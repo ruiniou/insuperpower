@@ -1,0 +1,11 @@
+.wiz-chip { display: inline-flex; align-items: center; gap: var(--wiz-spacing-xs); box-sizing: border-box; max-width: 100%; border-radius: var(--wiz-radius-xs); background: var(--wiz-grey-30); color: var(--wiz-grey-90); font-family: var(--wiz-text-caption-family); font-weight: var(--wiz-text-caption-weight); }
+.wiz-chip--default { height: 24px; padding: 0 var(--wiz-spacing-sm); font-size: var(--wiz-text-caption-size); }
+.wiz-chip--small { height: 18px; padding: 0 var(--wiz-spacing-xs-sm); gap: 3px; font-size: var(--wiz-text-label-size); }
+.wiz-chip.is-disabled { background: var(--wiz-grey-10); color: var(--wiz-grey-70); }
+.wiz-chip__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiz-chip__close { display: inline-flex; align-items: center; justify-content: center; flex: none; padding: 0; border: 0; background: transparent; color: var(--wiz-grey-80); cursor: pointer; }
+.wiz-chip--default .wiz-chip__close { font-size: 12px; }
+.wiz-chip--small .wiz-chip__close { font-size: 10px; }
+.wiz-chip__close:disabled { cursor: not-allowed; }
+.wiz-chip__close:focus-visible { outline: 2px solid var(--wiz-agent-brand); border-radius: 2px; }
+.wiz-chip__close > i { line-height: 1; }

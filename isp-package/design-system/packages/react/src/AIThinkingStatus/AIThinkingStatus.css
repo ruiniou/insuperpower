@@ -1,0 +1,17 @@
+.wiz-thinking {
+  display: flex;
+  align-items: center;
+  gap: var(--wiz-spacing-xs-sm);
+  padding: var(--wiz-spacing-sm) 0;
+  border-radius: var(--wiz-radius-xs);
+  font-family: var(--wiz-text-body-2-family);
+  font-size: var(--wiz-text-body-2-size);
+  letter-spacing: var(--wiz-text-body-2-letter-spacing);
+  line-height: normal;
+  color: var(--wiz-agent-muted);
+}
+.wiz-thinking__icon { font-size: 16px; line-height: 1; }
+.wiz-thinking--loading .wiz-thinking__icon { color: var(--wiz-agent-brand); animation: wiz-thinking-spin 1s linear infinite; }
+.wiz-thinking--waiting .wiz-thinking__icon { color: var(--wiz-orange-60); animation: wiz-thinking-spin 2s linear infinite; }
+@keyframes wiz-thinking-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .wiz-thinking__icon { animation: none !important; } }

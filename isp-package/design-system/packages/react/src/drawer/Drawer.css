@@ -1,0 +1,12 @@
+.wiz-drawer { position: absolute; right: 0; bottom: 0; z-index: 4; display: flex; flex-direction: column; box-sizing: border-box; max-width: calc(100% - 240px); background: var(--wiz-main-white); border-left: 1px solid var(--wiz-grey-40); border-bottom-right-radius: var(--wiz-radius-lg); box-shadow: var(--wiz-shadow-overlay); color: var(--wiz-color-text-primary); font-family: var(--wiz-font-family-ui); font-size: var(--wiz-text-body-2-size); }
+.wiz-drawer__split { position: absolute; left: 0; top: 0; bottom: 0; }
+.wiz-drawer__head { display: flex; align-items: center; justify-content: space-between; flex: none; height: 48px; box-sizing: border-box; padding: 0 var(--wiz-spacing-md) 0 var(--wiz-spacing-lg); border-bottom: 1px solid var(--wiz-grey-30); }
+.wiz-drawer__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); }
+.wiz-drawer__sub { margin-left: var(--wiz-spacing-sm); font-size: var(--wiz-text-caption-size); font-weight: var(--wiz-font-weight-regular); color: var(--wiz-color-text-secondary); }
+.wiz-drawer__body { flex: 1; min-height: 0; overflow: auto; }
+.wiz-drawer__row { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; align-items: center; column-gap: var(--wiz-spacing-md); height: 44px; box-sizing: border-box; padding: 0 var(--wiz-spacing-lg); border-bottom: 1px solid var(--wiz-grey-30); }
+.wiz-drawer__row-k { color: var(--wiz-color-text-secondary); }
+.wiz-drawer__row-v { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiz-drawer__sec { display: flex; align-items: center; justify-content: space-between; height: 48px; box-sizing: border-box; padding: 0 var(--wiz-spacing-lg); }
+.wiz-drawer__sec-t { font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); }
+.wiz-drawer__sec-t > i { margin-left: var(--wiz-spacing-sm); font-style: normal; font-weight: var(--wiz-font-weight-regular); font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }

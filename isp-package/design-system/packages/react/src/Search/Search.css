@@ -1,0 +1,21 @@
+.wiz-search { display: flex; align-items: center; box-sizing: border-box; max-width: 100%; height: 40px; padding: var(--wiz-spacing-xs) var(--wiz-spacing-sm); border: 1px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-sm); background: var(--wiz-main-white); transition: border-color 0.15s, box-shadow 0.15s; }
+.wiz-search:hover:not(.is-disabled), .wiz-search.is-hover, .wiz-search:focus-within:not(.is-disabled), .wiz-search.is-search { border-color: var(--wiz-brand-blue-70); box-shadow: var(--wiz-shadow-button); }
+.wiz-search.is-disabled { background: var(--wiz-grey-30); cursor: not-allowed; }
+.wiz-search__input { flex: 1; min-width: 0; margin: 0; padding: 0; border: 0; outline: 0; background: transparent; color: var(--wiz-grey-90); font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); font-weight: var(--wiz-text-body-2-weight); -webkit-appearance: none; appearance: none; }
+.wiz-search__input::-webkit-search-cancel-button, .wiz-search__input::-webkit-search-decoration { display: none; }
+.wiz-search__input::placeholder { color: var(--wiz-grey-50); }
+.wiz-search__btn { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--wiz-radius-sm); background: transparent; color: var(--wiz-main-grey); font-size: 16px; cursor: pointer; }
+.wiz-search__btn:hover:not(:disabled) { background: var(--wiz-alpha-black-8); }
+.wiz-search__btn:focus-visible { outline: 2px solid var(--wiz-agent-brand); outline-offset: 1px; }
+.wiz-search__btn:disabled { cursor: not-allowed; opacity: 0.5; }
+.wiz-search__btn > i { line-height: 1; }
+/* compact：高 32、14px，与同排 Button / Dropdown 对齐（内边距 0 8，描边计入高度） */
+.wiz-search--compact { height: 32px; padding-top: 0; padding-bottom: 0; }
+.wiz-search--compact .wiz-search__input { font-size: var(--wiz-text-body-1-size); }
+/* 展开形态的收起态：图标按钮，与原型 .ibtn 同为 32×32、圆角 8 */
+.wiz-search-toggle { display: inline-flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: 40px; height: 40px; padding: 0; border: 0; border-radius: var(--wiz-radius-sm); background: transparent; color: var(--wiz-grey-80); font-size: 16px; cursor: pointer; }
+.wiz-search-toggle--compact { width: 32px; height: 32px; }
+.wiz-search-toggle:hover:not(:disabled) { background: var(--wiz-grey-20); }
+.wiz-search-toggle:focus-visible { outline: 2px solid var(--wiz-agent-brand); outline-offset: 1px; }
+.wiz-search-toggle:disabled { cursor: not-allowed; opacity: 0.5; }
+.wiz-search-toggle > i { line-height: 1; }

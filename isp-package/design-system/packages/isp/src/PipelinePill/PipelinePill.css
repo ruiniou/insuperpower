@@ -1,0 +1,9 @@
+.wiz-isp-pill { position: absolute; z-index: 1; box-sizing: border-box; height: 40px; display: flex; align-items: center; gap: var(--wiz-spacing-sm); padding: 0 var(--wiz-spacing-sm) 0 var(--wiz-spacing-md); border: 1px solid var(--wiz-color-border-subtle); border-radius: var(--wiz-radius-full); background: var(--wiz-color-surface); color: inherit; box-shadow: var(--wiz-shadow-button); font-family: inherit; font-size: var(--wiz-text-body-2-size); font-weight: var(--wiz-font-weight-medium); white-space: nowrap; text-align: left; cursor: pointer; }
+.wiz-isp-pill:hover { box-shadow: var(--wiz-shadow-popover); }
+.wiz-isp-pill:focus-visible { outline: 2px solid var(--wiz-color-focus); outline-offset: 2px; }
+.wiz-isp-pill__count { margin-left: auto; font-size: var(--wiz-text-caption-size); font-weight: var(--wiz-font-weight-regular); color: var(--wiz-color-text-secondary); }
+.wiz-isp-pill--ready, .wiz-isp-pill--review { border-color: var(--wiz-color-primary); }
+.wiz-isp-pill--running { border-color: var(--wiz-color-primary); background: var(--wiz-color-primary-soft); }
+.wiz-isp-pill--stale { border-color: var(--wiz-color-warning); background: var(--wiz-yellow-10); }
+.wiz-isp-pill--todo { border-style: dashed; border-color: var(--wiz-color-border-strong); background: var(--wiz-grey-10); color: var(--wiz-color-text-secondary); }
+.wiz-isp-pnote { position: absolute; max-width: 156px; font-size: var(--wiz-text-caption-size); line-height: 1.35; color: var(--wiz-yellow-80); overflow-wrap: anywhere; }

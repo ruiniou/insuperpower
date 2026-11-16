@@ -1,0 +1,4 @@
+.wiz-event-progress .wiz-addon__body .wiz-label-status {
+  flex: none; align-items: center; padding: var(--wiz-spacing-xs) var(--wiz-spacing-md); border-radius: var(--wiz-radius-xs);
+}
+.wiz-event-progress .wiz-addon__body .wiz-label-status:hover { background: var(--wiz-grey-30); }

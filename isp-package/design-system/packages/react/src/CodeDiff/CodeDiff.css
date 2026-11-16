@@ -1,0 +1,68 @@
+.wiz-code-diff {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid var(--wiz-agent-border);
+  border-radius: var(--wiz-radius-sm);
+  background: var(--wiz-agent-surface);
+  line-height: normal;
+}
+.wiz-code-diff__header {
+  display: flex;
+  align-items: center;
+  gap: var(--wiz-spacing-sm);
+  min-height: 44px;
+  width: 100%;
+  padding: 0 var(--wiz-spacing-md);
+  box-sizing: border-box;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--wiz-text-body-2-family);
+  font-size: var(--wiz-text-body-2-size);
+  letter-spacing: var(--wiz-text-body-2-letter-spacing);
+  color: var(--wiz-agent-text);
+}
+.wiz-code-diff__header:focus-visible { outline: 2px solid var(--wiz-agent-brand); outline-offset: -2px; }
+.wiz-code-diff__icon, .wiz-code-diff__chevron { font-size: 16px; line-height: 1; color: var(--wiz-agent-muted); }
+.wiz-code-diff__title { white-space: nowrap; }
+.wiz-code-diff__counts {
+  display: flex;
+  align-items: center;
+  gap: var(--wiz-spacing-xs-sm);
+  padding-left: var(--wiz-spacing-xs);
+  font-size: var(--wiz-text-caption-size);
+  letter-spacing: var(--wiz-text-caption-letter-spacing);
+}
+.wiz-code-diff__add { color: var(--wiz-agent-success); }
+.wiz-code-diff__del { color: var(--wiz-agent-error); }
+.wiz-code-diff__spacer { flex: 1 1 0; }
+.wiz-code-diff__chevron { transition: transform 0.15s; }
+.wiz-code-diff--expanded .wiz-code-diff__chevron { transform: rotate(90deg); }
+
+.wiz-code-diff__lines {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--wiz-agent-border);
+  overflow-x: auto;
+  font-family: var(--wiz-text-code-family);
+  font-size: var(--wiz-text-code-size);
+  font-weight: var(--wiz-text-code-weight);
+  letter-spacing: var(--wiz-text-code-letter-spacing);
+  white-space: nowrap;
+}
+.wiz-code-diff__line {
+  display: flex;
+  align-items: center;
+  gap: var(--wiz-spacing-sm);
+  min-height: 20px;
+  padding: 0 var(--wiz-spacing-sm);
+  border-left: 3px solid transparent;
+  color: var(--wiz-agent-muted);
+}
+.wiz-code-diff__line--del { background: var(--wiz-agent-error-bg); border-left-color: var(--wiz-agent-error); }
+.wiz-code-diff__line--add { background: var(--wiz-agent-success-bg); border-left-color: var(--wiz-agent-success); }
+.wiz-code-diff__code { color: var(--wiz-agent-text); }
+@media (prefers-reduced-motion: reduce) { .wiz-code-diff__chevron { transition: none; } }

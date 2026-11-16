@@ -1,0 +1,6 @@
+{
+  "motion": {
+    "duration-panel": { "$type": "duration", "$value": "180ms" },
+    "ease-panel": { "$type": "cubicBezier", "$value": [0.25, 0.1, 0.25, 1] }
+  }
+}

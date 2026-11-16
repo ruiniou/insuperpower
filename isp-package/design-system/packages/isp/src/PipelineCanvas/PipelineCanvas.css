@@ -1,0 +1,3 @@
+.wiz-isp-stage { box-sizing: border-box; margin: 0 var(--wiz-spacing-lg); padding: var(--wiz-spacing-lg) var(--wiz-spacing-sm); flex: none; overflow-x: auto; overflow-y: hidden; background-color: var(--wiz-grey-10); background-image: radial-gradient(var(--wiz-grey-40) 1px, transparent 1px); background-size: 16px 16px; border: 1px solid var(--wiz-grey-30); border-radius: var(--wiz-radius-md); }
+.wiz-isp-pipe { position: relative; margin: 0 auto; }
+.wiz-isp-lane { position: absolute; top: 0; height: 26px; box-sizing: border-box; padding-top: 2px; display: flex; align-items: flex-start; border-bottom: 1px solid var(--wiz-color-border-subtle); font-size: var(--wiz-text-label-size); letter-spacing: 0.04em; text-transform: uppercase; color: var(--wiz-color-text-secondary); }

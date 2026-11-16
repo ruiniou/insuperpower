@@ -1,0 +1,7 @@
+.wiz-picklist { box-sizing: border-box; overflow: hidden; border: 1px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-sm); font-family: var(--wiz-font-family-ui); font-size: var(--wiz-text-body-2-size); color: var(--wiz-color-text-primary); }
+.wiz-picklist__head { display: grid; align-items: center; column-gap: 10px; height: 30px; box-sizing: border-box; padding: 0 10px; background: var(--wiz-grey-10); border-bottom: 1px solid var(--wiz-grey-30); font-size: var(--wiz-text-label-size); color: var(--wiz-color-text-secondary); letter-spacing: .02em; text-transform: uppercase; }
+.wiz-picklist__body { overflow: auto; }
+.wiz-picklist__row { display: grid; align-items: center; column-gap: 10px; min-height: 40px; box-sizing: border-box; padding: var(--wiz-spacing-xs) 10px; border-bottom: 1px solid var(--wiz-grey-30); }
+.wiz-picklist__row:last-child { border-bottom: 0; }
+.wiz-picklist__row.is-on { background: var(--wiz-color-surface-selected); }
+.wiz-picklist__cell { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

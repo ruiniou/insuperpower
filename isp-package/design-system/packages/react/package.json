@@ -1,0 +1,30 @@
+{
+  "name": "@wiz/react",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Wiz Agent React 组件库。需先引入 @wiz/tokens 的 tokens.css 与 remixicon 的 remixicon.css",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "style": "dist/style.css",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react-markdown": "^9.1.0",
+    "remark-gfm": "^4.0.1"
+  }
+}

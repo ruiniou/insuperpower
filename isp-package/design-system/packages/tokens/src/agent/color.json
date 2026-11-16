@@ -1,0 +1,65 @@
+{
+  "agent": {
+    "$type": "color",
+    "surface": {
+      "$value": "{palette.main.white}"
+    },
+    "canvas": {
+      "$value": "{palette.grey.10}"
+    },
+    "text": {
+      "$value": "{palette.grey.90}"
+    },
+    "muted": {
+      "$value": "{palette.grey.80}"
+    },
+    "border": {
+      "$value": "{palette.alpha.black-8}"
+    },
+    "brand": {
+      "$value": "{palette.main.brand-blue}"
+    },
+    "brand-bg": {
+      "$value": "{palette.alpha.progress-bg}"
+    },
+    "success": {
+      "$value": "{palette.main.success}"
+    },
+    "success-bg": {
+      "$value": "{palette.alpha.success-bg}"
+    },
+    "error": {
+      "$value": "{palette.main.error}"
+    },
+    "error-bg": {
+      "$value": "{palette.alpha.error-bg}"
+    },
+    "approval-bg": {
+      "$value": "{palette.alpha.warning-bg}"
+    },
+    "scrollbar-thumb": {
+      "$value": "{palette.grey.50}"
+    },
+    "scrollbar-thumb-hover": {
+      "$value": "{palette.grey.60}"
+    },
+    "syntax-keyword": {
+      "$value": "{palette.brand-blue.70}"
+    },
+    "syntax-string": {
+      "$value": "{palette.red.80}"
+    },
+    "syntax-comment": {
+      "$value": "{palette.green.70}"
+    },
+    "syntax-number": {
+      "$value": "{palette.greenblue.70}"
+    },
+    "syntax-function": {
+      "$value": "{palette.pink.80}"
+    },
+    "syntax-variable": {
+      "$value": "{palette.purple.70}"
+    }
+  }
+}

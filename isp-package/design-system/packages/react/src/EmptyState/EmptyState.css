@@ -1,0 +1,2 @@
+.wiz-empty { display: flex; flex-direction: column; align-items: center; gap: var(--wiz-spacing-md); padding: 40px var(--wiz-spacing-lg); text-align: center; color: var(--wiz-color-text-secondary); font-family: var(--wiz-font-family-ui); font-size: var(--wiz-text-body-2-size); }
+.wiz-empty__title { color: var(--wiz-color-text-primary); font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); }

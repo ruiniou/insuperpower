@@ -1,0 +1,19 @@
+.wiz-ai-tag-mini {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: var(--wiz-spacing-xs);
+  height: 20px;
+  padding: 0 var(--wiz-spacing-xs-sm) 0 var(--wiz-spacing-xs);
+  box-sizing: border-box;
+  border-radius: var(--wiz-radius-xs);
+  background: var(--wiz-agent-brand-bg);
+  color: var(--wiz-agent-brand);
+  font-family: var(--wiz-text-body-2-family);
+  font-size: var(--wiz-text-body-2-size);
+  font-weight: var(--wiz-text-body-2-weight);
+  letter-spacing: var(--wiz-text-body-2-letter-spacing);
+  line-height: normal;
+  white-space: nowrap;
+}
+.wiz-ai-tag-mini > i { font-size: 16px; line-height: 1; }

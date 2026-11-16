@@ -1,0 +1,70 @@
+.wiz-ai-ask-user {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid var(--wiz-grey-40);
+  border-radius: var(--wiz-radius-sm);
+  background: var(--wiz-agent-surface);
+  box-shadow: var(--wiz-shadow-overlay);
+  font-family: var(--wiz-text-body-2-family);
+  line-height: normal;
+}
+.wiz-ai-ask-user__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wiz-spacing-sm);
+  padding: var(--wiz-spacing-sm) var(--wiz-spacing-md);
+  border-bottom: 1px solid var(--wiz-grey-40);
+}
+.wiz-ai-ask-user__title {
+  display: flex;
+  align-items: center;
+  gap: var(--wiz-spacing-xs-sm);
+  font-size: var(--wiz-text-body-2-size);
+  letter-spacing: var(--wiz-text-body-2-letter-spacing);
+  color: var(--wiz-agent-text);
+}
+.wiz-ai-ask-user__title > i { font-size: 16px; line-height: 1; }
+.wiz-ai-ask-user__pager { display: flex; align-items: center; }
+.wiz-ai-ask-user__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--wiz-radius-xs);
+  background: transparent;
+  color: var(--wiz-agent-muted);
+  cursor: pointer;
+}
+.wiz-ai-ask-user__nav:hover { background: var(--wiz-agent-canvas); }
+.wiz-ai-ask-user__nav > i { font-size: 16px; line-height: 1; }
+.wiz-ai-ask-user__count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 18px;
+  font-size: var(--wiz-text-body-2-size);
+  letter-spacing: var(--wiz-text-body-2-letter-spacing);
+  color: var(--wiz-agent-muted);
+}
+.wiz-ai-ask-user__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--wiz-spacing-sm);
+  padding: var(--wiz-spacing-md) var(--wiz-spacing-md) var(--wiz-spacing-xs);
+}
+.wiz-ai-ask-user__question {
+  margin: 0;
+  font-size: var(--wiz-text-subtitle-1-size);
+  font-weight: var(--wiz-text-subtitle-1-weight);
+  letter-spacing: var(--wiz-text-subtitle-1-letter-spacing);
+  color: var(--wiz-agent-text);
+}
+.wiz-ai-ask-user__options { display: flex; flex-direction: column; }
+.wiz-ai-ask-user__footer { display: flex; align-items: center; justify-content: flex-end; gap: var(--wiz-spacing-sm); padding: var(--wiz-spacing-md); }

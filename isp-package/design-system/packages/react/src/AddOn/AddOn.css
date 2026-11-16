@@ -1,0 +1,48 @@
+.wiz-addon { display: flex; flex-direction: column; width: 100%; box-sizing: border-box; }
+.wiz-addon__strip {
+  display: flex; flex-direction: column; box-sizing: border-box; width: 100%; overflow: clip;
+  padding-bottom: var(--wiz-spacing-lg); margin-bottom: calc(-1 * var(--wiz-spacing-lg));
+  background: var(--wiz-grey-10); border: 0.5px solid var(--wiz-grey-40);
+  border-radius: var(--wiz-radius-lg) var(--wiz-radius-lg) 0 0; box-shadow: var(--wiz-shadow-layer);
+}
+.wiz-addon__input { position: relative; z-index: 1; }
+.wiz-addon__header {
+  display: flex; align-items: center; gap: var(--wiz-spacing-sm); padding: var(--wiz-spacing-md); cursor: pointer; user-select: none;
+}
+.wiz-addon__toggle {
+  all: unset; display: flex; align-items: center; flex: 1 1 0; min-width: 0; gap: var(--wiz-spacing-sm); cursor: pointer;
+  font-size: 14px; color: var(--wiz-agent-muted);
+}
+.wiz-addon__toggle:focus-visible { outline: 2px solid var(--wiz-color-focus); outline-offset: 2px; border-radius: var(--wiz-radius-xs); }
+.wiz-addon__title {
+  font-family: var(--wiz-text-subtitle-2-family); font-size: var(--wiz-text-subtitle-2-size); font-weight: var(--wiz-text-subtitle-2-weight);
+  letter-spacing: var(--wiz-text-subtitle-2-letter-spacing); line-height: normal; color: var(--wiz-agent-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wiz-addon__count {
+  flex: none; font-family: var(--wiz-text-label-family); font-size: var(--wiz-text-label-size); font-weight: var(--wiz-text-label-weight);
+  letter-spacing: var(--wiz-text-label-letter-spacing); line-height: normal; color: var(--wiz-agent-muted); font-variant-numeric: tabular-nums;
+}
+.wiz-addon__spinner { flex: none; font-size: 16px; line-height: 16px; color: var(--wiz-agent-brand); animation: wiz-addon-spin 1s linear infinite; }
+.wiz-addon__actions { display: flex; align-items: center; gap: var(--wiz-spacing-xs-sm); flex: none; cursor: default; }
+.wiz-addon__body {
+  display: flex; flex-direction: column; gap: var(--wiz-spacing-xs); box-sizing: border-box;
+  padding: 0 var(--wiz-spacing-xs) var(--wiz-spacing-sm); overflow-y: auto;
+}
+.wiz-addon__body::-webkit-scrollbar { width: 6px; background: transparent; }
+.wiz-addon__body::-webkit-scrollbar-track { background: transparent; }
+.wiz-addon__body::-webkit-scrollbar-thumb { border-radius: var(--wiz-radius-full); background: var(--wiz-agent-scrollbar-thumb); }
+.wiz-addon__body::-webkit-scrollbar-thumb:hover { background: var(--wiz-agent-scrollbar-thumb-hover); }
+@supports not selector(::-webkit-scrollbar) {
+  .wiz-addon__body { scrollbar-width: thin; scrollbar-color: var(--wiz-agent-scrollbar-thumb) transparent; }
+}
+@keyframes wiz-addon-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .wiz-addon__spinner { animation-duration: 3s; } }
+.wiz-addon__icon-btn {
+  all: unset; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; cursor: pointer;
+  font-size: 16px; color: var(--wiz-agent-muted); border-radius: var(--wiz-radius-xs);
+}
+.wiz-addon__icon-btn:hover { background: var(--wiz-grey-30); }
+.wiz-addon__icon-btn:focus-visible { outline: 2px solid var(--wiz-color-focus); }
+/* 不带输入框单独使用：无需叠放留白，四角圆角 */
+.wiz-addon--standalone .wiz-addon__strip { padding-bottom: 0; margin-bottom: 0; border-radius: var(--wiz-radius-lg); }

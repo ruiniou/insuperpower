@@ -1,0 +1,35 @@
+.wiz-tool-call {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--wiz-agent-border);
+  border-radius: var(--wiz-radius-sm);
+  background: var(--wiz-agent-surface);
+  line-height: normal;
+}
+.wiz-tool-call__header {
+  display: flex; align-items: center; gap: var(--wiz-spacing-xs-sm); width: 100%; box-sizing: border-box;
+  padding: var(--wiz-spacing-sm); border: 0; background: none; cursor: pointer; text-align: left;
+  font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); letter-spacing: var(--wiz-text-body-2-letter-spacing);
+  color: var(--wiz-agent-text);
+}
+.wiz-tool-call__header:hover, .wiz-tool-call--hover .wiz-tool-call__header { background: var(--wiz-agent-canvas); }
+.wiz-tool-call__header:focus-visible { outline: 2px solid var(--wiz-agent-brand); outline-offset: -2px; }
+.wiz-tool-call__icon { font-size: 16px; line-height: 1; color: var(--wiz-agent-muted); }
+.wiz-tool-call__name { white-space: nowrap; }
+.wiz-tool-call__details {
+  display: flex; flex-direction: column; gap: var(--wiz-spacing-sm);
+  padding: var(--wiz-spacing-sm) 0 var(--wiz-spacing-md); border-top: 1px solid var(--wiz-agent-border);
+}
+.wiz-tool-call__section { display: flex; flex-direction: column; gap: var(--wiz-spacing-xs); padding: 0 var(--wiz-spacing-md); min-width: 0; }
+.wiz-tool-call__label {
+  font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); letter-spacing: var(--wiz-text-body-2-letter-spacing);
+  color: var(--wiz-agent-muted);
+}
+.wiz-tool-call__code {
+  padding: var(--wiz-spacing-xs) 0; overflow-x: auto; border-radius: var(--wiz-radius-xs); background: var(--wiz-agent-canvas);
+  font-family: var(--wiz-text-code-family); font-size: var(--wiz-text-code-size); letter-spacing: var(--wiz-text-code-letter-spacing); color: var(--wiz-agent-muted);
+}
+.wiz-tool-call__line { display: flex; align-items: center; min-height: 20px; padding: 0 var(--wiz-spacing-sm); white-space: pre; }

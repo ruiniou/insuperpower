@@ -1,0 +1,43 @@
+.wiz-ai-ask-option {
+  display: flex;
+  align-items: center;
+  gap: var(--wiz-spacing-sm);
+  height: 40px;
+  padding: var(--wiz-spacing-sm);
+  box-sizing: border-box;
+  border-radius: var(--wiz-radius-xs);
+  cursor: pointer;
+}
+.wiz-ai-ask-option:hover, .wiz-ai-ask-option--hover, .wiz-ai-ask-option--selected { background: var(--wiz-agent-canvas); }
+.wiz-ai-ask-option__letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border: 1px solid var(--wiz-agent-border);
+  border-radius: var(--wiz-radius-xs);
+  background: var(--wiz-grey-30);
+  color: var(--wiz-agent-muted);
+  font-family: var(--wiz-text-caption-family);
+  font-size: var(--wiz-text-caption-size);
+  font-weight: var(--wiz-text-caption-weight);
+  letter-spacing: var(--wiz-text-caption-letter-spacing);
+  line-height: normal;
+}
+.wiz-ai-ask-option--selected .wiz-ai-ask-option__letter { background: var(--wiz-agent-brand); color: var(--wiz-main-white); }
+.wiz-ai-ask-option__text {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  word-break: break-word;
+  font-family: var(--wiz-text-body-2-family);
+  font-size: var(--wiz-text-body-2-size);
+  font-weight: var(--wiz-text-body-2-weight);
+  letter-spacing: var(--wiz-text-body-2-letter-spacing);
+  line-height: normal;
+  color: var(--wiz-agent-text);
+}
+.wiz-ai-ask-option--custom .wiz-ai-ask-option__text { color: var(--wiz-grey-60); }

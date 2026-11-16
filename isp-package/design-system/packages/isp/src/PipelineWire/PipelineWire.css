@@ -1,0 +1,9 @@
+.wiz-isp-wires { position: absolute; left: 0; top: 0; pointer-events: none; }
+.wiz-isp-wire { fill: none; stroke-width: 1.5; stroke: var(--wiz-color-border-default); }
+.wiz-isp-wire--ready { stroke: var(--wiz-color-primary); stroke-width: 2; }
+.wiz-isp-wire--stale { stroke: var(--wiz-yellow-60); stroke-dasharray: 5 4; }
+.wiz-isp-wire--todo { stroke-dasharray: 4 4; }
+.wiz-isp-wire--running { stroke: var(--wiz-color-primary); stroke-width: 2; stroke-dasharray: 6 4; animation: wiz-isp-dash 0.8s linear infinite; }
+.wiz-isp-wire--review { stroke: var(--wiz-color-primary); }
+@keyframes wiz-isp-dash { to { stroke-dashoffset: -20; } }
+@media (prefers-reduced-motion: reduce) { .wiz-isp-wire--running { animation: none; } }

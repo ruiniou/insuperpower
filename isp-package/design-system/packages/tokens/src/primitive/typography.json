@@ -1,0 +1,271 @@
+{
+  "font": {
+    "family": {
+      "$type": "fontFamily",
+      "ui": {
+        "$value": "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif"
+      },
+      "mono": {
+        "$value": "'Roboto Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+      }
+    },
+    "weight": {
+      "$type": "fontWeight",
+      "regular": {
+        "$value": 400
+      },
+      "medium": {
+        "$value": 500
+      },
+      "semibold": {
+        "$value": 600
+      }
+    },
+    "line-height": {
+      "$type": "string",
+      "normal": {
+        "$value": "normal"
+      }
+    }
+  },
+  "text": {
+    "h1": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 600
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "32px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.077px"
+      }
+    },
+    "h2": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 600
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "24px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.077px"
+      }
+    },
+    "h3": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 600
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "20px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.077px"
+      }
+    },
+    "h4": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 600
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "18px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.077px"
+      }
+    },
+    "h5": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 600
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.077px"
+      }
+    },
+    "subtitle-1": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 600
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "14px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.077px"
+      }
+    },
+    "subtitle-2": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 600
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "13px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.077px"
+      }
+    },
+    "body-1": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 400
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "14px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.077px"
+      }
+    },
+    "body-2": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 400
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "13px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.077px"
+      }
+    },
+    "caption": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 400
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.077px"
+      }
+    },
+    "label": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 600
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "11px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.5px"
+      }
+    },
+    "overline": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.ui}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 600
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "11px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0.5px"
+      },
+      "transform": {
+        "$type": "string",
+        "$value": "uppercase"
+      }
+    },
+    "code": {
+      "family": {
+        "$type": "fontFamily",
+        "$value": "{font.family.mono}"
+      },
+      "weight": {
+        "$type": "fontWeight",
+        "$value": 400
+      },
+      "size": {
+        "$type": "dimension",
+        "$value": "13px"
+      },
+      "letter-spacing": {
+        "$type": "dimension",
+        "$value": "0px"
+      }
+    }
+  }
+}

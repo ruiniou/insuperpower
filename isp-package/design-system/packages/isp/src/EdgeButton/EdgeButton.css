@@ -1,0 +1,13 @@
+.wiz-isp-eb { position: absolute; z-index: 3; box-sizing: border-box; width: 22px; height: 22px; padding: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--wiz-color-border-default); border-radius: var(--wiz-radius-full); background: var(--wiz-color-surface); color: var(--wiz-color-text-secondary); box-shadow: var(--wiz-shadow-button); font-size: 12px; cursor: pointer; }
+.wiz-isp-eb:focus-visible { outline: 2px solid var(--wiz-color-focus); outline-offset: 2px; }
+.wiz-isp-eb--locked { border: 0; background: transparent; box-shadow: none; }
+.wiz-isp-eb--locked::before { content: ''; width: 8px; height: 8px; border-radius: var(--wiz-radius-full); background: var(--wiz-color-border-default); transition: transform 0.12s; }
+.wiz-isp-eb--locked:hover::before { transform: scale(1.5); background: var(--wiz-color-text-muted); }
+.wiz-isp-eb--ready { border-color: var(--wiz-color-primary); background: var(--wiz-color-primary); color: var(--wiz-color-on-primary); }
+.wiz-isp-eb--stale { border-color: var(--wiz-color-warning); background: var(--wiz-yellow-10); color: var(--wiz-yellow-80); }
+.wiz-isp-eb--todo { border-style: dashed; border-color: var(--wiz-color-border-strong); background: var(--wiz-grey-10); }
+.wiz-isp-eb--todo::before { content: ''; width: 6px; height: 6px; border-radius: var(--wiz-radius-full); background: var(--wiz-color-border-strong); }
+.wiz-isp-eb--running, .wiz-isp-eb--review { border-color: var(--wiz-color-primary); background: var(--wiz-color-surface); color: var(--wiz-color-primary); }
+.wiz-isp-eb.is-selected { box-shadow: 0 0 0 4px var(--wiz-alpha-progress-bg); }
+.wiz-isp-eb__spin { animation: wiz-isp-spin 0.9s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .wiz-isp-eb__spin { animation: none; } }

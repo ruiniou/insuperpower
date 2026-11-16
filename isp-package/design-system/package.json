@@ -1,0 +1,30 @@
+{
+  "name": "wiz-design-system",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "tokens": "node packages/tokens/scripts/build.mjs && node packages/tokens/scripts/check.mjs",
+    "build": "npm run tokens && npm run build -w @wiz/react && npm run build -w @wiz/isp-demo",
+    "typecheck": "npm run typecheck -w @wiz/react && npm run typecheck -w @wiz/docs && npm run typecheck -w @wiz/isp && npm run typecheck -w @wiz/isp-demo",
+    "test": "npm run test -w @wiz/react && npm run test -w @wiz/isp && npm run test -w @wiz/isp-demo",
+    "dev": "npm run dev -w @wiz/docs",
+    "dev:isp": "npm run dev -w @wiz/isp-demo"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remixicon": "^4.6.0"
+  }
+}

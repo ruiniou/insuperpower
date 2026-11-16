@@ -1,0 +1,78 @@
+.wiz-prompt {
+  display: flex; flex-direction: column; gap: var(--wiz-spacing-lg); box-sizing: border-box; width: 100%; max-width: 800px;
+  padding: calc(var(--wiz-spacing-md) - 0.5px); background: var(--wiz-main-white); /* 描边 0.5 计入内边距，总高与 Figma 一致 */
+  border: 0.5px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-lg);
+  font-family: var(--wiz-text-body-1-family); font-size: var(--wiz-text-body-1-size);
+  letter-spacing: var(--wiz-text-body-1-letter-spacing); color: var(--wiz-main-grey);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+/* Hover / Focused：描边 1px（0.5 描边 + 0.5 外扩，避免内容位移） */
+.wiz-prompt--idle:hover, .wiz-prompt--stopping:hover, .wiz-prompt.is-hover,
+.wiz-prompt--idle:focus-within, .wiz-prompt.is-focused {
+  border-color: var(--wiz-main-brand-blue); box-shadow: 0 0 0 0.5px var(--wiz-main-brand-blue);
+}
+.wiz-prompt--disabled { background: var(--wiz-agent-canvas); box-shadow: 0 0 0 0.5px var(--wiz-grey-40); }
+
+.wiz-prompt__attachments { display: flex; gap: var(--wiz-spacing-sm); flex-wrap: wrap; padding: 6px 6px 0 0; margin: -6px -6px 0 0; }
+
+.wiz-prompt__area { position: relative; display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.wiz-prompt__area.has-attachments { flex: none; }
+.wiz-prompt__textarea {
+  all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 17px; max-height: none;
+  padding-right: var(--wiz-spacing-xs); overflow-y: auto; resize: none; white-space: pre-wrap; word-break: break-word;
+  font: inherit; letter-spacing: inherit; line-height: 17px; color: inherit; caret-color: var(--wiz-main-brand-blue);
+}
+.wiz-prompt__textarea::placeholder { color: var(--wiz-grey-70); opacity: 1; }
+.wiz-prompt--disabled .wiz-prompt__textarea { cursor: not-allowed; }
+.wiz-prompt--disabled .wiz-prompt__textarea::placeholder { color: var(--wiz-grey-60); }
+.wiz-prompt__hint {
+  position: absolute; left: 0; top: 0; display: flex; align-items: flex-start; gap: var(--wiz-spacing-xs-sm);
+  font-size: 14px; line-height: 20px; color: var(--wiz-grey-70); pointer-events: none; white-space: nowrap;
+}
+.wiz-prompt__hint > span:first-child, .wiz-prompt__hint > span:last-child { line-height: 17px; }
+.wiz-prompt__kbd {
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 20px; height: 20px; flex: none;
+  background: var(--wiz-main-white); border: 0.5px solid var(--wiz-alpha-black-8); border-radius: var(--wiz-radius-xs);
+  font-size: 14px; color: var(--wiz-grey-70); margin-top: -1.5px;
+}
+
+.wiz-prompt__actions { display: flex; align-items: center; justify-content: space-between; flex: none; width: 100%; }
+.wiz-prompt--disabled .wiz-prompt__actions { opacity: 0.4; }
+.wiz-prompt__tools { display: flex; align-items: center; gap: var(--wiz-spacing-xs); }
+
+.wiz-prompt__round {
+  all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex: none; cursor: pointer;
+  width: 28px; height: 28px; padding: var(--wiz-spacing-xs); border-radius: var(--wiz-radius-full);
+  font-size: 20px; line-height: 1; transition: background-color 120ms ease, transform 120ms ease;
+}
+.wiz-prompt__round:focus-visible { outline: 2px solid var(--wiz-color-focus); outline-offset: 1px; }
+.wiz-prompt__round:active:not(:disabled) { transform: scale(0.94); }
+.wiz-prompt__tool { color: var(--wiz-main-grey); }
+.wiz-prompt__tool:hover:not(:disabled) { background: var(--wiz-grey-30); }
+.wiz-prompt__tool:disabled { cursor: not-allowed; opacity: 0.4; }
+.wiz-prompt__send { background: var(--wiz-brand-blue-30); color: var(--wiz-fixed-white); cursor: not-allowed; }
+.wiz-prompt__send.is-ready { background: var(--wiz-main-brand-blue); cursor: pointer; }
+.wiz-prompt__send.is-ready:hover { background: var(--wiz-color-primary-hover); }
+.wiz-prompt__stop.is-running { background: var(--wiz-main-brand-blue); }
+.wiz-prompt__stop.is-running:hover { background: var(--wiz-color-primary-hover); }
+.wiz-prompt__stop.is-stopping { background: var(--wiz-grey-30); cursor: not-allowed; }
+.wiz-prompt__square { width: 8px; height: 8px; border-radius: 1px; background: var(--wiz-fixed-white); }
+.wiz-prompt__stop.is-stopping .wiz-prompt__square { background: var(--wiz-grey-70); }
+
+.wiz-prompt__running { display: flex; align-items: center; gap: var(--wiz-spacing-md); width: 100%; }
+.wiz-prompt__icon { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex: none; font-size: 20px; }
+.wiz-prompt__icon--spark { color: var(--wiz-main-brand-blue); }
+.wiz-prompt__running-text { flex: 1 1 0; min-width: 0; }
+
+/* 滚动条：6px、全圆角、无轨道底色 */
+.wiz-prompt__textarea::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
+.wiz-prompt__textarea::-webkit-scrollbar-track { background: transparent; }
+.wiz-prompt__textarea::-webkit-scrollbar-thumb { border-radius: var(--wiz-radius-full); background: var(--wiz-agent-scrollbar-thumb); }
+.wiz-prompt__textarea::-webkit-scrollbar-thumb:hover { background: var(--wiz-agent-scrollbar-thumb-hover); }
+@supports not selector(::-webkit-scrollbar) {
+  .wiz-prompt__textarea { scrollbar-width: thin; scrollbar-color: var(--wiz-agent-scrollbar-thumb) transparent; }
+}
+
+/* Add-on 之上叠放时带 Layer 阴影 */
+.wiz-addon__input > .wiz-prompt { box-shadow: var(--wiz-shadow-layer); }
+.wiz-addon__input > .wiz-prompt:is(:hover, :focus-within, .is-hover, .is-focused) { box-shadow: 0 0 0 0.5px var(--wiz-main-brand-blue), var(--wiz-shadow-layer); }

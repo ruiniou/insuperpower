@@ -1,0 +1,16 @@
+.wiz-switch { position: relative; flex: none; display: inline-block; box-sizing: border-box; margin: 0; padding: 0; border: 0; border-radius: var(--wiz-radius-full); background: var(--wiz-grey-50); cursor: pointer; transition: background-color 0.15s; }
+.wiz-switch.is-on { background: var(--wiz-brand-blue-70); }
+.wiz-switch:disabled { opacity: 0.4; cursor: not-allowed; }
+.wiz-switch:focus-visible { outline: 2px solid var(--wiz-agent-brand); outline-offset: 2px; }
+.wiz-switch__knob { position: absolute; top: 2px; left: 2px; border-radius: var(--wiz-radius-full); background: var(--wiz-fixed-white); box-shadow: 0 1px 3px color-mix(in srgb, var(--wiz-fixed-black) 30%, transparent); transition: transform 0.15s; }
+.wiz-switch--small { width: 28px; height: 16px; }
+.wiz-switch--small .wiz-switch__knob { width: 12px; height: 12px; }
+.wiz-switch--small.is-on .wiz-switch__knob { transform: translateX(12px); }
+.wiz-switch--medium { width: 44px; height: 24px; }
+.wiz-switch--medium .wiz-switch__knob { width: 20px; height: 20px; }
+.wiz-switch--medium.is-on .wiz-switch__knob { transform: translateX(20px); }
+.wiz-switch--large { width: 52px; height: 28px; }
+.wiz-switch--large .wiz-switch__knob { width: 24px; height: 24px; }
+.wiz-switch--large.is-on .wiz-switch__knob { transform: translateX(24px); }
+.wiz-switch-label { display: inline-flex; align-items: center; gap: var(--wiz-spacing-sm); cursor: pointer; font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); color: var(--wiz-grey-90); }
+.wiz-switch-label.is-disabled { cursor: not-allowed; color: var(--wiz-grey-60); }

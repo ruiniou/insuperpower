@@ -1,0 +1,7 @@
+.wiz-titlebar { display: flex; align-items: center; gap: 10px; box-sizing: border-box; height: 52px; padding: var(--wiz-spacing-sm) var(--wiz-spacing-lg); background: var(--wiz-main-white); }
+.wiz-titlebar.has-desc { height: 64px; }
+.wiz-titlebar.has-divider { border-bottom: 1px solid var(--wiz-grey-40); }
+.wiz-titlebar__main { display: flex; flex: 1 0 0; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; }
+.wiz-titlebar__title { display: flex; align-items: center; height: 24px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--wiz-text-h4-family); font-size: var(--wiz-text-h4-size); font-weight: var(--wiz-text-h4-weight); letter-spacing: var(--wiz-text-h4-letter-spacing); color: var(--wiz-main-grey); }
+.wiz-titlebar__desc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--wiz-text-body-2-size); letter-spacing: var(--wiz-text-body-2-letter-spacing); color: var(--wiz-grey-70); }
+.wiz-titlebar__actions { display: flex; align-items: center; gap: var(--wiz-spacing-sm); flex: none; }

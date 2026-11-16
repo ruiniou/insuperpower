@@ -1,0 +1,4 @@
+.wiz-isp-reflink { display: inline-flex; align-items: center; gap: 3px; min-width: 0; padding: var(--wiz-spacing-xs) 0; border: 0; background: transparent; color: var(--wiz-color-text-primary); font-family: inherit; font-size: inherit; font-weight: var(--wiz-font-weight-medium); line-height: 16px; text-align: left; text-decoration: underline; text-decoration-color: var(--wiz-color-primary); text-underline-offset: 3px; overflow-wrap: anywhere; cursor: pointer; }
+.wiz-isp-reflink > i { flex: none; font-size: 12px; }
+.wiz-isp-reflink:hover { color: var(--wiz-color-primary); }
+.wiz-isp-reflink:focus-visible { outline: 2px solid var(--wiz-color-focus); outline-offset: 2px; border-radius: var(--wiz-radius-xs); }

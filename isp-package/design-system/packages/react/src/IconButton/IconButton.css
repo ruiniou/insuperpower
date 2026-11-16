@@ -1,0 +1,25 @@
+.wiz-icon-button { display: inline-flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; margin: 0; padding: 0; border: 0; background: transparent; color: var(--wiz-main-grey); cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s; border-radius: var(--wiz-radius-sm); }
+.wiz-icon-button > i { line-height: 1; }
+.wiz-icon-button:focus-visible { outline: 2px solid var(--wiz-agent-brand); outline-offset: 1px; }
+.wiz-icon-button:disabled { cursor: not-allowed; }
+.wiz-icon-button.is-circle { border-radius: var(--wiz-radius-full); }
+
+/* ghost：Size 24 / 28 / 36 / 40 */
+.wiz-icon-button--small { width: 24px; height: 24px; font-size: 16px; }
+.wiz-icon-button--small:not(.is-circle) { border-radius: var(--wiz-radius-xs); }
+.wiz-icon-button--medium { width: 28px; height: 28px; font-size: 20px; }
+.wiz-icon-button--big { width: 36px; height: 36px; font-size: 24px; }
+.wiz-icon-button--large { width: 40px; height: 40px; font-size: 24px; }
+.wiz-icon-button--ghost.is-grey { color: var(--wiz-grey-80); }
+.wiz-icon-button--ghost:hover:not(:disabled), .wiz-icon-button--ghost.is-hover { background: var(--wiz-alpha-black-8); }
+.wiz-icon-button--ghost:disabled { color: var(--wiz-grey-60); }
+
+/* outline = Figma Icon Button 32×32 */
+.wiz-icon-button--outline { width: 32px; height: 32px; font-size: 16px; border: 1px solid var(--wiz-grey-40); background: var(--wiz-main-white); box-shadow: var(--wiz-shadow-button); }
+.wiz-icon-button--outline:hover:not(:disabled), .wiz-icon-button--outline.is-hover { border-color: var(--wiz-brand-blue-70); }
+.wiz-icon-button--outline:disabled { color: var(--wiz-grey-60); }
+
+/* primary（仅 circle） */
+.wiz-icon-button--primary { background: var(--wiz-brand-blue-70); color: var(--wiz-main-white); }
+.wiz-icon-button--primary:hover:not(:disabled), .wiz-icon-button--primary.is-hover { background: var(--wiz-brand-blue-60); }
+.wiz-icon-button--primary:disabled { background: var(--wiz-brand-blue-30); }

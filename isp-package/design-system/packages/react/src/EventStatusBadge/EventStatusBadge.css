@@ -1,0 +1,29 @@
+.wiz-event-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  gap: var(--wiz-spacing-xs);
+  height: 20px;
+  padding: 0 var(--wiz-spacing-xs-sm);
+  box-sizing: border-box;
+  border: 1px solid;
+  border-radius: var(--wiz-radius-xs);
+  font-family: var(--wiz-text-label-family);
+  font-size: var(--wiz-text-label-size);
+  font-weight: var(--wiz-text-label-weight);
+  letter-spacing: var(--wiz-text-label-letter-spacing);
+  line-height: normal;
+  white-space: nowrap;
+}
+.wiz-event-status-badge > i { font-size: 12px; line-height: 1; }
+.wiz-event-status-badge--blocked {
+  background: var(--wiz-agent-approval-bg);
+  border-color: var(--wiz-yellow-30);
+  color: var(--wiz-main-warning);
+}
+.wiz-event-status-badge--skipped {
+  background: var(--wiz-grey-30);
+  border-color: var(--wiz-agent-border);
+  color: var(--wiz-agent-muted);
+}

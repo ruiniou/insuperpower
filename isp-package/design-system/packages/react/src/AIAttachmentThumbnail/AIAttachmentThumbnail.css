@@ -1,0 +1,36 @@
+.wiz-attach-thumb { position: relative; flex: none; width: 48px; height: 48px; box-sizing: border-box; }
+.wiz-attach-thumb__image {
+  all: unset; display: block; box-sizing: border-box; width: 100%; height: 100%; cursor: pointer;
+  background-color: var(--wiz-grey-20); background-size: cover; background-position: center;
+  border: 1px solid var(--wiz-agent-border); border-radius: var(--wiz-radius-xs);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.wiz-attach-thumb__image:focus-visible { outline: 2px solid var(--wiz-color-focus); outline-offset: 1px; }
+.wiz-attach-thumb:not(.wiz-attach-thumb--uploading) .wiz-attach-thumb__image:hover { opacity: 0.9; }
+.wiz-attach-thumb__image:active { transform: scale(0.98); }
+.wiz-attach-thumb__overlay { position: absolute; inset: 0; border-radius: var(--wiz-radius-xs); background: var(--wiz-agent-muted); opacity: 0.12; pointer-events: none; }
+.wiz-attach-thumb__spinner {
+  position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
+  font-size: 16px; line-height: 16px; color: var(--wiz-agent-brand); pointer-events: none;
+  animation: wiz-attach-spin 1s linear infinite;
+}
+.wiz-attach-thumb__order {
+  position: absolute; top: -5px; left: -5px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; border-radius: var(--wiz-radius-full);
+  background: var(--wiz-agent-brand); color: var(--wiz-fixed-white);
+  font-family: var(--wiz-font-family-ui); font-size: 9px; font-weight: var(--wiz-font-weight-semibold); line-height: 1;
+  font-variant-numeric: tabular-nums; pointer-events: none;
+}
+.wiz-attach-thumb__close {
+  all: unset; position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; cursor: pointer;
+  display: none; align-items: center; justify-content: center; font-size: 20px; line-height: 1;
+  color: var(--wiz-grey-80); border-radius: var(--wiz-radius-full);
+}
+.wiz-attach-thumb__close:focus-visible { outline: 2px solid var(--wiz-color-focus); }
+.wiz-attach-thumb:hover .wiz-attach-thumb__close,
+.wiz-attach-thumb--hover .wiz-attach-thumb__close,
+.wiz-attach-thumb:focus-within .wiz-attach-thumb__close { display: flex; }
+.wiz-attach-thumb:hover .wiz-attach-thumb__order,
+.wiz-attach-thumb--hover .wiz-attach-thumb__order { display: none; }
+@keyframes wiz-attach-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .wiz-attach-thumb__spinner { animation-duration: 3s; } }

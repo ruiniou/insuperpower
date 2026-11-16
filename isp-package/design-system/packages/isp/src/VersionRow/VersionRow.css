@@ -1,0 +1,5 @@
+.wiz-isp-vr { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--wiz-spacing-sm); box-sizing: border-box; padding: var(--wiz-spacing-md) var(--wiz-spacing-lg); border-bottom: 1px solid var(--wiz-grey-30); font-family: var(--wiz-font-family-ui); font-size: var(--wiz-text-body-2-size); color: var(--wiz-color-text-primary); }
+.wiz-isp-vr__l1 { display: flex; align-items: center; gap: var(--wiz-spacing-sm); font-weight: var(--wiz-font-weight-medium); }
+.wiz-isp-vr__l2 { margin-top: 2px; font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
+.wiz-isp-vr__behind { margin-left: var(--wiz-spacing-xs); vertical-align: middle; }
+.wiz-isp-vr .wiz-status { height: 20px; }

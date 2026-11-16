@@ -1,0 +1,51 @@
+.wiz-label-status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--wiz-spacing-sm);
+  padding: var(--wiz-spacing-sm) var(--wiz-spacing-md);
+  box-sizing: border-box;
+  font-family: var(--wiz-text-body-2-family);
+  font-size: var(--wiz-text-body-2-size);
+  font-weight: var(--wiz-text-body-2-weight);
+  letter-spacing: var(--wiz-text-body-2-letter-spacing);
+  line-height: normal;
+  color: var(--wiz-agent-text);
+}
+.wiz-label-status__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 16px;
+  height: 20px;
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--wiz-agent-muted);
+}
+.wiz-label-status__icon > i { line-height: 1; }
+.wiz-label-status__text { display: flex; flex-direction: column; gap: var(--wiz-spacing-xs); flex: 1 1 0; min-width: 0; word-break: break-word; }
+.wiz-label-status__desc {
+  font-family: var(--wiz-text-caption-family);
+  font-size: var(--wiz-text-caption-size);
+  font-weight: var(--wiz-text-caption-weight);
+  letter-spacing: var(--wiz-text-caption-letter-spacing);
+  color: var(--wiz-agent-muted);
+}
+.wiz-label-status__trailing { flex: none; }
+.wiz-label-status__dash { width: 10px; height: 1.5px; background: var(--wiz-grey-60); }
+
+.wiz-label-status--running { color: var(--wiz-agent-brand); }
+.wiz-label-status--running .wiz-label-status__icon { color: var(--wiz-agent-brand); }
+.wiz-label-status--running .wiz-label-status__icon > i { animation: wiz-label-status-spin 1s linear infinite; }
+.wiz-label-status--queued,
+.wiz-label-status--interrupted { color: var(--wiz-agent-muted); }
+.wiz-label-status--blocked .wiz-label-status__icon { color: var(--wiz-main-warning); }
+.wiz-label-status--failed .wiz-label-status__icon { color: var(--wiz-agent-error); }
+.wiz-label-status--done .wiz-label-status__icon { color: var(--wiz-agent-success); }
+.wiz-label-status--skipped { color: var(--wiz-agent-muted); }
+.wiz-label-status--skipped .wiz-label-status__text { opacity: 0.7; }
+
+@keyframes wiz-label-status-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .wiz-label-status--running .wiz-label-status__icon > i { animation: none; }
+}

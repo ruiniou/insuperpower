@@ -1,0 +1,2 @@
+.wiz-isp-pop__line { min-height: 26px; display: flex; align-items: center; justify-content: space-between; font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
+.wiz-isp-pop__val { display: inline-flex; align-items: center; gap: var(--wiz-spacing-xs); color: var(--wiz-color-text-primary); }

@@ -1,0 +1,2 @@
+.wiz-isp-legend { display: flex; align-items: center; gap: 14px; font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
+.wiz-isp-legend > span { display: inline-flex; align-items: center; gap: 6px; }

@@ -1,0 +1,14 @@
+{
+  "name": "@wiz/isp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ISP 独有组件（流水线胶囊、连线按钮、展开信息卡等）。依赖 @wiz/react；@wiz/react 不得依赖本包。源码直接消费，无单独构建。",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "peerDependencies": { "react": ">=18", "react-dom": ">=18" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}

@@ -1,0 +1,9 @@
+.wiz-on-status { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; border: 0; background: color-mix(in srgb, var(--wiz-fixed-black) 5%, transparent); color: var(--wiz-main-white); font-family: var(--wiz-text-body-1-family); font-size: var(--wiz-text-body-1-size); font-weight: var(--wiz-text-body-1-weight); white-space: nowrap; cursor: pointer; transition: background-color 0.15s; }
+.wiz-on-status > i { font-size: 16px; line-height: 1; }
+.wiz-on-status--small { height: 24px; padding: 0 var(--wiz-spacing-sm); gap: var(--wiz-spacing-xs); border-radius: var(--wiz-radius-xs); font-family: var(--wiz-text-caption-family); font-size: var(--wiz-text-caption-size); }
+.wiz-on-status--small > i { font-size: 14px; }
+.wiz-on-status--medium { height: 32px; padding: 0 var(--wiz-spacing-md); gap: var(--wiz-spacing-xs-sm); border-radius: var(--wiz-radius-sm); }
+.wiz-on-status--large { height: 40px; padding: 0 14px; gap: var(--wiz-spacing-sm); border-radius: var(--wiz-radius-sm); font-family: var(--wiz-text-h5-family); font-size: var(--wiz-text-h5-size); font-weight: var(--wiz-text-h5-weight); }
+.wiz-on-status:hover:not(:disabled), .wiz-on-status.is-hover { background: color-mix(in srgb, var(--wiz-fixed-black) 15%, transparent); }
+.wiz-on-status:disabled { cursor: not-allowed; }
+.wiz-on-status:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }

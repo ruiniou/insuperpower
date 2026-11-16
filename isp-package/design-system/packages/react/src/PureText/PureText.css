@@ -1,0 +1,3 @@
+.wiz-pure-text { box-sizing: border-box; margin: 0; padding: 0; min-width: 0; color: var(--wiz-agent-text); }
+.wiz-pure-text > .wiz-md > :first-child { margin-top: 0; }
+.wiz-pure-text > .wiz-md > :last-child { margin-bottom: 0; }

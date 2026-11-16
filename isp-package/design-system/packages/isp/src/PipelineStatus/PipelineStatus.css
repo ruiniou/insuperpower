@@ -1,0 +1,8 @@
+.wiz-isp-sicon { flex: none; width: 16px; height: 16px; font-size: 16px; line-height: 16px; font-style: normal; display: inline-block; }
+.wiz-isp-sicon--locked { color: var(--wiz-color-success); }
+.wiz-isp-sicon--ready, .wiz-isp-sicon--running, .wiz-isp-sicon--review { color: var(--wiz-color-primary); }
+.wiz-isp-sicon--stale { color: var(--wiz-yellow-60); }
+.wiz-isp-sicon--todo { color: var(--wiz-color-text-muted); }
+.wiz-isp-sicon.is-spin { animation: wiz-isp-spin 0.9s linear infinite; }
+@keyframes wiz-isp-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .wiz-isp-sicon.is-spin { animation: none; } }
