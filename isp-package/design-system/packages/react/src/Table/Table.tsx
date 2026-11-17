@@ -1,5 +1,6 @@
 import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type HTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent, type ReactNode } from 'react';
 import { cx } from '../cx';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { Checkbox } from '../Checkbox/Checkbox';
 import { Select } from '../Select/Select';
 import { Status } from '../Status/Status';
@@ -12,9 +13,11 @@ export type ColumnType = 'content' | 'checkbox' | 'selector' | 'status' | 'link'
 
 function CellIconButton({ icon, label, active, onClick }: { icon: string; label: string; active?: boolean; onClick?: (e: MouseEvent<HTMLButtonElement>) => void }) {
   return (
-    <button type="button" className={cx('wiz-col-iconbtn', active && 'is-active')} aria-label={label} onClick={onClick}>
-      <i className={icon} aria-hidden="true" />
-    </button>
+    <Tooltip content={label} nowrap>
+      <button type="button" className={cx('wiz-col-iconbtn', active && 'is-active')} aria-label={label} onClick={onClick}>
+        <i className={icon} aria-hidden="true" />
+      </button>
+    </Tooltip>
   );
 }
 
@@ -349,8 +352,8 @@ export function Table({
           </span>
           <span className="wiz-table__pager-range">{rangeStart}–{rangeEnd} of {total}</span>
           <span className="wiz-table__pager-btns">
-            <button type="button" className="wiz-col-iconbtn" aria-label="Previous page" disabled={curPage === 0} onClick={() => setPage(Math.max(0, curPage - 1))}><i className="ri-arrow-left-s-line" aria-hidden="true" /></button>
-            <button type="button" className="wiz-col-iconbtn" aria-label="Next page" disabled={curPage >= pageCount - 1} onClick={() => setPage(Math.min(pageCount - 1, curPage + 1))}><i className="ri-arrow-right-s-line" aria-hidden="true" /></button>
+            <Tooltip content="Previous page" nowrap><button type="button" className="wiz-col-iconbtn" aria-label="Previous page" disabled={curPage === 0} onClick={() => setPage(Math.max(0, curPage - 1))}><i className="ri-arrow-left-s-line" aria-hidden="true" /></button></Tooltip>
+            <Tooltip content="Next page" nowrap><button type="button" className="wiz-col-iconbtn" aria-label="Next page" disabled={curPage >= pageCount - 1} onClick={() => setPage(Math.min(pageCount - 1, curPage + 1))}><i className="ri-arrow-right-s-line" aria-hidden="true" /></button></Tooltip>
           </span>
         </div>
       )}

@@ -23,14 +23,10 @@ button { font-family: inherit; }
 
 /* Studies */
 .studies { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.studies-id { display: inline-flex; align-items: center; gap: var(--wiz-spacing-sm); font-weight: var(--wiz-font-weight-medium); }
+.studies-id { white-space: nowrap; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: var(--wiz-spacing-sm); font-weight: var(--wiz-font-weight-medium); }
 .studies-id > i { font-size: 16px; color: var(--wiz-color-text-secondary); }
+.studies-blind { color: var(--wiz-color-text-secondary); }
 .studies-owner { display: inline-flex; align-items: center; gap: 6px; }
-/* 卡片视图（原型未设计，试点自拟） */
-.studies-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--wiz-spacing-md); padding: var(--wiz-spacing-lg); }
-.studies-card__top { display: flex; align-items: center; justify-content: space-between; }
-.studies-card__name { margin: var(--wiz-spacing-sm) 0; font-weight: var(--wiz-font-weight-medium); }
-.studies-card__meta { display: flex; align-items: center; justify-content: space-between; font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
 
 /* Event Overview */
 .ov { display: flex; flex-direction: column; min-height: 0; padding-bottom: var(--wiz-spacing-sm); }
@@ -80,3 +76,8 @@ button { font-family: inherit; }
 .app-role { position: absolute; left: var(--wiz-spacing-sm); right: var(--wiz-spacing-sm); bottom: 56px; }
 .app-drawer-form { padding: var(--wiz-spacing-lg); }
 .app-drawer-form__acts { display: flex; justify-content: flex-end; gap: var(--wiz-spacing-sm); padding: var(--wiz-spacing-md) var(--wiz-spacing-lg); }
+
+/* 生命周期标记：16 见方的槽，三态中心一致 */
+.studies-life { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 16px; height: 16px; font-size: 16px; line-height: 1; color: var(--wiz-color-text-secondary); }
+.studies-life svg { display: block; }
+.studies-life--active circle { fill: var(--wiz-brand-blue-70); }

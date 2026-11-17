@@ -1,5 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { cx } from '../cx';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { PopoverMenu } from '../PopoverMenu/PopoverMenu';
 import './Outline.css';
 
@@ -92,7 +93,7 @@ export function OutlineFilter({ options, value, allValue, onChange, className, .
       <PopoverMenu width={200} onSelect={(v) => onChange(v)}
         items={options.map((o) => ({ value: o.value, selected: o.value === value, label: <span className="wiz-outline__opt"><span>{o.label}</span><span className="wiz-outline__optn">{o.count}</span></span> }))}
         trigger={<button type="button" className={cx('wiz-outline__fbtn', active && 'is-on')} aria-label={'Filter' + (active && cur ? ': ' + cur.label : '')}><i className="ri-filter-3-line" aria-hidden="true" /><span>{active && cur ? cur.label : 'Filter'}</span><i className="ri-arrow-down-s-line" aria-hidden="true" /></button>} />
-      {active && <button type="button" className="wiz-outline__fclear" aria-label="Clear filter" onClick={() => onChange(all)}><i className="ri-close-line" aria-hidden="true" /></button>}
+      {active && <Tooltip content="Clear filter" nowrap><button type="button" className="wiz-outline__fclear" aria-label="Clear filter" onClick={() => onChange(all)}><i className="ri-close-line" aria-hidden="true" /></button></Tooltip>}
     </div>
   );
 }

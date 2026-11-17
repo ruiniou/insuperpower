@@ -1,5 +1,6 @@
 import { useState, type HTMLAttributes, type ReactNode } from 'react';
 import { cx } from '../cx';
+import { Tooltip } from '../Tooltip/Tooltip';
 import './SideBar.css';
 
 /** 主库 Side Bar Tabs 14:2426：Property 1 = Unselected / Selected / Hover；Show Text 对应 collapsed */
@@ -76,8 +77,9 @@ function userInitials(name: string) {
 /** 折叠 / 展开按钮：交付包原型 ibtn（32×32、圆角 8、灰色图标）+ 设计提供的 collapse-line / expand-line 图标（24 视窗、实心路径、显示 16） */
 export function SideBarToggle({ collapsed = true, className, ...rest }: { collapsed?: boolean } & Omit<HTMLAttributes<HTMLButtonElement>, 'children'>) {
   return (
+    <Tooltip content={collapsed ? 'Expand navigation' : 'Collapse navigation'} nowrap>
     <button type="button" className={cx('wiz-sidebar__toggle', className)} aria-expanded={!collapsed}
-      aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'} title={collapsed ? 'Expand navigation' : 'Collapse navigation'} {...rest}>
+      aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'} {...rest}>
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path fillRule="evenodd" clipRule="evenodd"
           d={collapsed
@@ -85,6 +87,7 @@ export function SideBarToggle({ collapsed = true, className, ...rest }: { collap
             : 'M19 2C20.6569 2 22 3.34315 22 5V19C22 20.6569 20.6569 22 19 22H5C3.34315 22 2 20.6569 2 19V5C2 3.34315 3.34315 2 5 2H19ZM10 20H19C19.5523 20 20 19.5523 20 19V5C20 4.44772 19.5523 4 19 4H10V20ZM5 4C4.44772 4 4 4.44772 4 5V19C4 19.5523 4.44772 20 5 20H8V4H5Z'} />
       </svg>
     </button>
+    </Tooltip>
   );
 }
 

@@ -141,7 +141,7 @@ export function GeneralSections() {
             <Cell key={t} label={`Message tone=${t}`}><div style={{ width: 362 }}><Message tone={t} closable>Message content content content</Message></div></Cell>
           ))}
           {(['top', 'bottom', 'left', 'right'] as const).map((d) => (
-            <Cell key={d} label={`Tooltip Direction=${d}`}><div className="tip-stage"><Tooltip content="Tooltip text" open direction={d}><Button size="small">Target</Button></Tooltip></div></Cell>
+            <Cell key={d} label={`Tooltip Direction=${d}`}><div className="tip-stage"><Tooltip content="Tooltip text" open arrow direction={d}><Button size="small">Target</Button></Tooltip></div></Cell>
           ))}
           <Cell label="Tooltip 真实交互（悬停 / Tab 聚焦，Esc 关闭）"><Tooltip content="Delete item"><IconButton icon="ri-delete-bin-line" aria-label="Delete" variant="outline" /></Tooltip></Cell>
         </Sec>

@@ -6,7 +6,7 @@ export type Loop = 'A' | 'B';
 export type Rec<T> = Record<NodeId, T>;
 
 export interface Version { n: number; label: string; by: string; date: string; note: string; status: string; file?: string; meta?: Record<string, string> }
-export type Lifecycle = 'ACTIVE' | 'ARCHIVED';
+export type Lifecycle = 'ACTIVE' | 'ARCHIVED' | 'DELETED';
 export type Blinding = 'Not blinded' | 'Blinded' | 'Revealed';
 export interface Study {
   id: string; name: string; ta: string; phase: string; admin: string; lifecycle: Lifecycle; blinding: Blinding;

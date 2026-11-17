@@ -1,5 +1,6 @@
-import { useRef, type HTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
+import { useRef, type HTMLAttributes, type KeyboardEvent, type ReactElement, type ReactNode } from 'react';
 import { cx } from '../cx';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { useControllable } from '../useControllable';
 import './SegmentedControl.css';
 
@@ -25,6 +26,9 @@ export interface SegmentedControlProps extends Omit<HTMLAttributes<HTMLDivElemen
 }
 
 /** 分段切换：单选，role=radiogroup；← → 切换并选中 */
+/** 纯图标项（无文字）才加 Tooltip */
+const IconTip = ({ text, children }: { text?: string; children: ReactElement }) => (text ? <Tooltip content={text} nowrap>{children}</Tooltip> : children);
+
 export function SegmentedControl({ items, variant = 'text', value, defaultValue, onChange, className, ...rest }: SegmentedControlProps) {
   const [cur, setCur] = useControllable<string>(value, defaultValue ?? items[0]?.value ?? '', onChange);
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -43,12 +47,14 @@ export function SegmentedControl({ items, variant = 'text', value, defaultValue,
       {items.map((it, i) => {
         const on = it.value === cur;
         return (
-          <button key={it.value} ref={(el) => { refs.current[i] = el; }} type="button" role="radio" aria-checked={on} aria-label={it['aria-label']}
-            disabled={it.disabled} tabIndex={on ? 0 : -1} className={cx('wiz-seg__item', on && 'is-on')}
-            onClick={() => setCur(it.value)} onKeyDown={(e) => onKey(e, i)}>
-            {it.icon && <i className={it.icon} aria-hidden="true" />}
-            {it.label !== undefined && <span>{it.label}</span>}
-          </button>
+          <IconTip key={it.value} text={it.label === undefined ? it['aria-label'] : undefined}>
+            <button ref={(el) => { refs.current[i] = el; }} type="button" role="radio" aria-checked={on} aria-label={it['aria-label']}
+              disabled={it.disabled} tabIndex={on ? 0 : -1} className={cx('wiz-seg__item', on && 'is-on')}
+              onClick={() => setCur(it.value)} onKeyDown={(e) => onKey(e, i)}>
+              {it.icon && <i className={it.icon} aria-hidden="true" />}
+              {it.label !== undefined && <span>{it.label}</span>}
+            </button>
+          </IconTip>
         );
       })}
     </div>

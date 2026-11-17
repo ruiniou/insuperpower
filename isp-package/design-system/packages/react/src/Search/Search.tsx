@@ -1,5 +1,6 @@
 import { forwardRef, useCallback, useRef, useState, type CSSProperties, type FocusEvent, type InputHTMLAttributes, type KeyboardEvent } from 'react';
 import { cx } from '../cx';
+import { Tooltip } from '../Tooltip/Tooltip';
 import './Search.css';
 
 /** Figma Search 273:337：Default / Hover / Search（有内容或聚焦） */
@@ -41,10 +42,12 @@ export const Search = forwardRef<HTMLInputElement, SearchProps>(function Search(
 
   if (!expanded) {
     return (
-      <button type="button" className={cx('wiz-search-toggle', `wiz-search-toggle--${size}`, className)} aria-label={rest['aria-label'] ?? 'Search'} aria-expanded={false} disabled={disabled}
-        onClick={() => { setOpen(true); requestAnimationFrame(() => inner.current?.focus()); }}>
-        <i className="ri-search-line" aria-hidden="true" />
-      </button>
+      <Tooltip content={rest['aria-label'] ?? 'Search'} nowrap>
+        <button type="button" className={cx('wiz-search-toggle', `wiz-search-toggle--${size}`, className)} aria-label={rest['aria-label'] ?? 'Search'} aria-expanded={false} disabled={disabled}
+          onClick={() => { setOpen(true); requestAnimationFrame(() => inner.current?.focus()); }}>
+          <i className="ri-search-line" aria-hidden="true" />
+        </button>
+      </Tooltip>
     );
   }
   const style: CSSProperties = { width };
