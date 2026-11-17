@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cx } from '../cx';
 import { useUid } from '../useControllable';
+import { useEdgeFit } from '../useEdgeFit';
 import './Breadcrumb.css';
 
 /** 同级切换下拉里的一行（平铺列表，与交付包原型 .cmenu 一致） */
@@ -43,6 +44,8 @@ function SwitchMenu({ item, name }: { item: BreadcrumbItem; name: (trigger: Reac
   const [q, setQ] = useState('');
   const root = useRef<HTMLSpanElement>(null);
   const trigger = useRef<HTMLElement>(null);
+  const menuEl = useRef<HTMLDivElement>(null);
+  useEdgeFit(menuEl, open);
   const timer = useRef<number>();
   const menuId = useUid('wiz-crumb-menu');
   const ph = item.searchPlaceholder ?? 'Search';
@@ -74,7 +77,7 @@ function SwitchMenu({ item, name }: { item: BreadcrumbItem; name: (trigger: Reac
         onKeyDown: (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); show(false); } },
       } as React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> }, open)}
       {open && (
-        <div id={menuId} role="menu" aria-label={ph} className="wiz-crumb-menu">
+        <div ref={menuEl} id={menuId} role="menu" aria-label={ph} className="wiz-crumb-menu">
           <label className="wiz-crumb-search">
             <i className="ri-search-line" aria-hidden="true" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={ph} aria-label={ph} autoComplete="off" autoFocus={focusSearch} />

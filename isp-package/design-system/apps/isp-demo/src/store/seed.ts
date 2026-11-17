@@ -17,7 +17,7 @@ export function createSeed(): Database {
     me: { name: 'User Name', ini: 'UN' },
     seq: { study: 3, event: 3, asset: 20, ds: 40 },
     studies: [
-      { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'Wang Fang', lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: 'Oct 31, 2026', members: 5, desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
+      { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'User Name', lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: 'Oct 31, 2026', members: 5, desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
       { id: 'STU-002', name: 'Breast Cancer Phase II Trial', ta: 'Oncology', phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE', blinding: 'Blinded', updated: 'Oct 26, 2026', members: 3, desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' },
       { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', admin: 'Wang Fang', lifecycle: 'ARCHIVED', blinding: 'Revealed', updated: 'Sep 18, 2026', members: 2, desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Mar 5, 2026' },
     ],

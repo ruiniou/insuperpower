@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type HTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
 import { cx } from '../cx';
+import { useEdgeFit } from '../useEdgeFit';
 import { useUid } from '../useControllable';
 import './PopoverMenu.css';
 
@@ -55,6 +56,7 @@ export function PopoverMenu({ trigger, items, onSelect, align = 'left', width = 
   const setOpen = (v: boolean) => { if (openProp === undefined) setInner(v); onOpenChange?.(v); };
   const root = useRef<HTMLSpanElement>(null);
   const menu = useRef<HTMLDivElement>(null);
+  useEdgeFit(menu, open);
   const menuId = useUid('wiz-menu');
 
   useEffect(() => {

@@ -122,7 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             {R.name === 'studies' && can('study.create') && <Button variant="primary" leftIcon="ri-add-line" onClick={() => go(hrefStudy(createStudy(), 'events'))}>New Study</Button>}
             {R.name === 'study' && R.tab === 'asset' && <Button leftIcon="ri-upload-2-line" onClick={() => openModal({ kind: 'uploadAsset', sid: R.sid, assetId: null, code: '' })}>Upload File</Button>}
             {R.name === 'study' && R.tab === 'dataset' && <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => openModal({ kind: 'uploadDataset', sid: R.sid, dsId: null, mode: R.space ? (SPACES.find((s) => s.key === R.space)?.mode ?? '') : '' })}>Upload Dataset</Button>}
-            {R.name === 'study' && (R.tab === 'events' || R.tab === 'asset') && can('event.create') && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'createEvent', sid: R.sid })}>New Event</Button>}
+            {R.name === 'study' && (R.tab === 'events' || R.tab === 'asset') && can('event.create', { study }) && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'createEvent', sid: R.sid })}>New Event</Button>}
             {R.name === 'study' && <PopoverMenu align="right" width={160} trigger={<IconButton size="compact" icon="ri-more-2-fill" aria-label="More" />} items={[{ label: 'Study details', value: 'details' }]} onSelect={() => openDrawer({ kind: 'studyDetails', id: R.sid })} />}
             {!copilot && <><span className="app-acts__sep" aria-hidden="true" /><IconButton size="compact" className="app-copilot-btn" icon="wiz-logo-icon" aria-label="Open Copilot" title="Copilot" onClick={() => setCopilot(true)} /></>}
           </div>

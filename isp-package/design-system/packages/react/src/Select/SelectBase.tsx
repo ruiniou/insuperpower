@@ -3,6 +3,7 @@ import { cx } from '../cx';
 import { Chip } from '../Chip/Chip';
 import { Field, FieldBox, resolveFieldState, type FieldSize, type FieldState } from '../Field/Field';
 import { useControllable, useUid } from '../useControllable';
+import { useEdgeFit } from '../useEdgeFit';
 import './Select.css';
 
 export type SelectOption = string | { value: string; label: string; disabled?: boolean };
@@ -27,6 +28,8 @@ export interface SelectBaseProps {
   name?: string;
   className?: string;
   noMatchText?: string;
+  /** 没有可见 label（如行内布局，标签在控件外）时，给控件一个读屏名称 */
+  'aria-label'?: string;
 }
 
 interface Internal extends SelectBaseProps {
@@ -41,7 +44,7 @@ const norm = (o: SelectOption): Opt => (typeof o === 'string' ? { value: o, labe
 /** Select 与 Multi Select 共用实现：自绘 listbox，键盘 ↑↓ Home End Enter Esc Tab，aria combobox */
 export function SelectBase({
   label, required, error, hint, size = 'medium', state, disabled, placeholder = 'Select...', options = [], searchable = false,
-  open: forceOpen, id, name, className, noMatchText = 'No matches', multiple, value, defaultValue, onChangeAny,
+  open: forceOpen, id, name, className, noMatchText = 'No matches', 'aria-label': ariaLabel, multiple, value, defaultValue, onChangeAny,
 }: Internal) {
   const opts = useMemo(() => options.map(norm), [options]);
   const uid = useUid('wiz-select');
@@ -58,6 +61,7 @@ export function SelectBase({
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  useEdgeFit(listRef, open);
 
   const selectedVals = multiple ? (Array.isArray(current) ? current : []) : [];
   const selectedOpt = !multiple ? opts.find((o) => o.value === current) : undefined;
@@ -144,6 +148,7 @@ export function SelectBase({
       aria-controls={listId}
       aria-autocomplete="list"
       aria-activedescendant={activeId}
+      aria-label={ariaLabel}
       aria-labelledby={undefined}
       id={baseId}
       onChange={(e) => { setQuery(e.target.value); if (!open) setOpen(true); }}
@@ -162,6 +167,7 @@ export function SelectBase({
           aria-expanded={searchable ? undefined : open}
           aria-controls={searchable ? undefined : listId}
           aria-activedescendant={searchable ? undefined : activeId}
+          aria-label={searchable ? undefined : ariaLabel}
           aria-invalid={st === 'error' || undefined}
           aria-describedby={st === 'error' ? `${baseId}-err` : undefined}
           aria-disabled={isDisabled || undefined}

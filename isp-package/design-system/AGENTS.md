@@ -37,6 +37,7 @@
 - 先用已导出的组件；没有再在同一套 Token 上新建，并说明现有组件为什么不合适。ISP 独有的放 `packages/isp`，通用的放 `packages/react`。
 - 样式覆盖用组件暴露的 className 与 CSS 变量钩子，不要靠调用方覆盖组件内部形状。
 - 图标：Remix（`ri-*-line` 为默认），纯图标按钮必须有 `aria-label`，并有 Tooltip 说明功能名称（`IconButton` 默认取 `title` / `aria-label`，位置与时延按 Atlas：下方 2px、水平居中、150ms，放不下自动翻转或平移，单行不换行；文案只写简短功能名称，如 More，不带对象；菜单 / 下拉展开时入口保持 Hovered 态，此时不出现 Tooltip）；业务/法规类操作的图标必须带文本标签。
+- 弹出层（下拉、菜单、Tooltip、Popover）必须做边缘检测：下方放不下时按空间翻到上方，仍放不下限制最大高度并内部滚动，左右越界整体平移，离视口边缘 4px。组件库已内置（`useEdgeFit`、`Tooltip`）；自绘弹出层必须复用，不得依赖父容器不裁切或页面位置够用。
 - Copilot 相关组件只是 UI 原语，AI 服务、持久化、权限、状态流转由应用提供。Markdown 用 `Markdown` 组件渲染（根类 `.wiz-md`），由应用提供内容并消毒，不注入原始 HTML。
 - 命名：组件与文案里的英文术语、状态名保持原样。
 

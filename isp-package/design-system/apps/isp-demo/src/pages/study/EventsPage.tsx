@@ -4,7 +4,7 @@ import { go } from '../../router';
 import { hrefEvent } from '../../store/actions';
 import { S } from '../../store/selectors';
 import { can, session } from '../../store/role';
-import { getDb, useDb } from '../../store/store';
+import { useDb } from '../../store/store';
 import { peopleOf, transferEventOwner } from '../../store/study';
 import { openModal } from '../../store/ui';
 import type { EventRec } from '../../store/types';
@@ -13,9 +13,8 @@ import { initials, Owner, PageHead, RowMenu, SearchBox, soon } from './common';
 /** #/study/:sid/events：Events 列表（Status 筛选、搜索、列表视图；卡片视图原型标注未设计） */
 export function EventsPage({ sid }: { sid: string }) {
   useDb();
-  const canCreate = can('event.create');
+  const canCreate = can('event.create', { study: S.study(sid) });
   const duty = session.duty;
-  const me = getDb().me.name;
   const [st, setSt] = useState('All');
   const [q, setQ] = useState('');
   const all = S.eventsOf(sid);
@@ -27,16 +26,14 @@ export function EventsPage({ sid }: { sid: string }) {
   const columns = useMemo<TableColumn[]>(() => [
     { key: 'name', header: 'Event', render: (_v, e: EventRec) => <span className="app-nm"><i className="ri-flow-chart" aria-hidden="true" /><span className="app-ell">{e.name}</span></span> },
     { key: 'status', header: 'Status', width: 120, render: (v) => <Status variant="style1" tone="grey" textCase="normal">{v}</Status> },
-    { key: 'owner', header: 'Event Owner', width: 170, render: (_v, e: EventRec) => (can('event.owner.transfer')
+    { key: 'owner', header: 'Event Owner', width: 170, render: (_v, e: EventRec) => (can('event.owner.transfer', { event: e })
       ? <MemberSelect variant="inline" size="small" aria-label={`Event Owner of ${e.name}`} value={e.owner} options={peopleOf(sid).map((n) => ({ value: n, name: n, initials: initials(n) }))} onChange={(v) => transferEventOwner(e.id, v)} />
       : <Owner name={e.owner} />) },
     { key: 'wfs', header: 'Workflows', width: 170, render: (_v, e: EventRec) => <span className="app-inline">{S.nWf(e)}{S.nStale(e) > 0 && <Status variant="style1" tone="yellow" textCase="normal">{S.nStale(e)} Outdated</Status>}</span> },
     { key: 'adopted', header: 'Adopted', width: 190, render: (v) => (v === '—' ? <span className="app-muted">—</span> : v) },
     { key: 'updated', header: 'Updated', width: 130, render: (v) => <span className="app-muted">{v}</span> },
     { key: 'more', header: '', width: 56, align: 'right', render: (_v, e: EventRec) => {
-      // Event Owner 只对自己负责的 Event 有这几项 [AI 推断，待确认]
-      const mine = duty !== 'Event Owner' || e.owner === me;
-      const extra = ([['event.member.manage', 'Manage Members'], ['event.duplicate', 'Duplicate'], ['event.archive', 'Archive Event']] as const).filter(([p]) => mine && can(p));
+      const extra = ([['event.member.manage', 'Manage Members'], ['event.duplicate', 'Duplicate'], ['event.archive', 'Archive Event']] as const).filter(([p]) => can(p, { event: e }));
       return (
         <RowMenu label={e.name} onSelect={(v) => { if (v === 'open') open(e.id); else soon(v)(); }}
           items={[{ label: 'Open Event', value: 'open' }, ...extra.map(([, l]) => ({ label: l, value: l }))]} />

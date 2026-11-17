@@ -176,13 +176,28 @@ describe('数据集槽位上传', () => {
 });
 
 describe('Study 页 MVP：职责与资料', () => {
-  it('点位默认值按 5.4：只有 Study Admin 能建 Event，只有 System Owner 能建 Study', async () => {
+  it('点位按职责与范围判定（5.4）：Study Admin 只在自己担任 Admin 的 Study 里生效', async () => {
     const { can } = await import('./role');
-    expect(can('event.create', 'Study Admin')).toBe(true);
-    expect(['System Owner', 'Event Owner', 'Member'].some((d) => can('event.create', d as never))).toBe(false);
-    expect(can('study.create', 'System Owner')).toBe(true);
-    expect(['Study Admin', 'Event Owner', 'Member'].some((d) => can('study.create', d as never))).toBe(false);
-    expect(can('study.metadata.update', 'Event Owner')).toBe(false);
+    const mine = S.study('STU-001')!, other = S.study('STU-002')!;
+    expect(mine.admin).toBe(getDb().me.name);
+    expect(can('event.create', { study: mine }, 'Study Admin')).toBe(true);
+    expect(can('event.create', { study: other }, 'Study Admin')).toBe(false);
+    expect(can('study.metadata.update', { study: other }, 'Study Admin')).toBe(false);
+    expect(can('event.create', { study: mine }, 'System Owner')).toBe(false);
+    expect(can('event.owner.transfer', { event: S.event('EVT-001')! }, 'System Owner')).toBe(false);
+    expect(can('study.metadata.update', { study: other }, 'System Owner')).toBe(true);
+    expect(can('study.create', {}, 'System Owner')).toBe(true);
+    expect(['Study Admin', 'Event Owner', 'Member'].some((d) => can('study.create', {}, d as never))).toBe(false);
+  });
+  it('Event Owner 只对自己负责的 Event 有成员治理、Duplicate、归档', async () => {
+    const { can } = await import('./role');
+    const mineEvt = S.event('EVT-004')!, other = S.event('EVT-001')!;
+    expect(mineEvt.owner).toBe(getDb().me.name);
+    expect(can('event.archive', { event: mineEvt }, 'Event Owner')).toBe(true);
+    expect(can('event.archive', { event: other }, 'Event Owner')).toBe(false);
+    expect(can('event.owner.transfer', { event: mineEvt }, 'Event Owner')).toBe(false);
+    expect(can('study.metadata.update', { study: S.study('STU-001')! }, 'Event Owner')).toBe(false);
+    expect(can('event.archive', { event: mineEvt }, 'Member')).toBe(false);
   });
   it('修改资料：原因必填，通过后更新资料', async () => {
     const { updateStudyDetails } = await import('./study');
@@ -200,7 +215,7 @@ describe('Study 页 MVP：职责与资料', () => {
   });
   it('交接 Event Owner：更新负责人；候选人来自本 Study', async () => {
     const { peopleOf, transferEventOwner } = await import('./study');
-    expect(peopleOf('STU-001')).toEqual(expect.arrayContaining(['Wang Fang', 'Li Wei', 'Chen Yu']));
+    expect(peopleOf('STU-001')).toEqual(expect.arrayContaining(['User Name', 'Li Wei', 'Chen Yu']));
     transferEventOwner('EVT-001', 'Chen Yu');
     expect(S.event('EVT-001')!.owner).toBe('Chen Yu');
     expect(toasts.at(-1)).toBe('Event Owner changed to Chen Yu');
