@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Avatar, Dropdown, Search, Table, type TableColumn } from '@wiz/react';
+import { Avatar, Button, Dropdown, EmptyState, Search, Table, type TableColumn } from '@wiz/react';
 import { go } from '../router';
 import { hrefStudy } from '../store/actions';
+import { can } from '../store/role';
 import { S } from '../store/selectors';
 import { useDb } from '../store/store';
 import type { Study } from '../store/types';
@@ -32,15 +33,19 @@ export function StudiesPage() {
 
   return (
     <div className="studies">
-      <div className="page-head">
+      {db.studies.length > 0 && <div className="page-head">
         <span className="page-title">Studies <i>{rows.length}</i></span>
         <span className="page-tools">
           <Search collapsible size="compact" width={220} placeholder="Search studies" aria-label="Search studies" value={q} onChange={(e) => setQ(e.target.value)} />
           <Dropdown size="medium" shadow="none" label={'TA: ' + ta} width={180} items={tas.map((t) => ({ label: t, value: t, selected: t === ta }))} onSelect={(v) => setTa(v)} />
+          {can('study.create') && <Button variant="primary" leftIcon="ri-add-line" onClick={() => go('#/studies/new')}>New Study</Button>}
         </span>
-      </div>
+      </div>}
       <div className="page-scroll">
-        {rows.length === 0 ? (
+        {db.studies.length === 0 ? (
+          <EmptyState title="No studies yet" description={can('study.create') ? 'Create a Study to get started.' : 'Ask an authorized administrator to create a Study.'}
+            action={can('study.create') ? <Button variant="primary" leftIcon="ri-add-line" onClick={() => go('#/studies/new')}>New Study</Button> : undefined} />
+        ) : rows.length === 0 ? (
           <div className="app-empty" role="status"><b>No studies match</b><span>Clear the search or the TA filter.</span></div>
         ) : (
           <Table className="studies-table" variant="plain" rowHeight={48} columns={columns} rows={rows} aria-label="Studies" onRowClick={(r: Study) => open(r.id)} />

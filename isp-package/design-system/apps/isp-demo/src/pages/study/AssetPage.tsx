@@ -53,13 +53,16 @@ export function AssetPage({ sid }: { sid: string }) {
 
   return (
     <div className="studies">
-      <PageHead>
+      {(real.length > 0 || rows.length > 0) && <PageHead>
         <span className="page-tools">
           <Dropdown size="medium" shadow="none" label={'Category: ' + cat} width={200} items={cats.map((t) => ({ label: t, value: t, selected: t === cat }))} onSelect={(v) => setCat(String(v))} />
           <Dropdown size="medium" shadow="none" label={'Type: ' + tp} width={180} items={types.map((t) => ({ label: t, value: t, selected: t === tp }))} onSelect={(v) => setTp(String(v))} />
         </span>
-        <SearchBox value={q} onChange={setQ} placeholder="Search assets" />
-      </PageHead>
+        <span className="page-tools">
+          <SearchBox value={q} onChange={setQ} placeholder="Search assets" />
+          <Button leftIcon="ri-upload-2-line" onClick={() => openModal({ kind: 'uploadAsset', sid, assetId: null, code: '' })}>Upload File</Button>
+        </span>
+      </PageHead>}
       <div className="page-scroll">
         {rows.length === 0
           ? <EmptyState title={real.length ? 'No assets match' : 'No assets yet'} description={real.length ? 'Clear the filters or search.' : 'Upload a Protocol, SAP, CRF or other study file to get started.'}

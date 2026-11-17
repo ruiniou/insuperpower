@@ -9,7 +9,6 @@ import { hrefEvent, hrefStudy } from './store/actions';
 import { eventCounts } from './store/selectors';
 import { S, SPACES } from './store/selectors';
 import { can, DUTIES, session, setDuty, type Duty } from './store/role';
-import { createStudy } from './store/study';
 import { toast, useDb } from './store/store';
 import { openDrawer, openModal, ui } from './store/ui';
 import { isTocWorkbench } from './pages/review/route';
@@ -23,6 +22,7 @@ function useHeader(R: Route): { crumbs: BreadcrumbItem[]; tabs: ReactNode } {
     onSwitch: (v) => go(hrefStudy(v, 'events')), searchPlaceholder: 'Search Study',
   });
   if (R.name === 'studies') return { crumbs: [{ label: 'Studies' }], tabs: null };
+  if (R.name === 'studyNew') return { crumbs: [{ label: 'New Study' }], tabs: null };
   if (R.name === 'study') {
     const s = S.study(R.sid);
     const items = [{ value: 'events', label: <>Events <i className="app-count">{S.eventsOf(R.sid).length}</i></> }, { value: 'asset', label: <>Asset <i className="app-count">{S.assetsOf(R.sid).length}</i></> }, { value: 'dataset', label: <>Dataset <i className="app-count">{S.datasetsOf(R.sid).length}</i></> }, { value: 'member', label: <>Member <i className="app-count">{s?.members ?? 0}</i></> }];
@@ -67,7 +67,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const R = useRoute();
   const db = useDb();
   const { crumbs, tabs } = useHeader(R);
-  const [copilot, setCopilot] = useState(false);
+  const [copilotOpen, setCopilot] = useState(false);
+  /** 新建 Study 页不提供 Copilot：入口隐藏，已打开的面板同时收起 */
+  const copilot = copilotOpen && R.name !== 'studyNew';
   const [navCollapsed, setNavCollapsed] = useState(true);
   /** 普通页面的 Nav：默认展开，可收起；收起后展开入口在页头最左 */
   const [mainNavCollapsed, setMainNavCollapsed] = useState(false);
@@ -119,12 +121,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="app-hdr">
           <div className="app-crumb">{mainNavCollapsed && <SideBarToggle onClick={() => setMainNavCollapsed(false)} />}<Breadcrumb size="sm" items={crumbs} aria-label="Breadcrumb" />{study && study.blinding !== 'Not blinded' && <BlindTag v={study.blinding} />}</div>
           <div className="app-acts">
-            {R.name === 'studies' && can('study.create') && <Button variant="primary" leftIcon="ri-add-line" onClick={() => go(hrefStudy(createStudy(), 'events'))}>New Study</Button>}
-            {R.name === 'study' && R.tab === 'asset' && <Button leftIcon="ri-upload-2-line" onClick={() => openModal({ kind: 'uploadAsset', sid: R.sid, assetId: null, code: '' })}>Upload File</Button>}
-            {R.name === 'study' && R.tab === 'dataset' && <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => openModal({ kind: 'uploadDataset', sid: R.sid, dsId: null, mode: R.space ? (SPACES.find((s) => s.key === R.space)?.mode ?? '') : '' })}>Upload Dataset</Button>}
-            {R.name === 'study' && (R.tab === 'events' || R.tab === 'asset') && can('event.create', { study }) && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'createEvent', sid: R.sid })}>New Event</Button>}
             {R.name === 'study' && <PopoverMenu align="right" width={160} trigger={<IconButton size="compact" icon="ri-more-2-fill" aria-label="More" />} items={[{ label: 'Study details', value: 'details' }]} onSelect={() => openDrawer({ kind: 'studyDetails', id: R.sid })} />}
-            {!copilot && <><span className="app-acts__sep" aria-hidden="true" /><IconButton size="compact" className="app-copilot-btn" icon="wiz-logo-icon" aria-label="Open Copilot" title="Copilot" onClick={() => setCopilot(true)} /></>}
+            {!copilot && R.name !== 'studyNew' && <><span className="app-acts__sep" aria-hidden="true" /><IconButton size="compact" className="app-copilot-btn" icon="wiz-logo-icon" aria-label="Open Copilot" title="Copilot" onClick={() => setCopilot(true)} /></>}
           </div>
         </header>
         {tabs && <div className="app-tabs">{tabs}</div>}

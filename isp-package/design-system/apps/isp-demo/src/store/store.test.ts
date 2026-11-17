@@ -208,10 +208,32 @@ describe('Study 页 MVP：职责与资料', () => {
     expect('ok' in updateStudyDetails('STU-001', { ...f, reason: 'Fix title' })).toBe(true);
     expect(S.study('STU-001')!.name).toBe('NSCLC Renamed');
   });
-  it('新建 Study：创建者为 Study Admin，初始非盲、ACTIVE', async () => {
-    const { createStudy } = await import('./study');
-    const s = S.study(createStudy())!;
-    expect([s.admin, s.blinding, s.lifecycle]).toEqual([getDb().me.name, 'Not blinded', 'ACTIVE']);
+  it('新建 Study：创建者为 Study Admin，初始非盲、ACTIVE，成员数含创建者与初始成员', async () => {
+    const { createStudy, emptyStudyForm } = await import('./study');
+    const { setDuty } = await import('./role');
+    setDuty('System Owner');
+    const f = { ...emptyStudyForm(), id: 'ABC-001', name: 'Demo Study', members: [{ key: 1, user: 'U-102', role: 'VIEW', from: '2026-12-01', to: '2027-01-01' }] };
+    const r = createStudy(f);
+    expect('id' in r).toBe(true);
+    const s = S.study('ABC-001')!;
+    expect([s.admin, s.blinding, s.lifecycle, s.members]).toEqual([getDb().me.name, 'Not blinded', 'ACTIVE', 2]);
+    expect(toasts.at(-1)).toBe('ABC-001 created');
+  });
+  it('新建 Study：编号归一化后重复被拒；无资格被拒；成员去重与日期校验', async () => {
+    const { createStudy, emptyStudyForm, validateStudyForm } = await import('./study');
+    const { setDuty } = await import('./role');
+    const base = { ...emptyStudyForm(), name: 'X' };
+    setDuty('Study Admin');
+    expect('errors' in createStudy({ ...base, id: 'NEW-1' }) && true).toBe(true);
+    setDuty('System Owner');
+    const dup = createStudy({ ...base, id: ' stu-００1 ' });
+    expect('errors' in dup && dup.errors.id).toMatch(/unavailable/);
+    expect(getDb().studies.length).toBe(3);
+    const m = (key: number, user: string, from: string, to: string) => ({ key, user, role: 'VIEW', from, to });
+    const er = validateStudyForm({ ...base, id: 'N2', members: [m(1, 'U-102', '2026-12-02', '2026-12-01'), m(2, 'U-102', '', '2026-12-02')] });
+    expect(er['m:1:to']).toMatch(/before start/);
+    expect(er['m:2:user']).toMatch(/already added/);
+    expect(er['m:2:from']).toBeTruthy();
   });
   it('交接 Event Owner：更新负责人；候选人来自本 Study', async () => {
     const { peopleOf, transferEventOwner } = await import('./study');

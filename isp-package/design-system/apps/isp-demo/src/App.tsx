@@ -4,6 +4,7 @@ import { EventOverviewPage } from './pages/EventOverviewPage';
 import { PlaceholderPage, NotFoundPage } from './pages/PlaceholderPage';
 import { ReviewPendingPage, ReviewTocPage } from './pages/review/ReviewTocPage';
 import { reviewStep } from './pages/review/route';
+import { CreateStudyPage } from './pages/CreateStudyPage';
 import { StudiesPage } from './pages/StudiesPage';
 import { useRoute } from './router';
 import { S } from './store/selectors';
@@ -18,6 +19,7 @@ function Page() {
   const R = useRoute();
   useDb();
   if (R.name === 'studies') return <StudiesPage />;
+  if (R.name === 'studyNew') return <CreateStudyPage />;
   if (R.name === 'study') {
     if (!S.study(R.sid)) return <NotFoundPage what="Study" id={R.sid} />;
     if (R.tab === 'events') return <EventsPage sid={R.sid} />;

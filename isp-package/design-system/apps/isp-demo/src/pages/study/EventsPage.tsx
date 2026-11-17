@@ -43,12 +43,13 @@ export function EventsPage({ sid }: { sid: string }) {
 
   return (
     <div className="studies">
-      <PageHead>
+      {all.length > 0 && <PageHead>
         <Dropdown size="medium" shadow="none" label={'Status: ' + st} width={180} items={sts.map((t) => ({ label: t, value: t, selected: t === st }))} onSelect={(v) => setSt(String(v))} />
         <span className="page-tools">
           <SearchBox value={q} onChange={setQ} placeholder="Search events" />
-</span>
-      </PageHead>
+          {canCreate && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'createEvent', sid })}>New Event</Button>}
+        </span>
+      </PageHead>}
       <div className="page-scroll">
         {rows.length === 0
           ? <EmptyState title={all.length ? 'No events match' : 'No events yet'} description={all.length ? 'Clear the filter or search.' : canCreate ? 'Create an Event to start an analysis.' : undefined}

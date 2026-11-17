@@ -98,3 +98,32 @@ button { font-family: inherit; }
 .sd__foot { display: flex; justify-content: flex-end; gap: var(--wiz-spacing-sm); flex: none; padding: var(--wiz-spacing-md); }
 /* 禁用的 Edit 要能悬停出原因：按钮不接收指针事件，由外层触发 Tooltip */
 .sd__edit-off .wiz-button { pointer-events: none; }
+
+/* Create Study：整页居中表单，底部固定操作栏 */
+.csf { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.csf-scroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+.csf-body { box-sizing: border-box; width: 100%; max-width: 720px; margin: 0 auto; padding: var(--wiz-spacing-xl) var(--wiz-spacing-lg) var(--wiz-spacing-3xl); display: flex; flex-direction: column; gap: var(--wiz-spacing-lg); -webkit-font-smoothing: antialiased; }
+.csf-sec { display: flex; flex-direction: column; gap: var(--wiz-spacing-md); min-width: 0; }
+.csf-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--wiz-spacing-md); align-items: start; }
+.csf-row--idname { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+.csf-count { font-variant-numeric: tabular-nums; }
+.csf-opt { margin-left: var(--wiz-spacing-xs); font-size: var(--wiz-text-caption-size); font-weight: var(--wiz-font-weight-regular); color: var(--wiz-color-text-muted); }
+.csf-hrow__end { margin-left: auto; display: inline-flex; align-items: center; gap: var(--wiz-spacing-sm); }
+.csf-h { margin: 0; font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); text-wrap: balance; }
+.csf-note { margin: 0; font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
+.csf-admin { min-height: 32px; font-size: var(--wiz-text-body-1-size); }
+.csf-hrow { display: flex; align-items: center; gap: var(--wiz-spacing-xs); min-height: 32px; }
+.csf-members { display: flex; flex-direction: column; gap: var(--wiz-spacing-sm); }
+.csf-na { display: flex; align-items: center; min-height: 32px; color: var(--wiz-color-text-muted); }
+.csf-mrow { display: grid; grid-template-columns: minmax(230px, 2.2fr) minmax(130px, 1fr) minmax(104px, 0.8fr) minmax(104px, 0.8fr) 64px; gap: var(--wiz-spacing-sm); align-items: start; }
+.csf-mrow--head { font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
+.csf-act { display: flex; align-items: center; justify-content: flex-end; height: 32px; }
+.csf-mrow--item { padding-top: var(--wiz-spacing-sm); border-top: 1px solid var(--wiz-grey-30); align-items: start; }
+.csf-mrow--add { padding-top: var(--wiz-spacing-sm); border-top: 1px solid var(--wiz-grey-30); }
+.csf-who { display: flex; align-items: center; gap: var(--wiz-spacing-sm); min-width: 0; }
+.csf-who > :first-child { flex: 1; min-width: 0; }
+.csf-who .wiz-status { flex: none; }
+.csf-nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.csf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.csf-foot { flex: none; display: flex; justify-content: flex-end; gap: var(--wiz-spacing-sm); padding: var(--wiz-spacing-md) var(--wiz-spacing-lg); border-top: 1px solid var(--wiz-grey-30); }
+.csf-tip { display: flex; flex-direction: column; }

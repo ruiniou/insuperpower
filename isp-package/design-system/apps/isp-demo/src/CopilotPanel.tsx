@@ -6,6 +6,7 @@ import { S } from './store/selectors';
 /** 当前页的上下文标签与占位对话（文案与 index.html 的 copCtx 一致） */
 function copilotContext(R: Route): { label: string; ask: string; answer: string } {
   if (R.name === 'studies') return { label: 'Studies', ask: 'Which studies need attention?', answer: 'STU-001 has a newer SAP version than its Primary Analysis Event is using. Open the Event to review the update.' };
+  if (R.name === 'studyNew') return { label: 'New Study', ask: '', answer: '' }; // 该页不提供 Copilot，仅满足类型
   if (R.name === 'study') {
     const tab = ({ events: 'Events', asset: 'Asset', dataset: 'Dataset', member: 'Member' } as Record<string, string>)[R.tab] ?? '';
     return { label: `${R.sid} ${tab}`.trim(), ask: 'Summarize what changed in this Study.', answer: 'Open the Asset tab to see the latest versions, and the Events tab to see which Events are behind.' };
