@@ -6,7 +6,6 @@ import { S } from './store/selectors';
 /** 当前页的上下文标签与占位对话（文案与 index.html 的 copCtx 一致） */
 function copilotContext(R: Route): { label: string; ask: string; answer: string } {
   if (R.name === 'studies') return { label: 'Studies', ask: 'Which studies need attention?', answer: 'STU-001 has a newer SAP version than its Primary Analysis Event is using. Open the Event to review the update.' };
-  if (R.name === 'studyNew') return { label: 'New Study', ask: 'What do I need for a new Study?', answer: 'Study ID and name are required. Role defaults to STAT, and new Studies start Unblinded. Members are optional.' };
   if (R.name === 'study') {
     const tab = ({ events: 'Events', asset: 'Asset', dataset: 'Dataset', member: 'Member' } as Record<string, string>)[R.tab] ?? '';
     return { label: `${R.sid} ${tab}`.trim(), ask: 'Summarize what changed in this Study.', answer: 'Open the Asset tab to see the latest versions, and the Events tab to see which Events are behind.' };
@@ -39,11 +38,11 @@ export function CopilotPanel({ route, onClose }: { route: Route; onClose: () => 
   return (
     <aside className="app-cop" aria-label="Copilot">
       <header className="app-cop__head">
-        <span className="app-cop__title"><i className="ri-bard-fill" aria-hidden="true" />Copilot</span>
+        <span className="app-cop__title"><i className="wiz-logo-icon" aria-hidden="true" />Copilot</span>
         <span className="app-cop__acts">
-          <IconButton size="small" icon="ri-chat-new-line" aria-label="New chat" title="New chat"
+          <IconButton size="compact" icon="ri-chat-new-line" aria-label="New chat" title="New chat"
             onClick={() => { setMessages([{ id: 'new', type: 'assistant-text', props: { children: 'New conversation. Ask about what is on this page.' } }]); setDraft(''); }} />
-          <IconButton size="small" icon="ri-close-line" aria-label="Close Copilot" title="Close Copilot" onClick={onClose} />
+          <IconButton size="compact" icon="ri-close-line" aria-label="Close Copilot" title="Close Copilot" onClick={onClose} />
         </span>
       </header>
       <ChatStream className="app-cop__stream" messages={messages}

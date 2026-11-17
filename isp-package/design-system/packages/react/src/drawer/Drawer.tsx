@@ -1,4 +1,4 @@
-import { useEffect, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
 import { CloseButton } from '../CloseButton/CloseButton';
 import { Splitter } from '../Splitter/Splitter';
 import { cx } from '../cx';
@@ -21,13 +21,15 @@ export interface DrawerProps extends Omit<HTMLAttributes<HTMLElement>, 'title'> 
   resizable?: boolean;
   /** 距定位祖先顶部的偏移（用于避开页头），默认 0 */
   top?: number | string;
+  /** 相邻主面板至少保留的宽度；拖宽上限 = min(max, 定位祖先宽 − 此值)，默认 320（DS 5.0 §1.5：拖大不能把其他面板挤出屏幕） */
+  neighborMin?: number;
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 export function Drawer({
   open = true, title, subtitle, onClose, width, defaultWidth = 440, min = 320, max = 560, onWidthChange, resizable = true,
-  top = 0, className, style, children, ...rest
+  top = 0, neighborMin = 320, className, style, children, ...rest
 }: DrawerProps) {
   const [inner, setInner] = useState(clamp(defaultWidth, min, max));
   const w = clamp(width ?? inner, min, max);
@@ -37,10 +39,14 @@ export function Drawer({
     document.addEventListener('keydown', k);
     return () => document.removeEventListener('keydown', k);
   }, [open, onClose]);
+  const ref = useRef<HTMLElement>(null);
   if (!open) return null;
-  const set = (next: number) => { const v = clamp(next, min, max); if (width == null) setInner(v); onWidthChange?.(v); };
+  const set = (next: number) => {
+    const host = ref.current?.offsetParent as HTMLElement | null;
+    const cap = host ? Math.max(min, Math.min(max, host.clientWidth - neighborMin)) : max;
+    const v = clamp(next, min, cap); if (width == null) setInner(v); onWidthChange?.(v); };
   return (
-    <aside {...rest} className={cx('wiz-drawer', className)} style={{ width: w, top, ...style }}>
+    <aside {...rest} ref={ref} className={cx('wiz-drawer', className)} style={{ width: w, top, ...style }}>
       {resizable && (
         <Splitter className="wiz-drawer__split" reverse aria-label="Resize drawer" value={w} min={min} max={max} onResize={(d) => set(w + d)} />
       )}

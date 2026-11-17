@@ -1,7 +1,7 @@
 /* 外壳取自原型 .card.nav：圆角 16、阴影同 Button、内边距 8 */
 .wiz-sidebar { display: flex; flex-direction: column; flex: none; align-items: stretch; box-sizing: border-box; height: 100%; gap: var(--wiz-spacing-xs); padding: var(--wiz-spacing-sm); overflow: hidden; border-radius: var(--wiz-radius-lg); background: var(--wiz-main-white); box-shadow: var(--wiz-shadow-button); }
 /* Logo 行取自原型 .logo：粗体 16、内边距 8 8 12；带折叠按钮时右侧内边距 0、两端对齐 */
-.wiz-sidebar__logo { display: flex; align-items: center; justify-content: space-between; flex: none; padding: var(--wiz-spacing-sm) var(--wiz-spacing-sm) var(--wiz-spacing-md); }
+.wiz-sidebar__logo { display: flex; align-items: center; justify-content: space-between; flex: none; box-sizing: border-box; height: 48px; margin-top: calc(-1 * var(--wiz-spacing-sm)); padding: 0 var(--wiz-spacing-sm); } /* 48 高：与主面板页头（48）同一水平中线（负 margin 抵消外壳上内边距） */
 .wiz-sidebar__logo.has-toggle { padding-right: 0; }
 .wiz-sidebar__logo-text { font-family: var(--wiz-font-family-ui); font-weight: 700; font-size: 16px; color: var(--wiz-main-grey); }
 /* 折叠 / 展开按钮取自原型 .ibtn，图标为设计提供的 collapse-line / expand-line */
@@ -14,7 +14,7 @@
 .wiz-sidebar__group { padding: var(--wiz-spacing-lg) var(--wiz-spacing-sm) 0; font-family: var(--wiz-text-overline-family); font-size: var(--wiz-text-overline-size); font-weight: var(--wiz-font-weight-regular); letter-spacing: var(--wiz-text-overline-letter-spacing); text-transform: uppercase; color: var(--wiz-grey-80); }
 .wiz-sidebar__footer { display: flex; flex: none; flex-direction: column; align-items: stretch; gap: var(--wiz-spacing-xs); }
 
-.wiz-sidebar-tab { display: flex; align-items: center; gap: 10px; box-sizing: border-box; width: 100%; padding: 10px; border: 0; border-radius: var(--wiz-radius-sm); background: var(--wiz-main-white); color: var(--wiz-grey-90); font-family: var(--wiz-text-body-1-family); font-size: var(--wiz-text-body-1-size); font-weight: var(--wiz-text-body-1-weight); letter-spacing: var(--wiz-text-body-1-letter-spacing); line-height: normal; white-space: nowrap; text-align: left; cursor: pointer; flex: none; overflow: hidden; }
+.wiz-sidebar-tab { display: flex; align-items: center; gap: var(--wiz-spacing-md); box-sizing: border-box; width: 100%; padding: 10px var(--wiz-spacing-sm); border: 0; border-radius: var(--wiz-radius-sm); background: var(--wiz-main-white); color: var(--wiz-grey-90); font-family: var(--wiz-text-body-1-family); font-size: var(--wiz-text-body-2-size); font-weight: var(--wiz-text-body-1-weight); letter-spacing: var(--wiz-text-body-1-letter-spacing); line-height: normal; white-space: nowrap; text-align: left; cursor: pointer; flex: none; overflow: hidden; }
 .wiz-sidebar-tab.is-collapsed { width: auto; justify-content: center; }
 .wiz-sidebar-tab__icon { flex: none; width: 20px; height: 20px; font-size: 20px; line-height: 20px; }
 .wiz-sidebar-tab__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }

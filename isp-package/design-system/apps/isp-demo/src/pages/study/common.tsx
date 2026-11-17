@@ -11,7 +11,7 @@ export const Owner = ({ name }: { name: string }) => <span className="app-owner"
 
 /** 行尾「更多」菜单 */
 export function RowMenu({ label, items, onSelect }: { label: string; items: PopoverMenuItem[]; onSelect: (v: string) => void }) {
-  return <PopoverMenu align="right" width={180} trigger={<IconButton icon="ri-more-2-fill" size="small" aria-label={`More actions for ${label}`} />} items={items} onSelect={(v) => onSelect(String(v))} />;
+  return <PopoverMenu align="right" width={180} trigger={<IconButton icon="ri-more-2-fill" size="compact" aria-label={`More actions for ${label}`} />} items={items} onSelect={(v) => onSelect(String(v))} />;
 }
 
 export const SearchBox = ({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) => (
@@ -19,3 +19,11 @@ export const SearchBox = ({ value, onChange, placeholder }: { value: string; onC
 );
 
 export const PageHead = ({ children }: { children: ReactNode }) => <div className="page-head">{children}</div>;
+
+import { Status } from '@wiz/react';
+import type { Blinding, Lifecycle } from '../../store/types';
+
+export const BLIND_LABEL: Record<Blinding, string> = { 'Not blinded': 'Not blinded', Blinded: 'Blinded', Revealed: 'Revealed' };
+const BLIND_TONE = { 'Not blinded': 'grey', Blinded: 'purple', Revealed: 'blue' } as const;
+export const BlindTag = ({ v }: { v: Blinding }) => <Status variant="style1" tone={BLIND_TONE[v]} textCase="normal">{BLIND_LABEL[v]}</Status>;
+export const LifecycleTag = ({ v }: { v: Lifecycle }) => <Status variant="dot" tone={v === 'ACTIVE' ? 'green' : 'grey'}>{v === 'ACTIVE' ? 'Active' : 'Archived'}</Status>;

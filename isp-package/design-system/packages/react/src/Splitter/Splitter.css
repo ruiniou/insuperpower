@@ -2,6 +2,7 @@
 .wiz-splitter::before { content: ''; position: absolute; background: var(--wiz-grey-40); }
 .wiz-splitter--x::before { top: 0; bottom: 0; left: 50%; width: 1px; transform: translateX(-50%); }
 .wiz-splitter--y::before { left: 0; right: 0; top: 50%; height: 1px; transform: translateY(-50%); }
+.wiz-splitter.is-bare::before { display: none; }
 .wiz-splitter.is-active { z-index: 30; }
 .wiz-splitter--x { cursor: col-resize; }
 .wiz-splitter--y { cursor: row-resize; }
@@ -13,5 +14,5 @@
 .wiz-splitter__bar { position: absolute; pointer-events: none; background: var(--wiz-brand-blue-70); opacity: 0; }
 .wiz-splitter--x .wiz-splitter__bar { top: 0; bottom: 0; left: 50%; width: 2px; transform: translateX(-50%); }
 .wiz-splitter--y .wiz-splitter__bar { left: 0; right: 0; top: 50%; height: 2px; transform: translateY(-50%); }
-.wiz-splitter.is-active .wiz-splitter__bar { opacity: 1; }
+.wiz-splitter.is-active .wiz-splitter__bar { opacity: 1; transition: opacity 150ms; } /* 淡入 150ms，离开立即消失 */
 .wiz-splitter:focus-visible .wiz-splitter__bar { opacity: 1; }

@@ -7,8 +7,8 @@ import './IconButton.css';
  * variant：ghost = Actions 无描边；outline = Icon Button（32×32 描边带阴影）；primary = Actions Style=Primary（仅 circle）
  */
 export type IconButtonVariant = 'ghost' | 'outline' | 'primary';
-/** small 24 · medium 28 · big 36 · large 40（outline 固定 32，忽略 size） */
-export type IconButtonSize = 'small' | 'medium' | 'big' | 'large';
+/** small 24 · medium 28 · compact 32（图标 16，与 32 高工具栏控件同轴）· big 36 · large 40（outline 固定 32，忽略 size） */
+export type IconButtonSize = 'small' | 'medium' | 'compact' | 'big' | 'large';
 export type IconButtonShape = 'rectangle' | 'circle';
 /** ghost 图标色：black = Main Grey，grey = Grey 80 */
 export type IconButtonColor = 'black' | 'grey';

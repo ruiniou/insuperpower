@@ -4,10 +4,12 @@
 .wiz-icon-button:disabled { cursor: not-allowed; }
 .wiz-icon-button.is-circle { border-radius: var(--wiz-radius-full); }
 
-/* ghost：Size 24 / 28 / 36 / 40 */
+/* ghost：Size 24 / 28 / 32（compact，与 32 高的 Button / SearchToggle 同轴）/ 36 / 40 */
 .wiz-icon-button--small { width: 24px; height: 24px; font-size: 16px; }
 .wiz-icon-button--small:not(.is-circle) { border-radius: var(--wiz-radius-xs); }
 .wiz-icon-button--medium { width: 28px; height: 28px; font-size: 20px; }
+.wiz-icon-button--compact { width: 32px; height: 32px; font-size: 16px; }
+.wiz-icon-button--compact:not(.is-circle) { border-radius: var(--wiz-radius-sm); }
 .wiz-icon-button--big { width: 36px; height: 36px; font-size: 24px; }
 .wiz-icon-button--large { width: 40px; height: 40px; font-size: 24px; }
 .wiz-icon-button--ghost.is-grey { color: var(--wiz-grey-80); }

@@ -50,6 +50,7 @@
 | Textarea | 多行输入 | 稳定 |
 | Select | 单选下拉 | 稳定 |
 | MultiSelect | 多选下拉 | 稳定 |
+| MemberSelect | 可搜索的单选成员选择器：触发器为头像加姓名，面板顶部搜索，选项带头像；`variant="inline"` 无边框无箭头，悬停才显底色，并向单元格内边距悬挂使内容与列头左对齐，用于表格单元格（Event Owner 交接）。面板挂到 body，不被表格裁切（移植自 Atlas MemberSingleSelect） | 无 Wiz 稿 |
 | Search | 搜索框；`collapsible` 可收成图标按钮，点击展开（新增能力无 Wiz 稿） | 稳定 |
 | Checkbox | 复选框 | 稳定 |
 | Radio | 单选框 | 稳定 |
@@ -87,12 +88,15 @@
 | SideBar / SideBarTabs / SideBarToggle | 左导航：默认宽 160，可收起；`selectedTone` 选中态 solid / soft（新增能力无 Wiz 稿） | 稳定 |
 | TopNav | 顶栏（Mac / Win 项目选择器） | 稳定 |
 | Logo | ISP 标志 | 稳定 |
-| Breadcrumb | 面包屑，▾ 切换同级 | 无 Wiz 稿 |
+| Breadcrumb | 面包屑，悬停层级名称展开同级切换（无 ▾） | 无 Wiz 稿 |
 | Dropdown | 下拉菜单按钮；菜单本体是 PopoverMenu / MenuItem（目录 `PopoverMenu/`） | 无 Wiz 稿 |
 | TitleBar | 标题栏（标题、描述、右侧操作） | 稳定 |
 | Splitter | 可拖拽分隔条 | 稳定 |
 | Card | 卡片容器；`--wiz-card-padding` 钩子 | 无 Wiz 稿 |
 | Drawer | 右侧覆盖层抽屉，可拖宽；DrawerRow（键值操作行）、DrawerSectionHead（目录 `drawer/`） | 无 Wiz 稿 |
+| StepNav | 步骤导航：图标加文字，步骤间 →，当前步骤灰底并带 `aria-current="step"`，已锁定步骤显示小锁，高 36；Review 页头用（规则 4.6） | 无 Wiz 稿 |
+| PanelHead | 面板 Head：高 48，左图标（悬停文字）、标题、中性状态文字，右操作区，可选第二行工具条 | 无 Wiz 稿 |
+| KeyValueRow | 通用键值行：键列宽与最小行高可配，值可单行省略或换行，可带操作；`DrawerRow` 暂保持独立实现 | 无 Wiz 稿 |
 
 ## 数据展示
 
@@ -101,6 +105,7 @@
 | Status | 状态标签（style1 / style2 / style3 / dot）；`textCase`（新增能力无 Wiz 稿） | 稳定 |
 | List / ListGroup / ListDivider / ListItem | 列表项：图标、计数、展开、缩进、复选、开关 | 稳定 |
 | TreeList | 树列表（目录 `List/`） | 无 Wiz 稿 |
+| OutlineRow / OutlineGroup / OutlineFilter | Outline 条目行（高 28，类型图标，单一状态位 `outlineMark` 按优先级取一个）、分组行（已完成/总数，全部完成换对勾）、带计数的 Filter（目录 `Outline/`） | 无 Wiz 稿 |
 | Table | 数据表：分页、选择、排序、`onRowClick` 整行可点、`rowHeight`、`groupBy`、`activeRow`、`columnLayout`；Column / ColumnHeader / ColumnBody 为单元格样式（新增能力无 Wiz 稿） | 无 Wiz 稿 |
 | Avatar / AvatarGroup | 头像（6 色，字号随尺寸缩放）与头像组 | 稳定 |
 | CodeEditor | SAS 代码编辑器（行号、当前行、语法高亮） | 无 Wiz 稿 |
@@ -125,9 +130,4 @@
 
 ## 提案中（未实现）
 
-见规则文档 5.3。以下组件已提议、尚未实现，不在上面的表里：
-
-- 步骤导航（U-7）
-- Outline 行与 Filter（U-8）
-- 面板 Head（U-9）
-- 键值行（U-10）
+无。规则文档 5.3 里 U-11 至 U-13 暂缓（Demo 临时设计，未定稿），U-18 至 U-20 仍在页面内拼装，均不在上面的表里。

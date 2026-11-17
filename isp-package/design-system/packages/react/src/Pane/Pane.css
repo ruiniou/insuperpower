@@ -1,0 +1,8 @@
+/* 面板折叠 / 展开：宽度与透明度一起过渡；拖拽 Splitter 时关闭过渡 */
+.wiz-pane { flex: none; align-self: stretch; min-width: 0; overflow: hidden; opacity: 0; transition: width var(--wiz-motion-duration-panel) var(--wiz-motion-ease-panel), flex-grow var(--wiz-motion-duration-panel) var(--wiz-motion-ease-panel), opacity var(--wiz-motion-duration-panel) var(--wiz-motion-ease-panel); }
+.wiz-pane.is-open { opacity: 1; }
+.wiz-pane.is-dragging { transition: none; }
+.wiz-pane__in { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; min-width: 0; }
+.wiz-pane__in.has-gap-start { padding-left: var(--wiz-spacing-sm); }
+.wiz-pane__in.has-gap-end { padding-right: var(--wiz-spacing-sm); }
+@media (prefers-reduced-motion: reduce) { .wiz-pane { transition: none; } }

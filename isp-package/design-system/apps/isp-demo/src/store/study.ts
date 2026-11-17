@@ -81,3 +81,44 @@ export function uploadDataset(f: UploadDatasetForm): { errors: Errors } | { ds: 
   return { ds: d, space };
 }
 export { DS_CATS };
+
+export const PHASES = ['Phase I', 'Phase II', 'Phase III', 'Phase IV', 'Exploratory'];
+export interface StudyDetailsForm { name: string; desc: string; ta: string; phase: string; reason: string }
+
+/** 修改 Study 资料：名称 1–200、说明 ≤2000、阶段为枚举或保留已有值、原因 1–1000（必填）。研究编号创建后不可改 */
+export function updateStudyDetails(sid: string, f: StudyDetailsForm): { errors: Errors } | { ok: true } {
+  const s = S.study(sid), er: Errors = {};
+  if (!s) return { errors: { name: 'Study not found.' } };
+  const name = f.name.trim(), reason = f.reason.trim();
+  if (!name) er.name = 'Study name is required.'; else if (name.length > 200) er.name = 'Use 200 characters or fewer.'; else if (noCtl(name)) er.name = 'Remove control characters.';
+  if (f.desc.length > 2000) er.desc = 'Use 2000 characters or fewer.';
+  if (f.phase && f.phase !== s.phase && !PHASES.includes(f.phase)) er.phase = 'Choose a listed phase.';
+  if (!reason) er.reason = 'Reason for change is required (1–1000 characters).'; else if (reason.length > 1000) er.reason = 'Use 1000 characters or fewer.';
+  if (Object.keys(er).length) return { errors: er };
+  Object.assign(s, { name, desc: f.desc.trim(), ta: f.ta.trim(), phase: f.phase, updated: dLong() });
+  toast('Study details updated'); emit();
+  return { ok: true };
+}
+
+/** 新建 Study：创建者成为 Study Admin，初始非盲、ACTIVE。表单流程本期不做，直接建一个可编辑的 Study */
+export function createStudy(): string {
+  const db = getDb();
+  const id = 'STU-' + String(++db.seq.study).padStart(3, '0');
+  db.studies.unshift({ id, name: 'Untitled Study', ta: '', phase: '', admin: db.me.name, lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: dLong(), members: 1, desc: '', tenant: 'Demo Tenant', createdBy: db.me.name, createdAt: dLong() });
+  toast(id + ' created'); emit();
+  return id;
+}
+
+/** 本 Study 可选的 Event Owner：Study Admin、各 Event 与 Workflow 的负责人、当前用户。成员模块未做，先从现有数据里取 */
+export function peopleOf(sid: string): string[] {
+  const db = getDb(), st = S.study(sid);
+  const names = [st?.admin, db.me.name, ...S.eventsOf(sid).flatMap((e) => [e.owner, ...e.wfs.map((w) => w.owner)])];
+  return Array.from(new Set(names.filter((n): n is string => !!n)));
+}
+
+/** 交接 Event Owner（event.owner.transfer，仅 Study Admin） */
+export function transferEventOwner(eid: string, name: string) {
+  const e = S.event(eid); if (!e || e.owner === name) return;
+  e.owner = name; e.updated = dLong();
+  toast('Event Owner changed to ' + name); emit();
+}

@@ -174,3 +174,35 @@ describe('数据集槽位上传', () => {
     expect(Object.keys(e.refs.datasets)).toHaveLength(1);
   });
 });
+
+describe('Study 页 MVP：职责与资料', () => {
+  it('点位默认值按 5.4：只有 Study Admin 能建 Event，只有 System Owner 能建 Study', async () => {
+    const { can } = await import('./role');
+    expect(can('event.create', 'Study Admin')).toBe(true);
+    expect(['System Owner', 'Event Owner', 'Member'].some((d) => can('event.create', d as never))).toBe(false);
+    expect(can('study.create', 'System Owner')).toBe(true);
+    expect(['Study Admin', 'Event Owner', 'Member'].some((d) => can('study.create', d as never))).toBe(false);
+    expect(can('study.metadata.update', 'Event Owner')).toBe(false);
+  });
+  it('修改资料：原因必填，通过后更新资料', async () => {
+    const { updateStudyDetails } = await import('./study');
+    const f = { name: 'NSCLC Renamed', desc: '', ta: 'Oncology', phase: 'Phase III', reason: '' };
+    const bad = updateStudyDetails('STU-001', f);
+    expect('errors' in bad && bad.errors.reason).toBeTruthy();
+    expect(S.study('STU-001')!.name).toBe('NSCLC Phase III Trial');
+    expect('ok' in updateStudyDetails('STU-001', { ...f, reason: 'Fix title' })).toBe(true);
+    expect(S.study('STU-001')!.name).toBe('NSCLC Renamed');
+  });
+  it('新建 Study：创建者为 Study Admin，初始非盲、ACTIVE', async () => {
+    const { createStudy } = await import('./study');
+    const s = S.study(createStudy())!;
+    expect([s.admin, s.blinding, s.lifecycle]).toEqual([getDb().me.name, 'Not blinded', 'ACTIVE']);
+  });
+  it('交接 Event Owner：更新负责人；候选人来自本 Study', async () => {
+    const { peopleOf, transferEventOwner } = await import('./study');
+    expect(peopleOf('STU-001')).toEqual(expect.arrayContaining(['Wang Fang', 'Li Wei', 'Chen Yu']));
+    transferEventOwner('EVT-001', 'Chen Yu');
+    expect(S.event('EVT-001')!.owner).toBe('Chen Yu');
+    expect(toasts.at(-1)).toBe('Event Owner changed to Chen Yu');
+  });
+});

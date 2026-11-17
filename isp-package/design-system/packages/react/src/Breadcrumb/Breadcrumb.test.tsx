@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { Breadcrumb } from './Breadcrumb';
 import { SideBar } from '../SideBar/SideBar';
 import { Dropdown } from '../Dropdown/Dropdown';
@@ -6,29 +6,43 @@ import { Dropdown } from '../Dropdown/Dropdown';
 const options = [{ value: 'a', label: 'Alpha' }, { value: 'b', label: 'Beta' }];
 
 describe('Breadcrumb', () => {
-  it('末项 aria-current；点 ▾ 打开、搜索、切换；Esc 关闭', () => {
+  it('末项 aria-current；无 ▾；点名称展开、搜索、切换；Esc 关闭', () => {
     const onSwitch = vi.fn();
     render(<Breadcrumb items={[{ label: 'Home', onClick: () => {} }, { label: 'Alpha', options, currentValue: 'a', onSwitch }]} />);
-    expect(screen.getByText('Alpha', { selector: '.wiz-crumb__text' }).closest('[aria-current]')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Switch Alpha' }));
+    const cur = screen.getByText('Alpha', { selector: '.wiz-crumb__text' }).closest('[aria-current]')!;
+    expect(cur).toBeTruthy();
+    expect(document.querySelector('.wiz-crumb-chev')).toBeNull();
+    fireEvent.click(cur);
     expect(screen.getByRole('menuitemradio', { name: 'Alpha' })).toHaveAttribute('aria-checked', 'true');
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'bet' } });
     expect(screen.queryByRole('menuitemradio', { name: 'Alpha' })).toBeNull();
     fireEvent.click(screen.getByText('Beta'));
     expect(onSwitch).toHaveBeenCalledWith('b', expect.objectContaining({ label: 'Beta' }));
     expect(screen.queryByRole('menu')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Switch Alpha' }));
+    fireEvent.keyDown(cur, { key: 'ArrowDown' });
     fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
     expect(screen.queryByRole('menu')).toBeNull();
   });
-  it('悬停不自动打开；点名称只导航', () => {
+  it('悬停延时展开、离开延时收起；点名称仍导航', () => {
+    vi.useFakeTimers();
     const onClick = vi.fn();
     render(<Breadcrumb items={[{ label: 'Home' }, { label: 'Studies', onClick, options }, { label: 'Cur' }]} />);
-    fireEvent.mouseEnter(screen.getByText('Studies').closest('.wiz-crumb-mw')!);
+    const mw = screen.getByText('Studies').closest('.wiz-crumb-mw')!;
+    fireEvent.mouseEnter(mw);
+    act(() => { vi.advanceTimersByTime(100); });
     expect(screen.queryByRole('menu')).toBeNull();
+    act(() => { vi.advanceTimersByTime(150); });
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    fireEvent.mouseLeave(mw);
+    fireEvent.mouseEnter(mw);
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(screen.getByRole('menu')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Studies'));
     expect(onClick).toHaveBeenCalled();
+    fireEvent.mouseLeave(mw);
+    act(() => { vi.advanceTimersByTime(200); });
     expect(screen.queryByRole('menu')).toBeNull();
+    vi.useRealTimers();
   });
 });
 

@@ -3,7 +3,7 @@ import { cx } from '../cx';
 import { useUid } from '../useControllable';
 import './Breadcrumb.css';
 
-/** ▾ 同级切换下拉里的一行（平铺列表，与交付包原型 .cmenu 一致） */
+/** 同级切换下拉里的一行（平铺列表，与交付包原型 .cmenu 一致） */
 export interface BreadcrumbOption {
   value: string;
   label: string;
@@ -17,7 +17,7 @@ export interface BreadcrumbItem {
   onClick?: () => void;
   /** 前置图标 ri 类名 */
   icon?: string;
-  /** 传入则该项右侧出现 ▾，点击打开同级切换下拉 */
+  /** 传入则该项名称悬停（约 200ms）展开同级切换下拉；点击（无 href/onClick 时）、↓ 键同样可展开。不显示 ▾，避免与分隔符 › 混淆 */
   options?: BreadcrumbOption[];
   /** 下拉里当前项的 value（该行高亮并打勾） */
   currentValue?: string;
@@ -29,17 +29,25 @@ export interface BreadcrumbItem {
 
 export interface BreadcrumbProps extends Omit<React.HTMLAttributes<HTMLElement>, 'children'> {
   items: BreadcrumbItem[];
-  /** lg = 16px / 行高 24（页头，默认，与原型一致）；md = 14px / 行高 20 */
-  size?: 'md' | 'lg';
+  /** lg = 16px / 行高 24（页头，默认，与原型一致）；md = 14px / 行高 20；sm = 13px（body-2）/ 行高 20，紧凑页头 */
+  size?: 'sm' | 'md' | 'lg';
 }
 
-function SwitchMenu({ item }: { item: BreadcrumbItem }) {
+const HOVER_OPEN_MS = 200;
+const HOVER_CLOSE_MS = 150;
+
+/** 带同级切换的层级：名称本身是触发器，悬停 200ms 展开、离开 150ms 收起；点击 / ↓ / Enter 也可展开（触屏与键盘） */
+function SwitchMenu({ item, name }: { item: BreadcrumbItem; name: (trigger: React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> }, open: boolean) => ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [focusSearch, setFocusSearch] = useState(false);
   const [q, setQ] = useState('');
   const root = useRef<HTMLSpanElement>(null);
-  const chev = useRef<HTMLButtonElement>(null);
+  const trigger = useRef<HTMLElement>(null);
+  const timer = useRef<number>();
   const menuId = useUid('wiz-crumb-menu');
   const ph = item.searchPlaceholder ?? 'Search';
+  const clear = () => window.clearTimeout(timer.current);
+  useEffect(() => clear, []);
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => { if (root.current && !root.current.contains(e.target as Node)) setOpen(false); };
@@ -47,23 +55,29 @@ function SwitchMenu({ item }: { item: BreadcrumbItem }) {
     return () => document.removeEventListener('mousedown', onDoc);
   }, [open]);
 
+  const show = (byHover: boolean) => { clear(); setFocusSearch(!byHover); setOpen(true); };
+  const hide = () => { clear(); setOpen(false); setQ(''); };
+  const schedule = (fn: () => void, ms: number) => { clear(); timer.current = window.setTimeout(fn, ms); };
   const s = q.trim().toLowerCase();
   const list = (item.options ?? []).filter((o) => !s || o.label.toLowerCase().includes(s));
-  const pick = (o: BreadcrumbOption) => { setOpen(false); setQ(''); item.onSwitch?.(o.value, o); chev.current?.focus(); };
-  const close = () => { setOpen(false); chev.current?.focus(); };
+  const pick = (o: BreadcrumbOption) => { hide(); item.onSwitch?.(o.value, o); trigger.current?.focus(); };
+  const close = () => { hide(); trigger.current?.focus(); };
 
   return (
-    <span ref={root} className="wiz-crumb-wrap" onKeyDown={(e) => { if (e.key === 'Escape' && open) { e.stopPropagation(); close(); } }}>
-      <button ref={chev} type="button" className="wiz-crumb-chev" aria-label={`Switch ${typeof item.label === 'string' ? item.label : ''}`.trim()}
-        aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined}
-        onClick={() => { setOpen((v) => !v); setQ(''); }}>
-        <i className="ri-arrow-down-s-line" aria-hidden="true" />
-      </button>
+    <span ref={root} className="wiz-crumb-mw"
+      onMouseEnter={() => { if (!open) schedule(() => show(true), HOVER_OPEN_MS); else clear(); }}
+      onMouseLeave={() => schedule(hide, HOVER_CLOSE_MS)}
+      onKeyDown={(e) => { if (e.key === 'Escape' && open) { e.stopPropagation(); close(); } }}>
+      {name({
+        ref: trigger, 'aria-haspopup': 'menu', 'aria-expanded': open, 'aria-controls': open ? menuId : undefined,
+        onClick: () => (open ? hide() : show(false)),
+        onKeyDown: (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); show(false); } },
+      } as React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> }, open)}
       {open && (
         <div id={menuId} role="menu" aria-label={ph} className="wiz-crumb-menu">
           <label className="wiz-crumb-search">
             <i className="ri-search-line" aria-hidden="true" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={ph} aria-label={ph} autoComplete="off" autoFocus />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={ph} aria-label={ph} autoComplete="off" autoFocus={focusSearch} />
           </label>
           <div className="wiz-crumb-body">
             {list.map((o) => {
@@ -87,7 +101,7 @@ function SwitchMenu({ item }: { item: BreadcrumbItem }) {
 
 /**
  * 面包屑（以交付包原型 .crumb / .cmenu 为准）：最后一项为当前页（字重 500、深色、不可点）；
- * 其余为链接，悬停变品牌蓝并加下划线；带 options 的项右侧有 ▾，点击打开同级切换下拉。
+ * 其余为链接，悬停出现底色胶囊（与带菜单层级一致，不变色、无下划线）；带 options 的项无 ▾，悬停名称后展开同级切换下拉。
  */
 export function Breadcrumb({ items, size = 'lg', className, ...rest }: BreadcrumbProps) {
   return (
@@ -97,17 +111,25 @@ export function Breadcrumb({ items, size = 'lg', className, ...rest }: Breadcrum
           const last = i === items.length - 1;
           const label = (<>{item.icon && <i className={cx('wiz-crumb__icon', item.icon)} aria-hidden="true" />}<span className="wiz-crumb__text">{item.label}</span></>);
           const title = typeof item.label === 'string' ? item.label : undefined;
-          const name = last
-            ? <span className="wiz-crumb is-current" aria-current="page" title={title}>{label}</span>
-            : item.href
-              ? <a className="wiz-crumb is-link" href={item.href} onClick={item.onClick} title={title}>{label}</a>
-              : item.onClick
-                ? <button type="button" className="wiz-crumb is-link" onClick={item.onClick} title={title}>{label}</button>
-                : <span className="wiz-crumb" title={title}>{label}</span>;
+          const hasMenu = !!item.options?.length;
+          const renderName = (t: React.HTMLAttributes<HTMLElement> & { ref?: React.Ref<HTMLElement> } = {}, open = false) => {
+            const cls = cx('wiz-crumb', last && 'is-current', !last && (item.href || item.onClick) && 'is-link', hasMenu && 'has-menu', open && 'is-open');
+            if (last) {
+              // 当前页：有同级切换时是按钮（点击展开），否则是纯文本
+              return hasMenu
+                ? <button type="button" className={cls} aria-current="page" title={title} {...t} ref={t.ref as React.Ref<HTMLButtonElement>}>{label}</button>
+                : <span className={cls} aria-current="page" title={title}>{label}</span>;
+            }
+            if (item.href) return <a className={cls} href={item.href} title={title} {...t} onClick={item.onClick} ref={t.ref as React.Ref<HTMLAnchorElement>}>{label}</a>;
+            if (item.onClick) return <button type="button" className={cls} title={title} {...t} onClick={item.onClick} ref={t.ref as React.Ref<HTMLButtonElement>}>{label}</button>;
+            return hasMenu
+              ? <button type="button" className={cls} title={title} {...t} ref={t.ref as React.Ref<HTMLButtonElement>}>{label}</button>
+              : <span className={cls} title={title}>{label}</span>;
+          };
           return (
             <li key={i} className="wiz-breadcrumb__item">
               {i > 0 && <i className="wiz-breadcrumb__sep ri-arrow-right-s-line" aria-hidden="true" />}
-              {item.options?.length ? <span className="wiz-crumb-mw">{name}<SwitchMenu item={item} /></span> : name}
+              {hasMenu ? <SwitchMenu item={item} name={renderName} /> : renderName()}
             </li>
           );
         })}

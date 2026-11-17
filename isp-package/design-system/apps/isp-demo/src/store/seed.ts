@@ -16,11 +16,10 @@ export function createSeed(): Database {
   const db: Database = {
     me: { name: 'User Name', ini: 'UN' },
     seq: { study: 3, event: 3, asset: 20, ds: 40 },
-    recent: ['EVT-001', 'EVT-002', 'EVT-003'],
     studies: [
-      { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', owner: 'Wang Fang', status: 'Active', updated: 'Oct 31, 2026', members: 5, desc: '' },
-      { id: 'STU-002', name: 'Breast Cancer Phase II Trial', ta: 'Oncology', phase: 'Phase II', owner: 'Zhao Min', status: 'Active', updated: 'Oct 26, 2026', members: 3, desc: '' },
-      { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', owner: 'Wang Fang', status: 'Disabled', updated: 'Sep 18, 2026', members: 2, desc: '' },
+      { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'Wang Fang', lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: 'Oct 31, 2026', members: 5, desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
+      { id: 'STU-002', name: 'Breast Cancer Phase II Trial', ta: 'Oncology', phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE', blinding: 'Blinded', updated: 'Oct 26, 2026', members: 3, desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' },
+      { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', admin: 'Wang Fang', lifecycle: 'ARCHIVED', blinding: 'Revealed', updated: 'Sep 18, 2026', members: 2, desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Mar 5, 2026' },
     ],
     assets: [
       { id: 'A1', studyId: 'STU-001', name: 'STU-001 Protocol', code: 'PROTOCOL', tl: 'Protocol', icon: 'doc', source: 'Uploaded', versions: [V(2, 'Li Wei', 'Oct 12', 'Approved', { status: 'Official' }), V(1, 'Li Wei', 'Oct 3')] },
@@ -94,6 +93,18 @@ export function createSeed(): Database {
       refs: { assets: { A10: { v: 1, use: 'Generate Shell' }, A11: { v: 1, use: 'Generate Shell' } }, datasets: {} },
       produced: [],
       flow: newFlow({ ui: { sel: 'toc', edge: null, inputsOpen: false, confirm: null } }),
+    },
+    {
+      id: 'EVT-004', studyId: 'STU-001', name: 'Exploratory Analysis', status: 'In progress', owner: 'User Name', goal: '', scope: 'EXPLORATORY', reason: '',
+      adopted: '—', updated: 'Nov 2, 2026', members: 2,
+      wfs: [{ id: 'WF-01', loop: 'A', owner: 'Li Wei', created: 'Nov 1', updated: 'Nov 2', inputs: { SAP: 'SAP v3' } }],
+      refs: { assets: { A1: { v: 2, use: 'Generate Shell' }, A2: { v: 3, use: 'Generate Shell' } }, datasets: {} },
+      produced: [],
+      flow: newFlow({
+        ui: { sel: 'toc', edge: null, inputsOpen: false, confirm: null },
+        st: { toc: 'review', shell: 'empty', prodCode: 'empty', qcCode: 'empty', prodResult: 'empty', qcResult: 'empty', pkg: 'empty' },
+        prog: { toc: 24, shell: 0, prodCode: 0, qcCode: 0, prodResult: 0, qcResult: 0, pkg: 0 }, wf: { A: 'WF-01', B: null },
+      }),
     },
   ];
   db.events = events;

@@ -1,0 +1,7 @@
+.wiz-kv { display: grid; grid-template-columns: var(--wiz-kv-label-width, 90px) minmax(0, 1fr) auto; align-items: center; column-gap: var(--wiz-spacing-md); min-height: var(--wiz-kv-min-height, 44px); box-sizing: border-box; padding: 0 var(--wiz-spacing-lg); border-bottom: 1px solid var(--wiz-grey-30); font-size: var(--wiz-text-body-2-size); }
+.wiz-kv.no-divider { border-bottom: 0; }
+.wiz-kv__k { color: var(--wiz-color-text-secondary); }
+.wiz-kv__v { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiz-kv__a { display: inline-flex; align-items: center; }
+.wiz-kv.is-wrap { align-items: start; padding-top: var(--wiz-spacing-sm); padding-bottom: var(--wiz-spacing-sm); }
+.wiz-kv.is-wrap .wiz-kv__v { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }

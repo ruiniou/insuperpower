@@ -29,7 +29,6 @@ export const S = {
   },
   newerAssetRefs(e: EventRec) { return S.pinnedAssets(e).filter((x) => S.latest(x.a).n > x.ref.v); },
   newerDsRefs(e: EventRec) { return S.pinnedDs(e).filter((x) => S.latest(x.d).n > x.ref.v); },
-  touchRecent(eid: string) { const db = getDb(); db.recent = [eid].concat(db.recent.filter((x) => x !== eid)); },
   wf: (e: EventRec, loop: 'A' | 'B'): Workflow | null => (e.flow.wf[loop] ? e.wfs.find((w) => w.id === e.flow.wf[loop]) ?? null : null),
   nStale: (e: EventRec) => NODES.filter((n) => e.flow.st[n.id] === 'stale').length,
   ago: () => dLong(),

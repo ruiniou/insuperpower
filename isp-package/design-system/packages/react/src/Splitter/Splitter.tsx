@@ -20,13 +20,15 @@ export interface SplitterProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onR
   value?: number;
   min?: number;
   max?: number;
+  /** 是否画默认 1px 细线（默认 true）；卡片之间的间隙里设 false，只在悬停 / 拖动时出现 */
+  line?: boolean;
   /** 强制显示悬停样式（展示用；真实悬停 200ms 后同效） */
   state?: 'default' | 'hover';
 }
 
 /** 主库 Draggable Divider 337:1977（旧包 Splitter）：默认 1px grey-40；悬停 / 拖动为 2px 品牌蓝。点击热区 10px */
 export function Splitter({
-  axis = 'x', reverse = false, size = 1, onResize, onResizeStart, onResizeEnd, value, min, max, state,
+  axis = 'x', reverse = false, size = 1, onResize, onResizeStart, onResizeEnd, value, min, max, state, line = true,
   className, style, 'aria-label': ariaLabel = 'Resize panel', ...rest
 }: SplitterProps) {
   const [shown, setShown] = useState(false);
@@ -81,7 +83,7 @@ export function Splitter({
   return (
     <div role="separator" tabIndex={0} aria-label={ariaLabel} aria-orientation={horizontal ? 'vertical' : 'horizontal'}
       aria-valuenow={value} aria-valuemin={min} aria-valuemax={max}
-      className={cx('wiz-splitter', `wiz-splitter--${axis}`, visible && 'is-active', dragging && 'is-dragging', className)}
+      className={cx('wiz-splitter', `wiz-splitter--${axis}`, visible && 'is-active', dragging && 'is-dragging', !line && 'is-bare', className)}
       style={{ [horizontal ? 'width' : 'height']: size, ...style }}
       onMouseDown={down} onKeyDown={key}
       onMouseEnter={() => { clearTimeout(timer.current); timer.current = setTimeout(() => setShown(true), 200); }}

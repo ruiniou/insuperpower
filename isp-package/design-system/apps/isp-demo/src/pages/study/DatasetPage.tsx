@@ -72,7 +72,7 @@ export function DatasetSpacePage({ sid, space }: { sid: string; space: string })
     { key: 'latest', header: 'Latest', width: 100, render: (_v, d: Row) => S.latest(d).label },
     { key: 'used', header: 'Used by', width: 190, render: (_v, d: Row) => <span className="app-sm">{usedTxt(d)}</span> },
     { key: 'upd', header: 'Updated', width: 90, render: (_v, d: Row) => <span className="app-sm">{S.latest(d).date}</span> },
-    { key: 'more', header: '', width: 56, render: (_v, d: Row) => (
+    { key: 'more', header: '', width: 56, align: 'right', render: (_v, d: Row) => (
       <RowMenu label={d.name} items={[{ label: 'Open Versions', value: 'open' }, { label: 'Upload New Version', value: 'up' }, { label: 'Download…', value: 'dl', disabled: true }]}
         onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'dsV', id: d.id }); if (v === 'up') openModal({ kind: 'uploadDataset', sid, dsId: d.id, mode: sp!.mode }); }} />
     ) },

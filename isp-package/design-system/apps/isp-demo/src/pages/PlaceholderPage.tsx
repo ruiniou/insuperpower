@@ -1,7 +1,7 @@
 import { Button } from '@wiz/react';
 import { go, type Route } from '../router';
 
-const fromRoute = (R: Route) => (R.name === 'studyNew' ? '#/studies/new' : R.name === 'study' ? `#/study/${R.sid}/${R.tab}` : R.name === 'event' ? `#/event/${R.eid}/${R.tab}${R.sub ? '/' + R.sub : ''}${R.node ? '/' + R.node : ''}` : '#/studies');
+const fromRoute = (R: Route) => (R.name === 'study' ? `#/study/${R.sid}/${R.tab}` : R.name === 'event' ? `#/event/${R.eid}/${R.tab}${R.sub ? '/' + R.sub : ''}${R.node ? '/' + R.node : ''}` : '#/studies');
 
 /** 试点范围外的路由占位 */
 export function PlaceholderPage({ route, title }: { route: Route; title: string }) {

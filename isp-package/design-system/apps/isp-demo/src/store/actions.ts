@@ -105,9 +105,11 @@ export function quickUploadDs(e: EventRec, cat: string, fileName: string) {
   toast(d.name + ' ' + S.latest(d).label + ' uploaded'); emit();
 }
 
-/** Studies：状态开关（状态模型待 PM 确认，原型仅切换并提示） */
-export function toggleStudy(id: string) {
-  const s = S.study(id); if (!s) return;
-  s.status = s.status === 'Active' ? 'Disabled' : 'Active';
-  toast(s.id + ' set to ' + s.status + ' (state model pending PM, Q1)'); emit();
+/** Review 工作台的 Lock + Approve 回写（4.5）：节点在 review 才锁定；TOC 锁定后 Shell 为 empty 则自动开始生成；shell 未就绪时先记 pend */
+export function rvCommit(e: EventRec, id: NodeId) {
+  const f = e.flow, w = S.wf(e, LOOP_OF[id]);
+  if (id === 'shell' && (f.st[id] === 'running' || f.st[id] === 'empty')) { f.rev.pend[id] = true; return; }
+  if (f.st[id] !== 'review') return;
+  ovLock(e, id); if (w) w.updated = dLong();
+  if (id === 'toc' && f.st.shell === 'empty') { ovRun(e, 'shell'); toast('TOC locked, Shell generation started'); }
 }

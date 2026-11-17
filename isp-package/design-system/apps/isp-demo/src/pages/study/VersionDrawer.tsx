@@ -5,7 +5,7 @@ import { catOf, SPACE, S } from '../../store/selectors';
 import { openModal, setDrawerWidth, ui, openDrawer } from '../../store/ui';
 import { soon } from './common';
 
-const HEADER_H = 56; // 抽屉盖住页签，顶边贴页头底（与原型 .dr top:56 一致）
+const HEADER_H = 48; // 抽屉盖住页签，顶边贴页头底（页头高 48，与各面板 Head 同高）
 const more = (what: string) => <IconButton icon="ri-more-2-fill" size="small" aria-label={what} onClick={soon('Version actions (preview / download)')} />;
 
 /** 资产版本抽屉：Name / Type + 版本列表（Latest、Official、Used by、behind） */

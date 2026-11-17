@@ -1,26 +1,26 @@
-/* 取自交付包原型 .crumb / .cmenu / .menu2：gap 4、16/24、当前项 500；▾ 20×20 圆角 6；菜单圆角 12、内边距 8、最小宽 288 */
+/* 取自交付包原型 .crumb / .cmenu / .menu2：gap 4、16/24、当前项 500；菜单圆角 12、内边距 8、最小宽 288 */
 .wiz-breadcrumb { min-width: 0; font-family: var(--wiz-font-family-ui); }
 .wiz-breadcrumb--lg { font-size: 16px; line-height: 24px; }
+.wiz-breadcrumb--sm { font-size: var(--wiz-text-body-2-size); line-height: 20px; }
 .wiz-breadcrumb--md { font-size: 14px; line-height: 20px; }
 .wiz-breadcrumb__list { display: flex; align-items: center; gap: var(--wiz-spacing-xs); min-width: 0; margin: 0; padding: 0; list-style: none; }
 .wiz-breadcrumb__item { display: inline-flex; align-items: center; gap: var(--wiz-spacing-xs); min-width: 0; }
 .wiz-breadcrumb__sep { flex: none; font-size: 16px; line-height: 1; color: var(--wiz-grey-80); }
-.wiz-crumb-mw { position: relative; display: inline-flex; align-items: center; gap: 2px; min-width: 0; }
+.wiz-crumb-mw { position: relative; display: inline-flex; align-items: center; min-width: 0; }
 .wiz-crumb { display: inline-flex; align-items: center; gap: var(--wiz-spacing-xs); min-width: 0; padding: 0; border: 0; background: transparent; font: inherit; font-weight: var(--wiz-font-weight-regular); color: var(--wiz-grey-80); text-decoration: none; }
 .wiz-crumb.is-current { color: var(--wiz-grey-90); font-weight: var(--wiz-font-weight-medium); }
 .wiz-crumb.is-link { cursor: pointer; }
-.wiz-crumb.is-link:hover { color: var(--wiz-brand-blue-70); text-decoration: underline; text-underline-offset: 3px; }
+.wiz-crumb.is-current.has-menu { cursor: pointer; }
+/* 可交互的层级（链接 / 带同级切换）：悬停或展开时出现底色胶囊，文字不变色、无下划线；
+   用等量负 margin 抵消内边距，文字左缘保持对齐 */
+.wiz-crumb.is-link, .wiz-crumb.has-menu { margin: 0 calc(-1 * var(--wiz-spacing-xs)); padding: 0 var(--wiz-spacing-xs); border-radius: var(--wiz-radius-xs); }
+.wiz-crumb.is-link:hover, .wiz-crumb.has-menu:hover, .wiz-crumb.has-menu.is-open { background: var(--wiz-grey-30); color: var(--wiz-grey-90); }
 .wiz-crumb:focus-visible { outline: 2px solid var(--wiz-brand-blue-70); outline-offset: 2px; border-radius: var(--wiz-radius-xs); }
 .wiz-crumb__icon { flex: none; font-size: 16px; line-height: 1; }
 .wiz-crumb__text { min-width: 0; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.wiz-crumb-wrap { display: inline-flex; align-items: center; }
-.wiz-crumb-chev { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--wiz-grey-80); cursor: pointer; }
-.wiz-crumb-chev > i { font-size: 16px; line-height: 1; }
-.wiz-crumb-chev:hover, .wiz-crumb-chev:focus-visible, .wiz-crumb-chev[aria-expanded='true'] { background: var(--wiz-grey-30); color: var(--wiz-grey-90); outline: 0; }
-.wiz-crumb-chev:focus-visible { box-shadow: 0 0 0 2px var(--wiz-brand-blue-70); }
-.wiz-crumb-menu { position: absolute; top: 100%; left: 0; z-index: 60; box-sizing: border-box; min-width: 288px; margin-top: var(--wiz-spacing-xs); padding: var(--wiz-spacing-sm); border: 1px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-md); background: var(--wiz-main-white); box-shadow: var(--wiz-shadow-popover); text-align: left; font-size: var(--wiz-text-body-2-size); line-height: normal; }
-.wiz-crumb-search { display: flex; align-items: center; gap: var(--wiz-spacing-sm); box-sizing: border-box; height: 32px; margin-bottom: var(--wiz-spacing-xs); padding: 0 var(--wiz-spacing-sm); border: 1px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-sm); color: var(--wiz-grey-80); }
+.wiz-crumb-menu { position: absolute; top: 100%; left: calc(-1 * var(--wiz-spacing-xs)); z-index: 60; box-sizing: border-box; min-width: 288px; margin-top: var(--wiz-spacing-xs); padding: var(--wiz-spacing-sm); border: 1px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-md); background: var(--wiz-main-white); box-shadow: var(--wiz-shadow-popover); text-align: left; font-size: var(--wiz-text-body-2-size); line-height: normal; }
+.wiz-crumb-search { display: flex; align-items: center; gap: var(--wiz-spacing-xs-sm); box-sizing: border-box; height: 32px; margin-bottom: var(--wiz-spacing-xs); padding: 0 calc(var(--wiz-spacing-sm) - 1px); border: 1px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-sm); color: var(--wiz-grey-80); }
 .wiz-crumb-search:focus-within { border-color: var(--wiz-brand-blue-70); }
 .wiz-crumb-search > i { font-size: 16px; line-height: 1; }
 .wiz-crumb-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: var(--wiz-text-body-2-size); color: var(--wiz-grey-90); }

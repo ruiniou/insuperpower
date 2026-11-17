@@ -6,7 +6,12 @@ export type Loop = 'A' | 'B';
 export type Rec<T> = Record<NodeId, T>;
 
 export interface Version { n: number; label: string; by: string; date: string; note: string; status: string; file?: string; meta?: Record<string, string> }
-export interface Study { id: string; name: string; ta: string; phase: string; owner: string; status: 'Active' | 'Disabled'; updated: string; members: number; desc: string }
+export type Lifecycle = 'ACTIVE' | 'ARCHIVED';
+export type Blinding = 'Not blinded' | 'Blinded' | 'Revealed';
+export interface Study {
+  id: string; name: string; ta: string; phase: string; admin: string; lifecycle: Lifecycle; blinding: Blinding;
+  updated: string; members: number; desc: string; tenant: string; createdBy: string; createdAt: string;
+}
 export interface Asset { id: string; studyId: string; name: string; code: string; tl: string; icon: string; source?: string; required?: boolean; versions: Version[] }
 export interface Dataset { id: string; studyId: string; space: 'dummy' | 'synthetic' | 'prod'; cat: string; name: string; label: string; versions: Version[] }
 export interface Ref { v: number; use: string }
@@ -33,7 +38,6 @@ export interface EventRec {
 export interface Database {
   me: { name: string; ini: string };
   seq: { study: number; event: number; asset: number; ds: number };
-  recent: string[];
   studies: Study[]; assets: Asset[]; datasets: Dataset[]; events: EventRec[];
 }
 

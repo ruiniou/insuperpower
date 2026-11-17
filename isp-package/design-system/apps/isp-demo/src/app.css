@@ -3,9 +3,9 @@ html, body, #root { height: 100%; }
 body { margin: 0; font-family: var(--wiz-font-family-ui); font-size: var(--wiz-text-body-1-size); color: var(--wiz-color-text-primary); background: var(--wiz-color-page); }
 button { font-family: inherit; }
 
-.app { box-sizing: border-box; display: flex; gap: var(--wiz-spacing-sm); width: 100%; height: 100vh; min-height: 720px; padding: var(--wiz-spacing-sm); background: var(--wiz-color-page); }
+.app { box-sizing: border-box; display: flex; gap: 0; width: 100%; height: 100vh; min-height: 720px; padding: var(--wiz-spacing-sm); background: var(--wiz-color-page); }
 .app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; border-radius: var(--wiz-radius-lg); background: var(--wiz-color-surface); box-shadow: var(--wiz-shadow-button); }
-.app-hdr { box-sizing: border-box; height: 56px; padding: 0 var(--wiz-spacing-lg); display: flex; align-items: center; justify-content: space-between; flex: none; border-bottom: 1px solid var(--wiz-grey-30); }
+.app-hdr { box-sizing: border-box; height: 48px; padding: 0 var(--wiz-spacing-lg); display: flex; align-items: center; justify-content: space-between; flex: none; border-bottom: 1px solid var(--wiz-grey-30); }
 .app-acts { display: flex; align-items: center; gap: var(--wiz-spacing-sm); }
 .app-tabs { flex: none; }
 .app-tabs { --wiz-tabs-padding: 0 var(--wiz-spacing-lg); }
@@ -63,12 +63,20 @@ button { font-family: inherit; }
 
 /* Copilot：页头入口（分隔线 + 图标按钮）与右侧独立卡片（宽 360、头部 56） */
 .app-acts__sep { width: 1px; height: 16px; margin: 0 var(--wiz-spacing-xs); background: var(--wiz-grey-50); }
-.app-copilot-btn { color: var(--wiz-color-primary); }
-.app-cop { flex: none; width: 360px; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: var(--wiz-radius-lg); background: var(--wiz-color-surface); box-shadow: var(--wiz-shadow-button); }
-.app-cop__head { box-sizing: border-box; flex: none; height: 56px; padding: 0 var(--wiz-spacing-lg); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--wiz-grey-30); }
+.app-cop { flex: 1; min-height: 0; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: var(--wiz-radius-lg); background: var(--wiz-color-surface); box-shadow: var(--wiz-shadow-button); }
+.app-cop__head { box-sizing: border-box; flex: none; height: 48px; padding: 0 var(--wiz-spacing-lg); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--wiz-grey-30); }
 .app-cop__title { display: flex; align-items: center; gap: var(--wiz-spacing-sm); font-size: var(--wiz-text-body-1-size); font-weight: var(--wiz-font-weight-semibold); }
-.app-cop__title > i { font-size: var(--wiz-text-h5-size); line-height: 1; color: var(--wiz-color-primary); }
 .app-cop__acts { display: flex; gap: var(--wiz-spacing-xs); }
 .app-cop__stream { flex: 1; min-height: 0; }
 .app-cop__foot { display: flex; flex-direction: column; align-items: flex-start; gap: var(--wiz-spacing-sm); padding-bottom: var(--wiz-spacing-sm); }
 .app-cop__foot > :last-child { align-self: stretch; }
+
+/* Study 页头：盲态标签、职责切换（Demo 用） */
+.app-crumb { display: flex; align-items: center; gap: var(--wiz-spacing-sm); min-width: 0; }
+.app-side { position: relative; display: flex; flex: 1; min-height: 0; height: 100%; }
+/* Copilot 与主面板之间的 Splitter：零宽，线居中在 8px 间隙里 */
+.app-sp { position: relative; left: var(--wiz-spacing-xs); flex: none; width: 0; align-self: stretch; z-index: 10; display: flex; }
+.app-sp--nav { left: calc(-1 * var(--wiz-spacing-xs)); }
+.app-role { position: absolute; left: var(--wiz-spacing-sm); right: var(--wiz-spacing-sm); bottom: 56px; }
+.app-drawer-form { padding: var(--wiz-spacing-lg); }
+.app-drawer-form__acts { display: flex; justify-content: flex-end; gap: var(--wiz-spacing-sm); padding: var(--wiz-spacing-md) var(--wiz-spacing-lg); }
