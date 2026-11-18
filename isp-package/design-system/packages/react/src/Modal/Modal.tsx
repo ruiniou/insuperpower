@@ -6,7 +6,7 @@ import { cx } from '../cx';
 import { useUid } from '../useControllable';
 import './Modal.css';
 
-/** Figma Modal 377:972：宽 600、圆角 12、标题栏 64 / 内容 / 确认栏 80 */
+/** 框架布局取自 Atlas：默认宽 480、圆角 8、头部（标题 + 关闭）/ 内容 / 页脚（上边线，按钮右对齐）；确认类弹窗用 ConfirmDialog */
 export interface ModalProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   open?: boolean;
   title?: ReactNode;
@@ -25,7 +25,7 @@ export interface ModalProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 export function Modal({
-  open = true, title = 'Modal Title', children, width = 600, onClose, onCancel, onConfirm,
+  open = true, title = 'Modal Title', children, width = 480, onClose, onCancel, onConfirm,
   confirmLabel = 'Confirm', cancelLabel = 'Cancel', footer, closeOnOverlayClick = true, className, style, ...rest
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);

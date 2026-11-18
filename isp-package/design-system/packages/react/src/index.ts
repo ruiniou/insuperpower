@@ -139,6 +139,8 @@ export { TopNav } from './TopNav/TopNav';
 export type { TopNavProps, TopNavPlatform } from './TopNav/TopNav';
 export { TitleBar } from './TitleBar/TitleBar';
 export type { TitleBarProps } from './TitleBar/TitleBar';
+export { ConfirmDialog } from './ConfirmDialog/ConfirmDialog';
+export type { ConfirmDialogProps } from './ConfirmDialog/ConfirmDialog';
 export { Pane } from './Pane/Pane';
 export type { PaneProps } from './Pane/Pane';
 export { Splitter, SPLITTER_KEY_STEP } from './Splitter/Splitter';

@@ -25,6 +25,9 @@ export interface TooltipProps {
 
 const GAP = 2;
 
+/** 只有键盘聚焦才显示（程序聚焦，如弹窗自动聚焦关闭按钮，不出 Tooltip）；不支持 :focus-visible 的环境按聚焦处理 */
+const keyboardFocus = (el: EventTarget) => { try { return (el as Element).matches(':focus-visible'); } catch { return true; } };
+
 export function Tooltip({ content, direction = 'bottom', delay = 150, nowrap, arrow = false, open: forceOpen, disabled, className, children }: TooltipProps) {
   const [shown, setShown] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; off: boolean; dir: TooltipDirection } | null>(null);
@@ -79,7 +82,7 @@ export function Tooltip({ content, direction = 'bottom', delay = 150, nowrap, ar
         ref={trigger}
         className={cx('wiz-tooltip-trigger', className)}
         aria-describedby={visible ? id : undefined}
-        onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide} onMouseDown={hideNow}
+        onMouseEnter={show} onMouseLeave={hide} onFocus={(e) => { if (keyboardFocus(e.target)) show(); }} onBlur={hide} onMouseDown={hideNow}
       >
         {children}
       </span>

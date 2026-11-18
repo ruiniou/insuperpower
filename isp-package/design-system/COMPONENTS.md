@@ -63,7 +63,8 @@
 | Divider | 分隔线 | 稳定 |
 | Message | 内联提示条（warning 等语义） | 稳定 |
 | Snackbar | 轻提示；SnackbarProvider / useSnackbar 管理队列 | 稳定 |
-| Modal | 弹窗（默认宽 600，可传 `width`） | 稳定 |
+| Modal | 弹窗，框架布局取自 Atlas（默认宽 480，圆角 8，头部 / 内容 / 页脚上边线，遮罩轻微模糊），可传 `width` | 稳定 |
+| ConfirmDialog | 二次确认 / 拦截弹窗（Atlas 框架，宽 440，破坏性确认带红色警示图标块）。破坏性确认时安全选项为主按钮并初始聚焦；文案按 ui_content_writer skill 写 | 提案中 |
 | Tooltip | 悬停提示 | 稳定 |
 | Popover | 气泡：panel（面板）、confirm（确认气泡），可带箭头（新增能力无 Wiz 稿） | 无 Wiz 稿 |
 | EmptyState | 空状态：标题、说明、操作 | 无 Wiz 稿 |

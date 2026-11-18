@@ -85,7 +85,9 @@ describe('Tooltip / Upload / 按钮', () => {
   it('Tooltip：聚焦显示，Esc 关闭', () => {
     vi.useFakeTimers();
     render(<Tooltip content="Tip" delay={0}><button>x</button></Tooltip>);
-    fireEvent.focus(screen.getByRole('button'));
+    const btn = screen.getByRole('button');
+    vi.spyOn(btn, 'matches').mockReturnValue(true); // 键盘聚焦（:focus-visible）
+    fireEvent.focus(btn);
     act(() => { vi.advanceTimersByTime(10); });
     expect(screen.getByRole('tooltip')).toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });

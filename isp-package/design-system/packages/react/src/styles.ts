@@ -57,6 +57,7 @@ import './SideBar/SideBar.css';
 import './Logo/Logo.css';
 import './TopNav/TopNav.css';
 import './TitleBar/TitleBar.css';
+import './ConfirmDialog/ConfirmDialog.css';
 import './Pane/Pane.css';
 import './Splitter/Splitter.css';
 import './Avatar/Avatar.css';

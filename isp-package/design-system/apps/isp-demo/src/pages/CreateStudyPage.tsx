@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Avatar, Button, Divider, EmptyState, Field, IconButton, Input, MemberSelect, Message, Modal, Select, Status, Textarea, Tooltip } from '@wiz/react';
+import { Avatar, Button, Divider, ConfirmDialog, EmptyState, Field, IconButton, Input, MemberSelect, Message, Select, Status, Textarea, Tooltip } from '@wiz/react';
 import { StudyFields } from './StudyFields';
 import { go, leave } from '../router';
 import { hrefStudy } from '../store/actions';
@@ -158,10 +158,10 @@ function CreateStudyForm() {
         </div>
       </form>
       {leaving && (
-        <Modal title="Discard changes?" width={440} onClose={() => setLeaving(null)}
-          footer={<><Button onClick={() => setLeaving(null)}>Continue editing</Button><Button variant="danger" onClick={() => { const p = leaving; setLeaving(null); leave.guard = null; p(); }}>Discard and leave</Button></>}>
-          You have unsaved changes. If you leave now, what you entered will be lost.
-        </Modal>
+        <ConfirmDialog tone="danger" title="Discard Changes?"
+          description="This Study has not been created yet. If you leave now, the details you entered will be lost."
+          confirmLabel="Discard Changes" cancelLabel="Keep Editing"
+          onCancel={() => setLeaving(null)} onConfirm={() => { const p = leaving; setLeaving(null); leave.guard = null; p(); }} />
       )}
     </>
   );
