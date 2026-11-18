@@ -6,6 +6,7 @@ import { PHASES, updateStudyDetails, type StudyDetailsForm } from '../../store/s
 import type { Errors } from '../../store/study';
 import { useDb } from '../../store/store';
 import { openDrawer } from '../../store/ui';
+import { StudyFields } from '../StudyFields';
 import { BlindTag, LifecycleTag } from './common';
 
 /** 一行：左键右值。只读与编辑共用这套排版，编辑时只把可改项的值换成控件，行高与列宽不变 */
@@ -44,11 +45,8 @@ export function StudyDetailsDrawer({ id }: { id: string }) {
         </span>
       </div>
       <div className="sd__body">
-        <Row k="Study ID">{s.id}</Row>
-        <Row k="Study Name">{editing ? <Input aria-label="Study Name" maxLength={200} autoFocus value={f.name} error={er.name} onChange={(e) => set({ name: e.target.value })} /> : s.name}</Row>
-        <Row k="Description" top>{editing ? <Textarea aria-label="Description" rows={3} maxLength={2000} value={f.desc} error={er.desc} onChange={(e) => set({ desc: e.target.value })} /> : (s.desc || '—')}</Row>
-        <Row k="Therapeutic Area">{editing ? <Input aria-label="Therapeutic Area" value={f.ta} onChange={(e) => set({ ta: e.target.value })} /> : (s.ta || '—')}</Row>
-        <Row k="Phase">{editing ? <Select aria-label="Phase" options={phases} value={f.phase} onChange={(v) => set({ phase: v })} /> : (s.phase || '—')}</Row>
+        <StudyFields mode={editing ? 'edit' : 'view'} idLocked values={{ id: s.id, name: editing ? f.name : s.name, desc: editing ? f.desc : s.desc, ta: editing ? f.ta : s.ta, phase: editing ? f.phase : s.phase }}
+          errors={er} onChange={(k, v) => { if (k !== 'id') set({ [k]: v } as Partial<StudyDetailsForm>); }} />
         <Row k="Study Admin">{s.admin}</Row>
         <Row k="Blinding"><BlindTag v={s.blinding} /></Row>
         <Row k="Lifecycle"><LifecycleTag v={s.lifecycle} /></Row>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Avatar, Button, Divider, EmptyState, Field, IconButton, Input, MemberSelect, Message, Modal, Select, Status, Textarea, Tooltip } from '@wiz/react';
+import { StudyFields } from './StudyFields';
 import { go, leave } from '../router';
 import { hrefStudy } from '../store/actions';
 import { ROLES, TENANT_USERS } from '../store/people';
@@ -109,17 +110,8 @@ function CreateStudyForm() {
 
             <section className="csf-sec" aria-labelledby="csf-h1">
               <div className="csf-hrow"><h2 className="csf-h" id="csf-h1">Study details</h2></div>
-              <div className="csf-row csf-row--idname">
-                <Input label="Study ID" required autoFocus value={f.id} error={er.id} hint="Unique in your tenant. Up to 64 characters."
-                  onChange={(e) => { set('id', e.target.value); clearErr('id'); }} onBlur={() => checkField('id')} />
-                <Input label="Study name" required value={f.name} error={er.name} onChange={(e) => { set('name', e.target.value); clearErr('name'); }} onBlur={() => checkField('name')} />
-              </div>
-              <Textarea label="Description" rows={3} value={f.desc} error={er.desc} hint={<span className="csf-count">{f.desc.length} / 2000</span>}
-                onChange={(e) => { set('desc', e.target.value); clearErr('desc'); }} onBlur={() => checkField('desc')} />
-              <div className="csf-row">
-                <Input label="Therapeutic area" value={f.ta} error={er.ta} onChange={(e) => { set('ta', e.target.value); clearErr('ta'); }} onBlur={() => checkField('ta')} />
-                <Select label="Phase" placeholder="Not specified" options={[{ value: NONE, label: 'Not specified' }, ...PHASES.map((p) => ({ value: p, label: p }))]} value={f.phase} onChange={(v) => set('phase', v)} />
-              </div>
+              <StudyFields mode="create" autoFocusId values={f} errors={er}
+                onChange={(k, v) => { set(k, v); clearErr(k); }} onBlur={(k) => { if (k !== 'phase') checkField(k); }} />
             </section>
             <Divider />
             <section className="csf-sec" aria-labelledby="csf-h3">

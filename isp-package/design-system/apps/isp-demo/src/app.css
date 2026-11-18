@@ -131,3 +131,6 @@ button { font-family: inherit; }
 .csf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .csf-foot { flex: none; display: flex; justify-content: flex-end; gap: var(--wiz-spacing-sm); padding: var(--wiz-spacing-md) var(--wiz-spacing-lg); border-top: 1px solid var(--wiz-grey-30); }
 .csf-tip { display: flex; flex-direction: column; }
+
+/* Study details 抽屉里共用的资料字段：窄容器内单列 */
+.sd .csf-row { grid-template-columns: minmax(0, 1fr); }
