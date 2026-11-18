@@ -5,7 +5,7 @@ import { S } from '../../store/selectors';
 import { useDb } from '../../store/store';
 import { openDrawer, openModal, ui } from '../../store/ui';
 import type { Asset, BaselineCode } from '../../store/types';
-import { eventsLbl, PageHead, RowMenu, SearchBox } from './common';
+import { eventsLbl, PageToolbar, RowMenu, SearchBox } from './common';
 import { AssetVersionDrawer } from './VersionDrawer';
 
 const ICON: Record<string, string> = { doc: 'ri-file-text-line', list: 'ri-list-check', shell: 'ri-table-line', code: 'ri-code-s-slash-line' };
@@ -101,15 +101,10 @@ export function AssetPage({ sid }: { sid: string }) {
   const isActive = (r: Row) => clickable(r) && ui.drawer?.kind === 'assetV' && ui.drawer.id === r.a!.id && (r.kind === 'asset' || ui.drawer.n == null || ui.drawer.n === r.n);
   return (
     <div className="studies">
-      <PageHead>
-        <span className="page-tools">
-          <Dropdown size="medium" shadow="none" label={'Type: ' + tp} width={180} items={types.map((t) => ({ label: t, value: t, selected: t === tp }))} onSelect={(v) => setTp(String(v))} />
-        </span>
-        <span className="page-tools">
-          <SearchBox value={q} onChange={setQ} placeholder="Search assets" />
-          <Button leftIcon="ri-upload-2-line" onClick={() => upload('')}>Upload File</Button>
-        </span>
-      </PageHead>
+      <PageToolbar
+        filters={<Dropdown size="medium" shadow="none" filterName="Type" label={tp} width={180} items={types.map((t) => ({ label: t, value: t, selected: t === tp }))} onSelect={(v) => setTp(String(v))} />}
+        search={<SearchBox value={q} onChange={setQ} placeholder="Search assets" />}
+        actions={<Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => upload('')}>Upload File</Button>} />
       <div className="page-scroll">
         <Table variant="plain" columnLayout="fixed" rowHeight={48} columns={columns} rows={rows} aria-label="Assets" groupBy={(r: Row) => r.grp} renderGroup={(g) => g}
           onRowClick={(r: Row) => openDrawer({ kind: 'assetV', id: r.a!.id, n: r.kind === 'slot' ? r.n : undefined })} rowClickable={clickable} activeRow={isActive} />

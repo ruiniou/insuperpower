@@ -51,6 +51,7 @@ import './List/List.css';
 import './Table/Table.css';
 import './SegmentedControl/SegmentedControl.css';
 import './Popover/Popover.css';
+import './Dropdown/Dropdown.css';
 import './Breadcrumb/Breadcrumb.css';
 import './SideBar/SideBar.css';
 import './Logo/Logo.css';

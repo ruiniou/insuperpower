@@ -1,0 +1,5 @@
+/* 筛选入口（filterName）：13px，前缀名称用次要色，当前值用主文字色，层级弱于标题和主操作 */
+.wiz-button.wiz-dropdown-filter { font-size: var(--wiz-text-body-2-size); }
+.wiz-dropdown-filter .wiz-button__label { display: inline-flex; align-items: baseline; gap: var(--wiz-spacing-xs); }
+.wiz-dropdown-filter__name { color: var(--wiz-color-text-secondary); }
+.wiz-dropdown-filter:hover:not(:disabled) .wiz-dropdown-filter__name { color: inherit; }

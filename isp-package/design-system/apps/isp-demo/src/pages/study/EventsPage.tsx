@@ -9,7 +9,7 @@ import { useDb } from '../../store/store';
 import { peopleOf, transferEventOwner } from '../../store/study';
 import { openModal } from '../../store/ui';
 import type { EventRec } from '../../store/types';
-import { initials, Owner, PageHead, RowMenu, SearchBox, soon } from './common';
+import { initials, Owner, PageToolbar, RowMenu, SearchBox, soon } from './common';
 
 /** #/study/:sid/events：Events 列表（Status 筛选、搜索、列表视图；卡片视图原型标注未设计） */
 export function EventsPage({ sid }: { sid: string }) {
@@ -44,13 +44,10 @@ export function EventsPage({ sid }: { sid: string }) {
 
   return (
     <div className="studies">
-      {all.length > 0 && <PageHead>
-        <Dropdown size="medium" shadow="none" label={'Status: ' + st} width={180} items={sts.map((t) => ({ label: t, value: t, selected: t === st }))} onSelect={(v) => setSt(String(v))} />
-        <span className="page-tools">
-          <SearchBox value={q} onChange={setQ} placeholder="Search events" />
-          {canCreate && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'createEvent', sid })}>New Event</Button>}
-        </span>
-      </PageHead>}
+      {all.length > 0 && <PageToolbar
+        filters={<Dropdown size="medium" shadow="none" filterName="Status" label={st} width={180} items={sts.map((t) => ({ label: t, value: t, selected: t === st }))} onSelect={(v) => setSt(String(v))} />}
+        search={<SearchBox value={q} onChange={setQ} placeholder="Search events" />}
+        actions={canCreate && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'createEvent', sid })}>New Event</Button>} />}
       <div className="page-scroll">
         {rows.length === 0
           ? <EmptyState title={all.length ? 'No events match' : 'No events yet'} description={all.length ? 'Clear the filter or search.' : canCreate ? 'Create an Event to start an analysis.' : undefined}

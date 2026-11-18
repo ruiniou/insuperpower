@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Avatar, Button, Dropdown, EmptyState, Search, Table, type TableColumn } from '@wiz/react';
 import { ICON } from '../icons';
+import { PageToolbar } from './study/common';
 import { go } from '../router';
 import { hrefStudy } from '../store/actions';
 import { can } from '../store/role';
@@ -37,15 +38,14 @@ export function StudiesPage() {
 
   return (
     <div className="studies">
-      {db.studies.length > 0 && <div className="page-head">
-        <span className="page-title">Studies <i>{rows.length}</i></span>
-        <span className="page-tools">
-          <Search collapsible size="compact" width={220} placeholder="Search studies" aria-label="Search studies" value={q} onChange={(e) => setQ(e.target.value)} />
-          <Dropdown size="medium" shadow="none" label={'Status: ' + st} width={180} items={sts.map((t) => ({ label: t, value: t, selected: t === st }))} onSelect={(v) => setSt(v)} />
-          <Dropdown size="medium" shadow="none" label={'Therapeutic area: ' + ta} width={220} items={tas.map((t) => ({ label: t, value: t, selected: t === ta }))} onSelect={(v) => setTa(v)} />
-          {can('study.create') && <Button variant="primary" leftIcon="ri-add-line" onClick={() => go('#/studies/new')}>New Study</Button>}
-        </span>
-      </div>}
+      {db.studies.length > 0 && <PageToolbar
+        start={<span className="page-title">Studies <i>{rows.length}</i></span>}
+        filters={<>
+          <Dropdown size="medium" shadow="none" filterName="Status" label={st} width={180} items={sts.map((t) => ({ label: t, value: t, selected: t === st }))} onSelect={(v) => setSt(v)} />
+          <Dropdown size="medium" shadow="none" filterName="Therapeutic area" label={ta} width={220} items={tas.map((t) => ({ label: t, value: t, selected: t === ta }))} onSelect={(v) => setTa(v)} />
+        </>}
+        search={<Search collapsible size="compact" width={220} placeholder="Search studies" aria-label="Search studies" value={q} onChange={(e) => setQ(e.target.value)} />}
+        actions={can('study.create') && <Button variant="primary" leftIcon="ri-add-line" onClick={() => go('#/studies/new')}>New Study</Button>} />}
       <div className="page-scroll">
         {db.studies.length === 0 ? (
           <EmptyState title="No studies yet" description={can('study.create') ? 'Create a Study to get started.' : 'Ask an authorized administrator to create a Study.'}

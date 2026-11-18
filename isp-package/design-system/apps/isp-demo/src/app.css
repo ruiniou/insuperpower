@@ -16,7 +16,7 @@ button { font-family: inherit; }
 .app-empty code { font-family: var(--wiz-font-family-mono); }
 
 .page-head { height: 48px; padding: 0 var(--wiz-spacing-lg); display: flex; align-items: center; justify-content: space-between; flex: none; }
-.page-title { display: flex; align-items: center; gap: var(--wiz-spacing-sm); font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); }
+.page-title { margin-right: var(--wiz-spacing-sm); display: flex; align-items: center; gap: var(--wiz-spacing-sm); font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); }
 .page-title i { font-style: normal; font-weight: var(--wiz-font-weight-regular); font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
 .page-tools { display: flex; align-items: center; gap: var(--wiz-spacing-sm); }
 .page-scroll { flex: 1; min-height: 0; overflow: auto; }

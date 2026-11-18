@@ -8,7 +8,7 @@ import { SPACES, S } from '../../store/selectors';
 import { useDb } from '../../store/store';
 import { openDrawer, openModal, ui } from '../../store/ui';
 import type { Dataset } from '../../store/types';
-import { eventsLbl, PageHead, plural, RowMenu, SearchBox } from './common';
+import { eventsLbl, PageToolbar, plural, RowMenu, SearchBox } from './common';
 import { DatasetVersionDrawer } from './VersionDrawer';
 
 const usedTxt = (d: Dataset) => { const n = S.dsUsers(d).length; return n ? eventsLbl(n) : '—'; };
@@ -23,14 +23,10 @@ export function DatasetOverviewPage({ sid }: { sid: string }) {
   const open = (sp: string, id?: string) => go(hrefStudy(sid, 'dataset', sp), id ? { drawer: { kind: 'dsV', id } } : undefined);
   return (
     <div className="studies">
-      <PageHead>
-        <span className="page-title">Dataset</span>
-        <span className="page-tools">
-          <Dropdown size="medium" shadow="none" label={'Category: ' + cat} width={180} items={cats.map((t) => ({ label: t, value: t, selected: t === cat }))} onSelect={(v) => setCat(String(v))} />
-          <SearchBox value={q} onChange={setQ} placeholder="Search datasets" />
-          <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => openModal({ kind: 'uploadDataset', sid, dsId: null, mode: '' })}>Upload Dataset</Button>
-        </span>
-      </PageHead>
+      <PageToolbar
+        filters={<Dropdown size="medium" shadow="none" filterName="Category" label={cat} width={180} items={cats.map((t) => ({ label: t, value: t, selected: t === cat }))} onSelect={(v) => setCat(String(v))} />}
+        search={<SearchBox value={q} onChange={setQ} placeholder="Search datasets" />}
+        actions={<Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => openModal({ kind: 'uploadDataset', sid, dsId: null, mode: '' })}>Upload Dataset</Button>} />
       <div className="page-scroll">
         {SPACES.map((sp) => {
           const all = S.datasetsOf(sid, sp.key), vis = all.filter((d) => (cat === 'All' || d.cat === cat) && match(d, q));
@@ -82,13 +78,10 @@ export function DatasetSpacePage({ sid, space }: { sid: string; space: string })
   return (
     <div className="studies">
       <TitleBar title={<span className="app-inline">{sp.name}<Status variant="style1" tone="grey" textCase="normal">{sp.badge}</Status></span>} description="Add a description…" divider={false} />
-      {all.length > 0 && <PageHead>
-        <Button variant="link" leftIcon="ri-arrow-left-s-line" onClick={() => go(hrefStudy(sid, 'dataset'))}>Overview</Button>
-        <span className="page-tools">
-          <SearchBox value={q} onChange={setQ} placeholder="Search datasets" />
-          <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => openModal({ kind: 'uploadDataset', sid, dsId: null, mode: sp.mode })}>Upload Dataset</Button>
-        </span>
-      </PageHead>}
+      {all.length > 0 && <PageToolbar
+        start={<Button variant="link" leftIcon="ri-arrow-left-s-line" onClick={() => go(hrefStudy(sid, 'dataset'))}>Overview</Button>}
+        search={<SearchBox value={q} onChange={setQ} placeholder="Search datasets" />}
+        actions={<Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => openModal({ kind: 'uploadDataset', sid, dsId: null, mode: sp.mode })}>Upload Dataset</Button>} />}
       <div className="page-scroll">
         {rows.length === 0
           ? <EmptyState title={all.length ? 'No datasets match' : `No datasets in ${sp.name} yet`} description={all.length ? 'Clear the search.' : 'Upload a dataset and pick this mode explicitly.'}
