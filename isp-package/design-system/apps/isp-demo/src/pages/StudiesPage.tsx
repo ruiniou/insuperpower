@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Avatar, Button, Dropdown, EmptyState, Search, Table, type TableColumn } from '@wiz/react';
+import { ICON } from '../icons';
 import { go } from '../router';
 import { hrefStudy } from '../store/actions';
 import { can } from '../store/role';
@@ -22,7 +23,7 @@ export function StudiesPage() {
   const open = (id: string) => go(hrefStudy(id, 'events'));
 
   const columns = useMemo<TableColumn[]>(() => [
-    { key: 'id', header: 'Study ID', width: 150, render: (_v, s: Study) => <span className="studies-id"><i className="ri-folder-line" aria-hidden="true" />{s.id}<LifecycleMark v={s.lifecycle} /></span> },
+    { key: 'id', header: 'Study ID', width: 150, render: (_v, s: Study) => <span className="studies-id"><i className={ICON.study} aria-hidden="true" />{s.id}<LifecycleMark v={s.lifecycle} /></span> },
     { key: 'name', header: 'Study Name' },
     { key: 'ta', header: 'TA', width: 120, render: (v) => v || '—' },
     { key: 'admin', header: 'Study Admin', width: 170, render: (_v, s: Study) => <span className="studies-owner"><Avatar size={20} color="brand-blue" initials={initials(s.admin)} />{s.admin}</span> },

@@ -50,13 +50,13 @@ function CreateStudyForm() {
   }, []);
 
   useEffect(() => {
-    if (!focusPending.current || !Object.keys(er).length) return;
+    if (!focusPending.current || !(Object.keys(er).length || Object.values(dEr).some(Boolean))) return;
     focusPending.current = false;
     const first = root.current?.querySelector('.wiz-field__error')?.closest('.wiz-field');
     const target = first?.querySelector<HTMLElement>('input, textarea, button, [role="combobox"]');
     target?.scrollIntoView({ block: 'center' });
     target?.focus();
-  }, [er]);
+  }, [er, dEr]);
 
   const set = <K extends keyof CreateStudyForm>(k: K, v: CreateStudyForm[K]) => setF((p) => ({ ...p, [k]: v }));
   const setRow = (key: number, patch: Partial<CreateStudyForm['members'][number]>) => {
@@ -82,11 +82,15 @@ function CreateStudyForm() {
     e?.preventDefault();
     if (busy) return;
     const local = validateStudyForm(f);
-    if (draft.user || draft.from || draft.to) local.draft = 'Add this member or clear the row.';
-    if (Object.keys(local).length) { focusPending.current = true; setEr(local); return; }
+    // 添加行填了内容但没点 Add：校验通过就随表单一并提交，不通过则在添加行报错；完全空白的添加行忽略
+    const pending = !!(draft.user || draft.from || draft.to);
+    const de = pending ? validateMemberRow(draft) : {};
+    if (Object.keys(local).length || Object.keys(de).length) { focusPending.current = true; setEr(local); setDEr(de); return; }
+    const form = pending ? { ...f, members: [...f.members, { key: nextKey.current++, ...draft, from: draft.from.trim(), to: draft.to.trim() }] } : f;
+    setDEr({});
     setBusy(true);
     window.setTimeout(() => {
-      const r = createStudy(f);
+      const r = createStudy(form);
       if ('errors' in r) { focusPending.current = true; setEr(r.errors); setBusy(false); return; }
       leave.guard = null; // 已提交，不再拦截
       go(hrefStudy(r.id, 'events'));
@@ -145,7 +149,7 @@ function CreateStudyForm() {
                   );
                 })}
                 <div className="csf-mrow csf-mrow--add" role="row">
-                  <span role="cell"><MemberSelect aria-label="Person to add" placeholder="+ Select a person" options={memberOptions.map((o) => ({ ...o, disabled: f.members.some((m) => m.user === o.value) }))} value={draft.user || null} error={dEr.user || er.draft}
+                  <span role="cell"><MemberSelect aria-label="Person to add" placeholder="+ Select a person" options={memberOptions.map((o) => ({ ...o, disabled: f.members.some((m) => m.user === o.value) }))} value={draft.user || null} error={dEr.user}
                     onChange={(v) => { setDraft((d) => ({ ...d, user: v })); setDEr((p) => ({ ...p, user: '' })); clearErr('draft'); }} /></span>
                   <span role="cell"><Select aria-label="Role to add" options={ROLES} value={draft.role} onChange={(v) => setDraft((d) => ({ ...d, role: v }))} /></span>
                   <span role="cell"><Input placeholder="YYYY-MM-DD" aria-label="From" value={draft.from} error={dEr.from} onChange={(e) => { setDraft((d) => ({ ...d, from: e.target.value })); setDEr((p) => ({ ...p, from: '', to: '' })); clearErr('draft'); }} /></span>

@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { Breadcrumb, Button, IconButton, Pane, PopoverMenu, Select, SideBar, SideBarToggle, Splitter, Tabs, type BreadcrumbItem } from '@wiz/react';
+import { ICON } from './icons';
 import { ReviewNavContext } from './pages/review/nav';
 import { CopilotPanel } from './CopilotPanel';
 import { BlindTag } from './pages/study/common';
@@ -17,8 +18,8 @@ import { isTocWorkbench } from './pages/review/route';
 function useHeader(R: Route): { crumbs: BreadcrumbItem[]; tabs: ReactNode } {
   const db = useDb();
   const studyCrumb = (sid: string, current: boolean): BreadcrumbItem => ({
-    label: sid, ...(current ? {} : { href: hrefStudy(sid, 'events'), onClick: () => go(hrefStudy(sid, 'events')) }),
-    options: db.studies.map((s) => ({ value: s.id, label: s.id, icon: 'ri-folder-line' })), currentValue: sid,
+    label: sid, icon: ICON.study, ...(current ? {} : { href: hrefStudy(sid, 'events'), onClick: () => go(hrefStudy(sid, 'events')) }),
+    options: db.studies.map((s) => ({ value: s.id, label: s.id, icon: ICON.study })), currentValue: sid,
     onSwitch: (v) => go(hrefStudy(v, 'events')), searchPlaceholder: 'Search Study',
   });
   if (R.name === 'studies') return { crumbs: [{ label: 'Studies' }], tabs: null };
@@ -41,7 +42,7 @@ function useHeader(R: Route): { crumbs: BreadcrumbItem[]; tabs: ReactNode } {
     crumbs: [
       studyCrumb(e.studyId, false),
       {
-        label: e.name, options: S.eventsOf(e.studyId).map((x) => ({ value: x.id, label: x.name, icon: 'ri-flow-chart' })), currentValue: e.id,
+        label: e.name, icon: ICON.event, options: S.eventsOf(e.studyId).map((x) => ({ value: x.id, label: x.name, icon: ICON.event })), currentValue: e.id,
         onSwitch: (v) => go(hrefEvent(v, tab)), searchPlaceholder: 'Search Event',
       },
     ],
@@ -87,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const soon = (name: string) => () => toast(name + ' is not in this prototype');
   const items = [
     { icon: 'ri-home-5-line', label: 'Home', value: 'home', onClick: soon('Home') },
-    { icon: 'ri-folder-line', label: 'Studies', value: 'studies' },
+    { icon: ICON.study, label: 'Studies', value: 'studies' },
     { icon: 'ri-book-2-line', label: 'Knowledge Base', value: 'kb', onClick: soon('Knowledge Base') },
   ];
   const active = 'studies';

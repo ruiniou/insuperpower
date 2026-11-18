@@ -5,8 +5,9 @@ import { SPACES } from './config';
 import { S } from './selectors';
 import { can } from './role';
 import { newFlow, V } from './seed';
+import { baselineAsset, baselinesOf, baselineUsers, BL_NAME, currentBaseline, isBlCode } from './baseline';
 import { emit, getDb, toast } from './store';
-import type { Asset, Dataset, EventRec } from './types';
+import type { Asset, Baseline, Dataset, EventRec } from './types';
 
 const extOf = (n: string) => (n.split('.').pop() || '').toLowerCase();
 const noCtl = (s: string) => /[\u0000-\u001f\u007f]/.test(s);
@@ -39,26 +40,57 @@ export function createEvent(f: CreateEventForm): { errors: Errors } | { id: stri
   return { id, nAssets: n };
 }
 
-export interface UploadAssetForm { sid: string; assetId: string | null; code: string; name: string; meta: Record<string, string>; fileName: string; reason: string }
-/** 上传文件 / 新版本：新文件会顶替同类型的「Required · Not uploaded」占位 */
+export type BaselineMode = 'new' | 'current';
+export interface UploadAssetForm { sid: string; assetId: string | null; code: string; name: string; meta: Record<string, string>; fileName: string; reason: string; version: string; baselineMode: BaselineMode; baselineLabel: string }
+export const usedByEvents = (n: number) => 'Used by ' + n + (n === 1 ? ' event' : ' events') + '. Start a new baseline instead.';
+const sameLabel = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/** 上传文件 / 新版本：新文件会顶替同类型的「Required · Not uploaded」占位。
+ *  Protocol 与 SAP：Study 内各只有一个 Asset，已有则追加版本；同时新建 Baseline（未改的槽位沿用 Current）或替换 Current 的同类槽位（Current 被引用时不可替换） */
 export function uploadAsset(f: UploadAssetForm): { errors: Errors } | { asset: Asset } {
-  const db = getDb(), er: Errors = {}, a = f.assetId ? S.asset(f.assetId) ?? null : null, t = TYPE(f.code);
+  const db = getDb(), er: Errors = {}, t = TYPE(f.code);
+  const bl = !!t && isBlCode(t.code) ? t.code : null;
+  const a = (f.assetId ? S.asset(f.assetId) ?? null : null) ?? (bl ? baselineAsset(f.sid, bl) ?? null : null);
   if (!t) er.code = 'Select a file type.';
   const name = f.name.trim(); if (!name) er.name = 'Enter a name or choose a file.';
+  const version = f.version.trim();
+  if (!version) er.version = 'Enter a version.';
+  else if (a && a.versions.some((v) => sameLabel(v.label, version))) er.version = 'This version already exists.';
   if (t) t.req.forEach((r) => { if (!(f.meta[r] || '').trim()) er['m:' + r] = 'Required.'; });
   if (!f.fileName) er.file = 'Choose a file.'; else if (FILE_OK.indexOf(extOf(f.fileName)) < 0) er.file = 'Unsupported format. Allowed: ' + FILE_OK.map((x) => '.' + x).join(' ');
+  const list = baselinesOf(f.sid), cur = list[0];
+  const asNew = !!bl && (f.baselineMode === 'new' || !cur);
+  const blLabel = f.baselineLabel.trim();
+  if (bl && asNew) {
+    if (!blLabel) er.baseline = 'Enter a baseline version.';
+    else if (list.some((b) => sameLabel(b.label, blLabel))) er.baseline = 'This baseline version already exists.';
+  } else if (bl && cur) {
+    const n = baselineUsers(cur).length;
+    if (n) er.baseline = usedByEvents(n);
+  }
   if (Object.keys(er).length) return { errors: er };
   const note = f.reason.trim() || (a ? 'Appended file version' : 'Initial upload');
+  const nextN = a ? S.latest(a).n + 1 : 1;
+  const ver = V(nextN, db.me.name, dShort(), note, { label: version, meta: { ...f.meta }, file: f.fileName });
   let target = a;
-  if (a) {
-    a.versions.unshift(V(S.latest(a).n + 1, db.me.name, dShort(), note, { meta: { ...f.meta }, file: f.fileName }));
-  } else {
-    target = { id: 'A' + (++db.seq.asset), studyId: f.sid, name, code: t!.code, tl: SHORT[t!.code] || t!.name, icon: t!.cat === 'Code & Scripts' ? 'code' : 'doc', source: 'Uploaded', versions: [V(1, db.me.name, dShort(), note, { meta: { ...f.meta }, file: f.fileName })] };
+  if (a) a.versions.unshift(ver);
+  else {
+    target = { id: 'A' + (++db.seq.asset), studyId: f.sid, name, code: t!.code, tl: SHORT[t!.code] || t!.name, icon: t!.cat === 'Code & Scripts' ? 'code' : 'doc', source: 'Uploaded', versions: [ver] };
     db.assets.push(target);
     db.assets = db.assets.filter((x) => !(x.required && x.studyId === f.sid && x.code === t!.code));
   }
   const st = S.study(f.sid); if (st) st.updated = dLong();
-  toast((a ? 'New version ' : 'Uploaded ') + target!.name + ' ' + S.latest(target!).label);
+  if (bl) {
+    const slot = { assetId: target!.id, n: nextN };
+    if (asNew) {
+      const b: Baseline = { id: 'B' + (++db.seq.baseline), studyId: f.sid, label: blLabel, slots: { ...(cur?.slots ?? {}), [bl]: slot }, by: db.me.name, date: dShort(), note: f.reason.trim() };
+      db.baselines.unshift(b);
+      toast('Uploaded ' + BL_NAME[bl] + ' ' + version + '. Baseline ' + blLabel + ' created.');
+    } else {
+      cur!.slots[bl] = slot;
+      toast('Uploaded ' + BL_NAME[bl] + ' ' + version + ' to Baseline ' + cur!.label + '.');
+    }
+  } else toast((a ? 'New version ' : 'Uploaded ') + target!.name + ' ' + version);
   emit();
   return { asset: target! };
 }

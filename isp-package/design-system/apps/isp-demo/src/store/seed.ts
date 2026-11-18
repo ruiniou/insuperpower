@@ -1,6 +1,8 @@
-import type { Database, EventRec, Flow, Version } from './types';
+import type { Baseline, Database, EventRec, Flow, Version } from './types';
 
-export const V = (n: number, by: string, date: string, note = '', o: Partial<Version> = {}): Version => ({ n, label: 'v' + n, by, date, note, status: '', ...o });
+export const V = (n: number, by: string, date: string, note = '', o: Partial<Version> = {}): Version => ({ n, label: 'v' + n, by, date, note, ...o });
+/** Asset 版本：label 是用户填写的版本号 */
+const AV = (n: number, label: string, by: string, date: string, note = ''): Version => V(n, by, date, note, { label });
 
 export const newFlow = (o: Partial<Flow> = {}): Flow => ({
   ui: { sel: null, edge: null, inputsOpen: false, confirm: null },
@@ -15,25 +17,31 @@ export const newFlow = (o: Partial<Flow> = {}): Flow => ({
 export function createSeed(): Database {
   const db: Database = {
     me: { name: 'User Name', ini: 'UN' },
-    seq: { study: 3, event: 3, asset: 20, ds: 40 },
+    seq: { study: 3, event: 3, asset: 20, ds: 40, baseline: 4 },
     studies: [
       { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'User Name', lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: 'Oct 31, 2026', members: 5, desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
       { id: 'STU-002', name: 'Breast Cancer Phase II Trial', ta: 'Oncology', phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE', blinding: 'Blinded', updated: 'Oct 26, 2026', members: 3, desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' },
       { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', admin: 'Wang Fang', lifecycle: 'ARCHIVED', blinding: 'Revealed', updated: 'Sep 18, 2026', members: 2, desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Mar 5, 2026' },
     ],
     assets: [
-      { id: 'A1', studyId: 'STU-001', name: 'STU-001 Protocol', code: 'PROTOCOL', tl: 'Protocol', icon: 'doc', source: 'Uploaded', versions: [V(2, 'Li Wei', 'Oct 12', 'Approved', { status: 'Official' }), V(1, 'Li Wei', 'Oct 3')] },
-      { id: 'A2', studyId: 'STU-001', name: 'STU-001 SAP', code: 'SAP', tl: 'SAP', icon: 'doc', source: 'Uploaded', versions: [V(3, 'Chen Yu', 'Oct 28', 'Draft 3', { status: 'Draft' }), V(2, 'Li Wei', 'Oct 15', 'Approved', { status: 'Official' }), V(1, 'Li Wei', 'Oct 3')] },
-      { id: 'A3', studyId: 'STU-001', name: 'STU-001 CRF', code: 'CRF', tl: 'CRF', icon: 'doc', source: 'Uploaded', versions: [V(2, 'Zhao Min', 'Oct 22', 'Draft 2', { status: 'Draft' }), V(1, 'Zhao Min', 'Oct 14', 'Approved', { status: 'Official' })] },
-      { id: 'A4', studyId: 'STU-001', name: 'STU-001 ADaM Spec', code: 'ADAM_SPEC', tl: 'ADaM Spec', icon: 'doc', source: 'Uploaded', versions: [V(3, 'Li Wei', 'Oct 20', '', { label: 'v1.2' }), V(2, 'Li Wei', 'Oct 14', '', { label: 'v1.1' }), V(1, 'Li Wei', 'Oct 8', '', { label: 'v1.0' })] },
-      { id: 'A5', studyId: 'STU-001', name: 'STU-001 SDTM Spec', code: 'SDTM_SPEC', tl: 'SDTM Spec', icon: 'doc', source: 'Uploaded', versions: [V(1, 'Li Wei', 'Oct 20')] },
-      { id: 'A6', studyId: 'STU-001', name: 'Primary Analysis TOC', code: 'TOC_TFL_DEFINITION', tl: 'TOC', icon: 'list', source: 'Promoted from WF-03', versions: [V(1, 'Li Wei', 'Oct 30', '', { status: 'Official' })] },
-      { id: 'A7', studyId: 'STU-001', name: 'Primary Analysis Mock Shell', code: 'TABLE_SHELL', tl: 'Shell', icon: 'shell', source: 'Promoted from WF-03', versions: [V(2, 'Li Wei', 'Oct 31', '', { status: 'Official' })] },
-      { id: 'A8', studyId: 'STU-001', name: 'Primary Analysis SAS code', code: 'TFL_PRODUCTION_CODE', tl: 'Prod. code', icon: 'code', source: 'Promoted from WF-04', versions: [V(1, 'Chen Yu', 'Nov 1')] },
+      { id: 'A1', studyId: 'STU-001', name: 'STU-001 Protocol', code: 'PROTOCOL', tl: 'Protocol', icon: 'doc', source: 'Uploaded', versions: [AV(2, 'Amendment 1', 'Li Wei', 'Oct 12', 'Approved'), AV(1, 'v1.0', 'Li Wei', 'Oct 3')] },
+      { id: 'A2', studyId: 'STU-001', name: 'STU-001 SAP', code: 'SAP', tl: 'SAP', icon: 'doc', source: 'Uploaded', versions: [AV(3, 'v3.0', 'Chen Yu', 'Oct 28', 'Revised sensitivity analyses'), AV(2, 'v2.0', 'Li Wei', 'Oct 15', 'Approved'), AV(1, 'v1.0', 'Li Wei', 'Oct 3')] },
+      { id: 'A3', studyId: 'STU-001', name: 'STU-001 CRF', code: 'CRF', tl: 'CRF', icon: 'doc', source: 'Uploaded', versions: [AV(2, 'v2.0', 'Zhao Min', 'Oct 22', 'Revised forms'), AV(1, 'v1.0', 'Zhao Min', 'Oct 14', 'Approved')] },
+      { id: 'A4', studyId: 'STU-001', name: 'STU-001 ADaM Spec', code: 'ADAM_SPEC', tl: 'ADaM Spec', icon: 'doc', source: 'Uploaded', versions: [AV(3, 'v1.2', 'Li Wei', 'Oct 20'), AV(2, 'v1.1', 'Li Wei', 'Oct 14'), AV(1, 'v1.0', 'Li Wei', 'Oct 8')] },
+      { id: 'A5', studyId: 'STU-001', name: 'STU-001 SDTM Spec', code: 'SDTM_SPEC', tl: 'SDTM Spec', icon: 'doc', source: 'Uploaded', versions: [AV(1, 'v1.0', 'Li Wei', 'Oct 20')] },
+      { id: 'A6', studyId: 'STU-001', name: 'Primary Analysis TOC', code: 'TOC_TFL_DEFINITION', tl: 'TOC', icon: 'list', source: 'Promoted from WF-03', versions: [AV(1, 'v1.0', 'Li Wei', 'Oct 30')] },
+      { id: 'A7', studyId: 'STU-001', name: 'Primary Analysis Mock Shell', code: 'TABLE_SHELL', tl: 'Shell', icon: 'shell', source: 'Promoted from WF-03', versions: [AV(2, 'v1.1', 'Li Wei', 'Oct 31'), AV(1, 'v1.0', 'Li Wei', 'Oct 29')] },
+      { id: 'A8', studyId: 'STU-001', name: 'Primary Analysis SAS code', code: 'TFL_PRODUCTION_CODE', tl: 'Prod. code', icon: 'code', source: 'Promoted from WF-04', versions: [AV(1, 'v1.0', 'Chen Yu', 'Nov 1')] },
       { id: 'A9', studyId: 'STU-001', name: '', code: 'ACRF', tl: 'aCRF', icon: 'doc', required: true, versions: [] },
-      { id: 'A10', studyId: 'STU-002', name: 'STU-002 Protocol', code: 'PROTOCOL', tl: 'Protocol', icon: 'doc', source: 'Uploaded', versions: [V(1, 'Zhao Min', 'Oct 20', 'Approved', { status: 'Official' })] },
-      { id: 'A11', studyId: 'STU-002', name: 'STU-002 SAP', code: 'SAP', tl: 'SAP', icon: 'doc', source: 'Uploaded', versions: [V(1, 'Zhao Min', 'Oct 24', 'Draft 1', { status: 'Draft' })] },
+      { id: 'A10', studyId: 'STU-002', name: 'STU-002 Protocol', code: 'PROTOCOL', tl: 'Protocol', icon: 'doc', source: 'Uploaded', versions: [AV(1, 'v1.0', 'Zhao Min', 'Oct 20', 'Approved')] },
+      { id: 'A11', studyId: 'STU-002', name: 'STU-002 SAP', code: 'SAP', tl: 'SAP', icon: 'doc', source: 'Uploaded', versions: [AV(1, 'v0.9', 'Zhao Min', 'Oct 24')] },
     ],
+    baselines: [
+      { id: 'B3', studyId: 'STU-001', label: 'v3.0', slots: { PROTOCOL: { assetId: 'A1', n: 2 }, SAP: { assetId: 'A2', n: 3 } }, by: 'Chen Yu', date: 'Oct 28', note: '' },
+      { id: 'B2', studyId: 'STU-001', label: 'v2.0', slots: { PROTOCOL: { assetId: 'A1', n: 2 }, SAP: { assetId: 'A2', n: 2 } }, by: 'Li Wei', date: 'Oct 15', note: '' },
+      { id: 'B1', studyId: 'STU-001', label: 'v1.0', slots: { PROTOCOL: { assetId: 'A1', n: 1 }, SAP: { assetId: 'A2', n: 1 } }, by: 'Li Wei', date: 'Oct 3', note: '' },
+      { id: 'B4', studyId: 'STU-002', label: 'v1.0', slots: { PROTOCOL: { assetId: 'A10', n: 1 }, SAP: { assetId: 'A11', n: 1 } }, by: 'Zhao Min', date: 'Oct 24', note: '' },
+    ] satisfies Baseline[],
     datasets: [],
     events: [],
   };
@@ -57,8 +65,8 @@ export function createSeed(): Database {
   const events: EventRec[] = [
     {
       id: 'EVT-001', studyId: 'STU-001', name: 'Primary Analysis', status: 'In progress', owner: 'Li Wei', goal: '', scope: 'FORMAL', reason: '',
-      adopted: 'WF-03 SAP v2 baseline',
-      wfs: [{ id: 'WF-01', loop: 'A', owner: 'Li Wei', created: 'Oct 27', updated: 'Oct 31', inputs: { SAP: 'SAP v2', Protocol: 'Protocol v2' } }, { id: 'WF-02', loop: 'B', owner: 'Chen Yu', created: 'Oct 29', updated: 'Nov 2', inputs: { Dataset: '3 pinned' } }],
+      adopted: 'WF-03 SAP v2.0 baseline',
+      wfs: [{ id: 'WF-01', loop: 'A', owner: 'Li Wei', created: 'Oct 27', updated: 'Oct 31', inputs: { SAP: 'SAP v2.0', Protocol: 'Protocol Amendment 1' } }, { id: 'WF-02', loop: 'B', owner: 'Chen Yu', created: 'Oct 29', updated: 'Nov 2', inputs: { Dataset: '3 pinned' } }],
       updated: 'Oct 31, 2026', members: 5,
       refs: { assets: { A1: { v: 2, use: 'Generate Shell' }, A2: { v: 2, use: 'Generate Shell' }, A4: { v: 3, use: 'Generate Shell, Generate Code' } }, datasets: { D3: { v: 2, use: 'Generate Code' }, D6: { v: 1, use: 'Generate Code' }, D7: { v: 1, use: 'Generate Code' } } },
       produced: [
@@ -78,7 +86,7 @@ export function createSeed(): Database {
     {
       id: 'EVT-002', studyId: 'STU-001', name: 'Interim Analysis', status: 'In progress', owner: 'Chen Yu', goal: '', scope: 'INTERIM', reason: '',
       adopted: '—', updated: 'Oct 25, 2026', members: 3,
-      wfs: [{ id: 'WF-01', loop: 'A', owner: 'Chen Yu', created: 'Oct 20', updated: 'Oct 25', inputs: { SAP: 'SAP v3' } }],
+      wfs: [{ id: 'WF-01', loop: 'A', owner: 'Chen Yu', created: 'Oct 20', updated: 'Oct 25', inputs: { SAP: 'SAP v3.0' } }],
       refs: { assets: { A1: { v: 2, use: 'Generate Shell' }, A2: { v: 3, use: 'Generate Shell' } }, datasets: { D1: { v: 2, use: 'Generate Code' }, D3: { v: 2, use: 'Generate Code' } } },
       produced: [],
       flow: newFlow({
@@ -90,14 +98,14 @@ export function createSeed(): Database {
     {
       id: 'EVT-003', studyId: 'STU-002', name: 'Primary Analysis', status: 'In progress', owner: 'Zhao Min', goal: '', scope: 'FORMAL', reason: '',
       adopted: '—', updated: 'Oct 26, 2026', members: 2, wfs: [],
-      refs: { assets: { A10: { v: 1, use: 'Generate Shell' }, A11: { v: 1, use: 'Generate Shell' } }, datasets: {} },
+      refs: { assets: {}, datasets: {} },
       produced: [],
       flow: newFlow({ ui: { sel: 'toc', edge: null, inputsOpen: false, confirm: null } }),
     },
     {
       id: 'EVT-004', studyId: 'STU-001', name: 'Exploratory Analysis', status: 'In progress', owner: 'User Name', goal: '', scope: 'EXPLORATORY', reason: '',
       adopted: '—', updated: 'Nov 2, 2026', members: 2,
-      wfs: [{ id: 'WF-01', loop: 'A', owner: 'Li Wei', created: 'Nov 1', updated: 'Nov 2', inputs: { SAP: 'SAP v3' } }],
+      wfs: [{ id: 'WF-01', loop: 'A', owner: 'Li Wei', created: 'Nov 1', updated: 'Nov 2', inputs: { SAP: 'SAP v3.0' } }],
       refs: { assets: { A1: { v: 2, use: 'Generate Shell' }, A2: { v: 3, use: 'Generate Shell' } }, datasets: {} },
       produced: [],
       flow: newFlow({

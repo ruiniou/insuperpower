@@ -1,6 +1,6 @@
 import { DOWN, EDGES, GROUP_LABEL, LOOP_NAME, LOOP_OF, NODE, NODES, SPACES, TOTAL } from './config';
 import { btnFor, ovCtx, type BtnSpec, type OvCtx } from './flow';
-import { S, dsByType, vLabel } from './selectors';
+import { S, dsByType, vLabel, vLabelBl } from './selectors';
 import type { Disp, EventRec, NodeDef, NodeId } from './types';
 
 /** Overview 的视图模型：全部由 event.flow 与引用数据派生（纯函数），UI 只负责渲染 */
@@ -16,7 +16,7 @@ export function inputsGroups(e: EventRec): InputsGroupVM[] {
   const groups: InputsGroupVM[] = [];
   S.pinnedAssets(e).forEach(({ a, ref }) => {
     const lv = S.latest(a), nw = lv.n > ref.v;
-    groups.push({ label: GROUP_LABEL[a.code] || a.tl, text: a.tl + ' ' + vLabel(a, ref.v), badge: nw ? lv.label + ' newer' : '', open: { act: 'jumpAsset', arg: a.id }, change: { act: 'pinAsset', arg: a.id }, changeLabel: 'Change ' + a.tl + ' version' });
+    groups.push({ label: GROUP_LABEL[a.code] || a.tl, text: a.tl + ' ' + vLabelBl(a, ref.v), badge: nw ? lv.label + ' newer' : '', open: { act: 'jumpAsset', arg: a.id }, change: { act: 'pinAsset', arg: a.id }, changeLabel: 'Change ' + a.tl + ' version' });
   });
   ['SAP', 'CRF'].forEach((code) => {
     if (!S.pinnedAssets(e).some((x) => x.a.code === code)) groups.push({ label: GROUP_LABEL[code] || code, text: 'None pinned', badge: '', change: { act: 'refAsset', arg: code }, changeLabel: 'Choose ' + code });

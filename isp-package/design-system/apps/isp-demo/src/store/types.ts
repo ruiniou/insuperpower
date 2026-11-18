@@ -5,7 +5,8 @@ export type Disp = 'locked' | 'ready' | 'stale' | 'todo' | 'running' | 'review';
 export type Loop = 'A' | 'B';
 export type Rec<T> = Record<NodeId, T>;
 
-export interface Version { n: number; label: string; by: string; date: string; note: string; status: string; file?: string; meta?: Record<string, string> }
+/** n 是内部序号（不显示）；label 是上传时用户填写的版本号 */
+export interface Version { n: number; label: string; by: string; date: string; note: string; file?: string; meta?: Record<string, string> }
 export type Lifecycle = 'ACTIVE' | 'ARCHIVED' | 'DELETED';
 export type Blinding = 'Not blinded' | 'Blinded' | 'Revealed';
 export interface Study {
@@ -13,6 +14,16 @@ export interface Study {
   updated: string; members: number; desc: string; tenant: string; createdBy: string; createdAt: string;
 }
 export interface Asset { id: string; studyId: string; name: string; code: string; tl: string; icon: string; source?: string; required?: boolean; versions: Version[] }
+/** 指向某个 Asset 的某个版本（n 为内部序号） */
+export interface BaselineSlot { assetId: string; n: number }
+export type BaselineCode = 'PROTOCOL' | 'SAP';
+/** Study Baseline：Protocol 与 SAP 的一组版本。DB.baselines 新的在前，每个 Study 的第一个是 Current */
+export interface Baseline {
+  id: string; studyId: string;
+  label: string;
+  slots: Partial<Record<BaselineCode, BaselineSlot>>;
+  by: string; date: string; note: string;
+}
 export interface Dataset { id: string; studyId: string; space: 'dummy' | 'synthetic' | 'prod'; cat: string; name: string; label: string; versions: Version[] }
 export interface Ref { v: number; use: string }
 export interface Workflow { id: string; loop: Loop; owner: string; created: string; updated: string; inputs: Record<string, string> }
@@ -37,8 +48,8 @@ export interface EventRec {
 }
 export interface Database {
   me: { name: string; ini: string };
-  seq: { study: number; event: number; asset: number; ds: number };
-  studies: Study[]; assets: Asset[]; datasets: Dataset[]; events: EventRec[];
+  seq: { study: number; event: number; asset: number; ds: number; baseline: number };
+  studies: Study[]; assets: Asset[]; baselines: Baseline[]; datasets: Dataset[]; events: EventRec[];
 }
 
 export interface NodeDef {

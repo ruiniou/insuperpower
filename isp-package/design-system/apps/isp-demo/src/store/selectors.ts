@@ -1,4 +1,5 @@
 import { TYPE } from './assets';
+import { baselineTag } from './baseline';
 import { DOWN, LOOP_NODES, NODES, SPACES } from './config';
 import { dLong } from './dates';
 import { getDb } from './store';
@@ -50,6 +51,8 @@ export function wfInfo(e: EventRec, w: Workflow) {
 }
 
 export const vLabel = (x: { versions: Version[] }, n: number) => { const v = S.vOf(x, n); return v ? v.label : 'v' + n; };
+/** 版本号加 Baseline 标签：`v3.0, Baseline v3.0`；Protocol 与 SAP 之外或不属于任何 Baseline 时只有版本号 */
+export const vLabelBl = (a: Asset, n: number) => [vLabel(a, n), baselineTag(a, n)].filter(Boolean).join(', ');
 export const dsCnt = (e: EventRec, c: string) => S.pinnedDs(e, 'dummy').filter((x) => x.d.cat === c).length;
 export const dsByType = (e: EventRec) => ['ADaM', 'SDTM'].map((c) => [c, dsCnt(e, c)] as const).filter((x) => x[1]).map((x) => x[0] + ' ' + x[1]).join(', ');
 export const eventCounts = (e: EventRec) => ({ asset: Object.keys(e.refs.assets).length + e.produced.length, ds: Object.keys(e.refs.datasets).length });

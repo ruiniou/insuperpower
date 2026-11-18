@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Button, Dropdown, EmptyState, MemberSelect, Status, Table, type TableColumn } from '@wiz/react';
+import { ICON } from '../../icons';
 import { go } from '../../router';
 import { hrefEvent } from '../../store/actions';
 import { S } from '../../store/selectors';
@@ -24,7 +25,7 @@ export function EventsPage({ sid }: { sid: string }) {
   const open = (id: string) => go(hrefEvent(id, 'overview'));
 
   const columns = useMemo<TableColumn[]>(() => [
-    { key: 'name', header: 'Event', render: (_v, e: EventRec) => <span className="app-nm"><i className="ri-flow-chart" aria-hidden="true" /><span className="app-ell">{e.name}</span></span> },
+    { key: 'name', header: 'Event', render: (_v, e: EventRec) => <span className="app-nm"><i className={ICON.event} aria-hidden="true" /><span className="app-ell">{e.name}</span></span> },
     { key: 'status', header: 'Status', width: 120, render: (v) => <Status variant="style1" tone="grey" textCase="normal">{v}</Status> },
     { key: 'owner', header: 'Event Owner', width: 170, render: (_v, e: EventRec) => (can('event.owner.transfer', { event: e })
       ? <MemberSelect variant="inline" size="small" aria-label={`Event Owner of ${e.name}`} value={e.owner} options={peopleOf(sid).map((n) => ({ value: n, name: n, initials: initials(n) }))} onChange={(v) => transferEventOwner(e.id, v)} />

@@ -3,7 +3,9 @@ import { DOWN, NODES } from './config';
 import { btnFor, ovCtx } from './flow';
 import { ovDoReplace, ovKeep, ovLock, ovRun, ovStartOrFix, quickUploadDs } from './actions';
 import { attentionRows, inputsGroups, nodeCard, popoverFor } from './overview';
-import { S, wfInfo } from './selectors';
+import { baselineAsset, baselinesOf, baselineUsers, slotCarriedFrom, suggestBaselineLabel } from './baseline';
+import { S, vLabelBl, wfInfo } from './selectors';
+import { uploadAsset } from './study';
 import { getDb, resetDb, setToastHandler } from './store';
 
 let toasts: string[] = [];
@@ -121,7 +123,7 @@ describe('Needs your attention（节点状态的投影）', () => {
     expect(rows[0].title).toBe('QC Code can use Shell v2');
     expect(rows[0].keepLabel).toBe('Keep v1');
     expect(rows[1].primary).toBe(true);
-    expect(rows[2].sub).toBe('SAP v3, ADSL v3. This Event stays on v2 and v2');
+    expect(rows[2].sub).toBe('SAP v3.0, ADSL v3. This Event stays on v2.0 and v2');
   });
   it('全部处理完显示为空（EVT-003 无引用更新、全 empty → 只有 Ready TOC）', () => {
     const rows = attentionRows(evt('EVT-003'), ovCtx(evt('EVT-003')));
@@ -136,7 +138,7 @@ describe('Needs your attention（节点状态的投影）', () => {
 describe('Inputs / 卡片行 / 气泡', () => {
   it('Inputs：SAP/Protocol/ADaM Spec 带 newer 提示；Datasets 汇总', () => {
     const g = inputsGroups(evt());
-    expect(g.find((x) => x.label === 'Analysis plan')).toMatchObject({ text: 'SAP v2', badge: 'v3 newer' });
+    expect(g.find((x) => x.label === 'Analysis plan')).toMatchObject({ text: 'SAP v2.0, Baseline v2.0', badge: 'v3.0 newer' });
     expect(g.find((x) => x.label === 'Datasets')).toMatchObject({ text: 'ADaM 3', badge: 'ADSL v3 newer' });
     expect(g.find((x) => x.label === 'CRF')).toMatchObject({ text: 'None pinned' });
   });
@@ -241,5 +243,52 @@ describe('Study 页 MVP：职责与资料', () => {
     transferEventOwner('EVT-001', 'Chen Yu');
     expect(S.event('EVT-001')!.owner).toBe('Chen Yu');
     expect(toasts.at(-1)).toBe('Event Owner changed to Chen Yu');
+  });
+});
+
+describe('Study Baseline', () => {
+  const sap = (sid: string) => baselineAsset(sid, 'SAP')!;
+  const form = (o: Partial<Parameters<typeof uploadAsset>[0]>): Parameters<typeof uploadAsset>[0] => ({ sid: 'STU-001', assetId: null, code: 'SAP', name: 'x', meta: { 'SAP external version': '1' }, fileName: 'sap.pdf', reason: '', version: 'v4.0', baselineMode: 'new', baselineLabel: 'v4.0', ...o });
+  it('种子：STU-001 Current v3.0，Protocol 沿用 from v2.0，SAP 不沿用；Current 被引用', () => {
+    const list = baselinesOf('STU-001');
+    expect(list.map((b) => b.label)).toEqual(['v3.0', 'v2.0', 'v1.0']);
+    expect(slotCarriedFrom(list, 0, 'PROTOCOL')).toBe('v2.0');
+    expect(slotCarriedFrom(list, 0, 'SAP')).toBeNull();
+    expect(baselineUsers(list[0]).length).toBeGreaterThan(0);
+    expect(baselineUsers(baselinesOf('STU-002')[0])).toHaveLength(0);
+  });
+  it('新建 Baseline：只换 SAP 槽位，Protocol 沿用；预填 v4.0；追加版本不新建 Asset', () => {
+    expect(suggestBaselineLabel('STU-001')).toBe('v4.0');
+    const n = getDb().assets.length;
+    const r = uploadAsset(form({}));
+    expect('asset' in r).toBe(true);
+    expect(getDb().assets).toHaveLength(n);
+    const list = baselinesOf('STU-001');
+    expect(list[0].label).toBe('v4.0');
+    expect(list[0].slots.SAP).toEqual({ assetId: 'A2', n: 4 });
+    expect(slotCarriedFrom(list, 0, 'PROTOCOL')).toBe('v2.0');
+    expect(toasts.at(-1)).toBe('Uploaded SAP v4.0. Baseline v4.0 created.');
+  });
+  it('被引用的 Current 不能 Add to current；未被引用的 STU-002 可以替换槽位', () => {
+    const r = uploadAsset(form({ baselineMode: 'current' }));
+    expect('errors' in r && r.errors.baseline).toMatch(/^Used by \d+ events?\. Start a new baseline instead\.$/);
+    const r2 = uploadAsset(form({ sid: 'STU-002', version: 'v1.0', baselineMode: 'current', baselineLabel: '' }));
+    expect('asset' in r2).toBe(true);
+    expect(baselinesOf('STU-002')).toHaveLength(1);
+    expect(baselinesOf('STU-002')[0].slots.SAP).toEqual({ assetId: 'A11', n: 2 });
+    expect(toasts.at(-1)).toBe('Uploaded SAP v1.0 to Baseline v1.0.');
+    expect(sap('STU-002').versions).toHaveLength(2);
+  });
+  it('版本号与 Baseline 版本号校验', () => {
+    const e1 = uploadAsset(form({ version: ' ' })), e2 = uploadAsset(form({ version: 'V3.0' })), e3 = uploadAsset(form({ baselineLabel: 'V3.0' })), e4 = uploadAsset(form({ baselineLabel: '' }));
+    expect('errors' in e1 && e1.errors.version).toBe('Enter a version.');
+    expect('errors' in e2 && e2.errors.version).toBe('This version already exists.');
+    expect('errors' in e3 && e3.errors.baseline).toBe('This baseline version already exists.');
+    expect('errors' in e4 && e4.errors.baseline).toBe('Enter a baseline version.');
+  });
+  it('Event 侧标签：同一版本属于多个 Baseline 取最新', () => {
+    expect(vLabelBl(S.asset('A1')!, 2)).toBe('Amendment 1, Baseline v3.0');
+    expect(vLabelBl(S.asset('A2')!, 2)).toBe('v2.0, Baseline v2.0');
+    expect(vLabelBl(S.asset('A4')!, 3)).toBe('v1.2');
   });
 });

@@ -1,7 +1,8 @@
 import { emit } from './store';
 
 /** 版本抽屉状态（原型 UI.drawer / UI.pw.drawer）：路由变化时清空，除非 go() 带 drawer；宽度跨打开保留 */
-export type DrawerState = { kind: 'assetV' | 'dsV' | 'studyDetails'; id: string } | null;
+/** n：版本抽屉里要定位到的版本（内部序号） */
+export type DrawerState = { kind: 'assetV' | 'dsV' | 'studyDetails'; id: string; n?: number } | null;
 export const ui: { drawer: DrawerState; drawerWidth: number; pending: DrawerState | undefined } = { drawer: null, drawerWidth: 440, pending: undefined };
 export const openDrawer = (d: DrawerState) => { ui.drawer = d; emit(); };
 export const setDrawerWidth = (w: number) => { ui.drawerWidth = w; emit(); };

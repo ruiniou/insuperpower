@@ -39,6 +39,10 @@ button { font-family: inherit; }
 .app-inline { display: inline-flex; align-items: center; gap: var(--wiz-spacing-sm); }
 .app-owner { display: inline-flex; align-items: center; gap: 6px; }
 .app-muted { color: var(--wiz-color-text-secondary); }
+.wiz-isp-vr.app-ver--active { background: var(--wiz-color-surface-selected); }
+.app-indent { padding-left: var(--wiz-spacing-lg); }
+.app-bl-opt { display: flex; flex-direction: column; gap: var(--wiz-spacing-sm); }
+.app-bl-opt__sub { padding-left: var(--wiz-spacing-xl); }
 .app-sm { font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
 .app-mono { font-family: var(--wiz-font-family-mono); }
 .app-hint { font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-muted); }

@@ -1,16 +1,17 @@
 import { useState } from 'react';
-import { Avatar, Button, Field, FileBox, Input, Message, Modal, PickList, CheckPill, Select, Textarea } from '@wiz/react';
+import { Avatar, Button, Field, FileBox, Input, Message, Modal, PickList, CheckPill, Radio, Select, Textarea } from '@wiz/react';
 import { go } from '../../router';
 import { CAT_ORDER, FILE_OK, TYPE, TYPES, SCOPES } from '../../store/assets';
 import { hrefEvent, hrefStudy } from '../../store/actions';
+import { baselineTag, baselineUsers, currentBaseline, isBlCode, baselineAsset, suggestBaselineLabel } from '../../store/baseline';
 import { SPACE, S } from '../../store/selectors';
 import { DS_FILE_OK } from '../../store/actions';
-import { createEvent, defaultEventRefs, uploadAsset, uploadDataset, type Errors } from '../../store/study';
+import { createEvent, defaultEventRefs, uploadAsset, uploadDataset, usedByEvents, type BaselineMode, type Errors } from '../../store/study';
 import { closeModal, modalUi } from '../../store/ui';
 import { useDb } from '../../store/store';
 import type { Asset } from '../../store/types';
 
-const verOptions = (a: Asset) => a.versions.map((v, i) => ({ value: String(v.n), label: [v.label, i === 0 ? 'Latest' : '', v.status === 'Official' ? 'Official' : ''].filter(Boolean).join(', ') }));
+const verOptions = (a: Asset) => a.versions.map((v, i) => ({ value: String(v.n), label: [v.label, baselineTag(a, v.n), i === 0 ? 'Latest' : ''].filter(Boolean).join(', ') }));
 const initials = (n: string) => n.split(' ').map((x) => x[0]).join('').toUpperCase();
 
 function Footer({ note, confirm, onConfirm }: { note?: string; confirm: string; onConfirm: () => void }) {
@@ -62,34 +63,57 @@ function CreateEventModal({ sid }: { sid: string }) {
 
 const typeOptions = CAT_ORDER.flatMap((c) => [{ value: '__' + c, label: c, disabled: true }, ...TYPES.filter((t) => t.cat === c).map((t) => ({ value: t.code, label: t.name }))]);
 
-/** Upload File / Upload new version：版本模式锁定类型与名称，新版本号自动 +1 */
+/** Upload File / Upload new version：版本模式锁定类型与名称；版本号由用户填写。Protocol 与 SAP 另选 Baseline */
 function UploadAssetModal({ sid, assetId, code: code0 }: { sid: string; assetId: string | null; code: string }) {
   const a = assetId ? S.asset(assetId) ?? null : null;
-  const [f, setF] = useState({ code: a ? a.code : code0, name: a ? a.name : '', meta: {} as Record<string, string>, fileName: '', reason: '' });
+  const cur = currentBaseline(sid), curUsers = cur ? baselineUsers(cur).length : 0;
+  const [f, setF] = useState({ code: a ? a.code : code0, name: a ? a.name : '', meta: {} as Record<string, string>, fileName: '', reason: '', version: '', baselineMode: 'new' as BaselineMode, baselineLabel: suggestBaselineLabel(sid) });
   const [er, setEr] = useState<Errors>({});
   const t = TYPE(f.code);
+  const bl = isBlCode(f.code);
+  const existing = a ?? (isBlCode(f.code) ? baselineAsset(sid, f.code) ?? null : null);
   const submit = () => {
-    const r = uploadAsset({ sid, assetId, ...f });
+    const r = uploadAsset({ sid, assetId, ...f, name: existing ? existing.name : f.name });
     if ('errors' in r) { setEr(r.errors); return; }
     closeModal(); go(hrefStudy(sid, 'asset'), { drawer: { kind: 'assetV', id: r.asset.id } });
   };
+  const setType = (code: string) => {
+    const ex = isBlCode(code) ? baselineAsset(sid, code) : undefined;
+    setF({ ...f, code, meta: {}, name: ex ? ex.name : a ? a.name : existing ? '' : f.name });
+    setEr({ ...er, code: '' });
+  };
   return (
     <Modal title={a ? 'Upload New Version' : 'Upload File'} width={600} onClose={closeModal}
-      footer={<Footer note="Version number is assigned automatically." confirm={a ? 'Upload version' : 'Upload'} onConfirm={submit} />}>
+      footer={<Footer confirm={a ? 'Upload version' : 'Upload'} onConfirm={submit} />}>
       <div className="app-form">
-        {a && <Message tone="info">Adding a new version of <b>{a.name}</b> (currently {S.latest(a).label}). Type is locked to the existing asset. The new version will be <b>v{S.latest(a).n + 1}</b>.</Message>}
+        {a && <Message tone="info">Adding a new version of <b>{a.name}</b> (currently {S.latest(a).label}). Type is locked to the existing asset.</Message>}
         <Select label="File type" required searchable placeholder="Select a type…" disabled={!!a} options={typeOptions} value={f.code} error={er.code}
           hint={a ? 'Locked when adding a version.' : 'From the 31 asset types. Write permission per role is checked by type.'}
-          onChange={(v) => { setF({ ...f, code: v, meta: {} }); setEr({ ...er, code: '' }); }} />
-        <Input label="Name" required readOnly={!!a} placeholder="Filled from the file name if empty" maxLength={200} value={f.name} error={er.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+          onChange={setType} />
+        <Field label="File" required error={er.file} hint={'Allowed: ' + FILE_OK.map((x) => '.' + x).join(' ')}>
+          <FileBox accept={FILE_OK.map((x) => '.' + x).join(',')} fileName={f.fileName} invalid={!!er.file}
+            onChange={(n) => { setF({ ...f, fileName: n, name: f.name.trim() ? f.name : n.replace(/\.[^.]+$/, '') }); setEr({ ...er, file: '' }); }} />
+        </Field>
+        <Input label="Name" required readOnly={!!existing} placeholder="Filled from the file name if empty" maxLength={200} value={existing ? existing.name : f.name} error={er.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+        <Input label="Version" required maxLength={64} value={f.version} error={er.version} onChange={(e) => { setF({ ...f, version: e.target.value }); setEr({ ...er, version: '' }); }} />
+        {bl && (
+          <Field label="Baseline" required>
+            <div className="app-bl-opt">
+              <Radio name="baseline-mode" label="Start a new baseline" checked={f.baselineMode === 'new' || !cur} onChange={() => { setF({ ...f, baselineMode: 'new' }); setEr({ ...er, baseline: '' }); }} />
+              {(f.baselineMode === 'new' || !cur) && (
+                <div className="app-bl-opt__sub">
+                  <Input aria-label="Baseline version" maxLength={64} value={f.baselineLabel} error={er.baseline} onChange={(e) => { setF({ ...f, baselineLabel: e.target.value }); setEr({ ...er, baseline: '' }); }} />
+                </div>
+              )}
+              {cur && <Radio name="baseline-mode" label={'Add to current baseline ' + cur.label} disabled={curUsers > 0} checked={f.baselineMode === 'current'} onChange={() => { setF({ ...f, baselineMode: 'current' }); setEr({ ...er, baseline: '' }); }} />}
+              {cur && curUsers > 0 && <span className="app-hint app-bl-opt__sub">{usedByEvents(curUsers)}</span>}
+            </div>
+          </Field>
+        )}
         <Field label="Metadata">
           {t ? (t.req.length ? (
             <div className="app-form__row2">{t.req.map((r) => <Input key={t.code + r} label={r} required value={f.meta[r] || ''} error={er['m:' + r]} onChange={(e) => setF({ ...f, meta: { ...f.meta, [r]: e.target.value } })} />)}</div>
           ) : <span className="app-hint">No required metadata for this type.</span>) : <span className="app-hint">Select a type to see its required metadata.</span>}
-        </Field>
-        <Field label="File" required error={er.file} hint={'Allowed: ' + FILE_OK.map((x) => '.' + x).join(' ')}>
-          <FileBox accept={FILE_OK.map((x) => '.' + x).join(',')} fileName={f.fileName} invalid={!!er.file}
-            onChange={(n) => { setF({ ...f, fileName: n, name: f.name.trim() ? f.name : n.replace(/\.[^.]+$/, '') }); setEr({ ...er, file: '' }); }} />
         </Field>
         <Textarea label="Reason" rows={2} maxLength={1000} placeholder={a ? 'Defaults to "Appended file version"' : 'Optional'} value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} />
       </div>

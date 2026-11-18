@@ -1,3 +1,4 @@
+import { ICON } from '../../icons';
 import { useEffect, useRef, useState } from 'react';
 import { Breadcrumb, Button, IconButton, Popover, SideBarToggle, StepNav, type BreadcrumbItem } from '@wiz/react';
 import { go } from '../../router';
@@ -24,13 +25,13 @@ function crumbsOf(e: EventRec): BreadcrumbItem[] {
   const w = S.wf(e, LOOP_OF.toc);
   const full: BreadcrumbItem[] = [
     {
-      label: e.studyId, href: hrefStudy(e.studyId, 'events'), onClick: () => go(hrefStudy(e.studyId, 'events')),
-      options: getDb().studies.map((s) => ({ value: s.id, label: s.id, icon: 'ri-folder-line' })), currentValue: e.studyId,
+      label: e.studyId, icon: ICON.study, href: hrefStudy(e.studyId, 'events'), onClick: () => go(hrefStudy(e.studyId, 'events')),
+      options: getDb().studies.map((s) => ({ value: s.id, label: s.id, icon: ICON.study })), currentValue: e.studyId,
       onSwitch: (v) => go(hrefStudy(v, 'events')), searchPlaceholder: 'Search Study',
     },
     {
-      label: e.name, href: hrefEvent(e.id, 'overview'), onClick: () => go(hrefEvent(e.id, 'overview')),
-      options: S.eventsOf(e.studyId).map((x) => ({ value: x.id, label: x.name, icon: 'ri-flow-chart' })), currentValue: e.id,
+      label: e.name, icon: ICON.event, href: hrefEvent(e.id, 'overview'), onClick: () => go(hrefEvent(e.id, 'overview')),
+      options: S.eventsOf(e.studyId).map((x) => ({ value: x.id, label: x.name, icon: ICON.event })), currentValue: e.id,
       onSwitch: (v) => go(hrefEvent(v, 'overview')), searchPlaceholder: 'Search Event',
     },
     ...(w ? [{ label: 'Workflow', href: hrefEvent(e.id, 'workflow') }, { label: w.id, href: hrefWf(e.id, w.id) }] : []),
