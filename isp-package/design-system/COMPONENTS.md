@@ -90,7 +90,7 @@
 | TopNav | 顶栏（Mac / Win 项目选择器） | 稳定 |
 | Logo | ISP 标志 | 稳定 |
 | Breadcrumb | 面包屑，悬停层级名称展开同级切换（无 ▾） | 无 Wiz 稿 |
-| Dropdown | 下拉菜单按钮；菜单本体是 PopoverMenu / MenuItem（目录 `PopoverMenu/`） | 无 Wiz 稿 |
+| Dropdown | 下拉菜单按钮；菜单本体是 PopoverMenu / MenuItem（目录 `PopoverMenu/`）。`multiple` 为多选筛选：行前带复选框，点选不关菜单，选中状态由 `items[].selected` 给；`filterName` 下 `label` 为空时只显示图标加名称（借鉴 Atlas FilterChip 的多选行为） | 无 Wiz 稿 |
 | TitleBar | 标题栏（标题、描述、右侧操作） | 稳定 |
 | Splitter | 可拖拽分隔条 | 稳定 |
 | Card | 卡片容器；`--wiz-card-padding` 钩子 | 无 Wiz 稿 |
@@ -107,7 +107,7 @@
 | List / ListGroup / ListDivider / ListItem | 列表项：图标、计数、展开、缩进、复选、开关 | 稳定 |
 | TreeList | 树列表（目录 `List/`） | 无 Wiz 稿 |
 | OutlineRow / OutlineGroup / OutlineFilter | Outline 条目行（高 28，类型图标，单一状态位 `outlineMark` 按优先级取一个）、分组行（已完成/总数，全部完成换对勾）、带计数的 Filter（目录 `Outline/`） | 无 Wiz 稿 |
-| Table | 数据表：分页、选择、排序、`onRowClick` 整行可点、`rowHeight`、`groupBy`、`activeRow`、`columnLayout`；Column / ColumnHeader / ColumnBody 为单元格样式（新增能力无 Wiz 稿） | 无 Wiz 稿 |
+| Table | 数据表：分页（含 `jumpToPage` 跳页）、选择、排序、`onRowClick` 整行可点、`rowHeight`、`groupBy`、`activeRow`、`columnLayout`；Column / ColumnHeader / ColumnBody 为单元格样式（新增能力无 Wiz 稿） | 无 Wiz 稿 |
 | Avatar / AvatarGroup | 头像（6 色，字号随尺寸缩放）与头像组 | 稳定 |
 | CodeEditor | SAS 代码编辑器（行号、当前行、语法高亮） | 无 Wiz 稿 |
 
@@ -128,6 +128,7 @@
 | RefLink | 资产或 Dataset 引用链接 | 无 Wiz 稿 |
 | VersionRow | 版本行（版本号、Latest / Official、人加日期、Used by） | 无 Wiz 稿 |
 | DatasetCard | Dataset 空间卡；DatasetCardMore 为「+N more」占位 | 无 Wiz 稿 |
+| ValidityPicker | 有效期选择：开始必填、结束可选（End time 开关），精确到分钟，欧美格式，时区由系统判定；`formatRange` 生成显示文案 | 提案中 |
 
 ## 提案中（未实现）
 

@@ -1,0 +1,8 @@
+.wiz-card { box-sizing: border-box; padding: var(--wiz-card-padding, 20px); border-radius: var(--wiz-card-radius, var(--wiz-radius-lg)); background: var(--wiz-main-white); }
+.wiz-card--ring { box-shadow: var(--wiz-shadow-ring-hairline); }
+.wiz-card--card { box-shadow: var(--wiz-shadow-button); }
+.wiz-card--flat { box-shadow: none; }
+
+.wiz-card.is-interactive { cursor: pointer; transition: box-shadow 0.15s; }
+.wiz-card.is-interactive:hover { box-shadow: 0 0 0 1px var(--wiz-brand-blue-70), var(--wiz-shadow-button); }
+.wiz-card.is-interactive:focus-visible { outline: 2px solid var(--wiz-agent-brand); outline-offset: 2px; }

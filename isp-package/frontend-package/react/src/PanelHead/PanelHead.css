@@ -1,0 +1,7 @@
+.wiz-panelhead { flex: none; box-sizing: border-box; background: var(--wiz-main-white); }
+.wiz-panelhead__row { display: flex; align-items: center; gap: var(--wiz-spacing-sm); height: 48px; box-sizing: border-box; padding: 0 var(--wiz-spacing-lg); }
+.wiz-panelhead__icon { flex: none; font-size: 16px; line-height: 1; color: var(--wiz-grey-80); }
+.wiz-panelhead__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--wiz-text-subtitle-1-family); font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); color: var(--wiz-grey-90); }
+.wiz-panelhead__meta { flex: none; font-size: var(--wiz-text-caption-size); color: var(--wiz-grey-80); white-space: nowrap; }
+.wiz-panelhead__actions { display: inline-flex; flex: none; align-items: center; gap: var(--wiz-spacing-sm); margin-left: auto; }
+.wiz-panelhead__toolbar { display: flex; align-items: center; gap: var(--wiz-spacing-sm); box-sizing: border-box; padding: 0 var(--wiz-spacing-lg) var(--wiz-spacing-sm); }

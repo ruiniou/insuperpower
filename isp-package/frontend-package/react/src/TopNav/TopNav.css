@@ -1,0 +1,17 @@
+.wiz-topnav { display: flex; align-items: center; box-sizing: border-box; height: 40px; border-bottom: 1px solid var(--wiz-grey-40); background: var(--wiz-grey-20); }
+.wiz-topnav__section { display: flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; height: 100%; padding: 0 var(--wiz-spacing-md); }
+.wiz-topnav__lights { gap: var(--wiz-spacing-sm); }
+.wiz-topnav__lights > span { width: 12px; height: 12px; border-radius: var(--wiz-radius-full); background: var(--wiz-red-50); }
+.wiz-topnav__lights > span:nth-child(2) { background: var(--wiz-yellow-50); }
+.wiz-topnav__lights > span:nth-child(3) { background: var(--wiz-green-50); }
+.wiz-topnav__project { display: flex; align-items: center; justify-content: center; flex: 1 0 0; min-width: 0; height: 100%; padding: 0 var(--wiz-spacing-md); box-sizing: border-box; }
+.wiz-topnav__selector { display: inline-flex; align-items: center; gap: var(--wiz-spacing-sm); max-width: 100%; padding: 0; border: 0; background: transparent; color: var(--wiz-grey-90); cursor: pointer; font-family: var(--wiz-text-subtitle-1-family); font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-text-subtitle-1-weight); letter-spacing: var(--wiz-text-subtitle-1-letter-spacing); }
+.wiz-topnav__selector:focus-visible { outline: 2px solid var(--wiz-brand-blue-70); outline-offset: 2px; border-radius: var(--wiz-radius-xs); }
+.wiz-topnav__selector-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiz-topnav__selector > i { flex: none; font-size: 16px; line-height: 1; }
+.wiz-topnav__actions { display: flex; align-items: center; gap: var(--wiz-spacing-sm); flex: none; padding-right: var(--wiz-spacing-md); }
+.wiz-topnav__win { display: flex; flex: none; height: 100%; }
+.wiz-topnav__win > button { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 46px; height: 100%; padding: 0 var(--wiz-spacing-xs); border: 0; background: transparent; color: var(--wiz-grey-90); cursor: pointer; }
+.wiz-topnav__win > button > i { font-size: 16px; line-height: 1; }
+.wiz-topnav__win > button:hover { background: var(--wiz-alpha-black-8); }
+.wiz-topnav__win > button:focus-visible { outline: 2px solid var(--wiz-brand-blue-70); outline-offset: -2px; }

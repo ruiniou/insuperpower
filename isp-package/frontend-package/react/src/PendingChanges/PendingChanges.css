@@ -1,0 +1,9 @@
+.wiz-pending__item {
+  all: unset; box-sizing: border-box; display: flex; align-items: center; flex: none; gap: var(--wiz-spacing-sm); width: 100%; cursor: pointer;
+  padding: var(--wiz-spacing-xs) var(--wiz-spacing-md); border-radius: var(--wiz-radius-xs);
+  font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); letter-spacing: var(--wiz-text-body-2-letter-spacing);
+  line-height: normal; color: var(--wiz-agent-brand);
+}
+.wiz-pending__item > i { font-size: 12px; line-height: 12px; }
+.wiz-pending__item:hover { background: var(--wiz-grey-30); }
+.wiz-pending__item:focus-visible { outline: 2px solid var(--wiz-color-focus); outline-offset: -2px; }

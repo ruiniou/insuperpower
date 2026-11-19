@@ -1,0 +1,4 @@
+.wiz-close-button { display: inline-flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: 36px; height: 36px; margin: 0; padding: var(--wiz-spacing-xs-sm); border: 0; border-radius: var(--wiz-radius-sm); background: transparent; color: var(--wiz-grey-70); font-size: 24px; cursor: pointer; transition: background-color 0.15s; }
+.wiz-close-button:hover:not(:disabled), .wiz-close-button.is-hover { background: var(--wiz-alpha-black-8); }
+.wiz-close-button:focus-visible { outline: 2px solid var(--wiz-agent-brand); outline-offset: 1px; }
+.wiz-close-button > i { line-height: 1; }

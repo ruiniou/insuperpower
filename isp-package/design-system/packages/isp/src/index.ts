@@ -24,3 +24,5 @@ export { VersionRow } from './VersionRow/VersionRow';
 export type { VersionRowProps } from './VersionRow/VersionRow';
 export { DatasetCard, DatasetCardMore } from './DatasetCard/DatasetCard';
 export type { DatasetCardProps } from './DatasetCard/DatasetCard';
+export { ValidityPicker, formatRange, formatDateTime, formatDate, formatTime, isValidIso, nowIso, addMinutes, systemTimeZone } from './ValidityPicker/ValidityPicker';
+export type { ValidityPickerProps, Validity } from './ValidityPicker/ValidityPicker';

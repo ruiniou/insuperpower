@@ -11,7 +11,16 @@ export type Lifecycle = 'ACTIVE' | 'ARCHIVED' | 'DELETED';
 export type Blinding = 'Not blinded' | 'Blinded' | 'Revealed';
 export interface Study {
   id: string; name: string; ta: string; phase: string; admin: string; lifecycle: Lifecycle; blinding: Blinding;
-  updated: string; members: number; desc: string; tenant: string; createdBy: string; createdAt: string;
+  updated: string; desc: string; tenant: string; createdBy: string; createdAt: string;
+}
+export type MemberRole = 'DEV' | 'STAT' | 'DM' | 'QC' | 'VIEW';
+export type BlindAttr = 'BLINDED' | 'UNBLINDED' | 'UNSET';
+/** Study 成员。同一 Study 内同一 userId 只有一条记录；REMOVED 的再次加入时恢复这条 */
+export interface StudyMember {
+  id: string; studyId: string; userId: string; name: string; email: string;
+  role: MemberRole; attr: BlindAttr;
+  validFrom: string; validUntil: string | null;
+  status: 'ACTIVE' | 'REMOVED'; isAdmin: boolean;
 }
 export interface Asset { id: string; studyId: string; name: string; code: string; tl: string; icon: string; source?: string; required?: boolean; versions: Version[] }
 /** 指向某个 Asset 的某个版本（n 为内部序号） */
@@ -48,8 +57,8 @@ export interface EventRec {
 }
 export interface Database {
   me: { name: string; ini: string };
-  seq: { study: number; event: number; asset: number; ds: number; baseline: number };
-  studies: Study[]; assets: Asset[]; baselines: Baseline[]; datasets: Dataset[]; events: EventRec[];
+  seq: { study: number; event: number; asset: number; ds: number; baseline: number; member: number };
+  studies: Study[]; members: StudyMember[]; assets: Asset[]; baselines: Baseline[]; datasets: Dataset[]; events: EventRec[];
 }
 
 export interface NodeDef {

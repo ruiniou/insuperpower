@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button, IconButton, Input, Select, Textarea, Tooltip } from '@wiz/react';
+import { attrLabel, myMembership, roleLabel } from '../../store/members';
 import { can } from '../../store/role';
 import { S } from '../../store/selectors';
 import { PHASES, updateStudyDetails, type StudyDetailsForm } from '../../store/study';
@@ -18,6 +19,7 @@ function Row({ k, children, top }: { k: string; children: ReactNode; top?: boole
 export function StudyDetailsDrawer({ id }: { id: string }) {
   useDb();
   const s = S.study(id);
+  const mine = myMembership(id);
   const [editing, setEditing] = useState(false);
   const [f, setF] = useState<StudyDetailsForm>({ name: '', desc: '', ta: '', phase: '', reason: '' });
   const [er, setEr] = useState<Errors>({});
@@ -49,6 +51,8 @@ export function StudyDetailsDrawer({ id }: { id: string }) {
           errors={er} onChange={(k, v) => { if (k !== 'id') set({ [k]: v } as Partial<StudyDetailsForm>); }} />
         <Row k="Study Admin">{s.admin}</Row>
         <Row k="Blinding"><BlindTag v={s.blinding} /></Row>
+        <Row k="My role">{mine ? roleLabel(mine.role) : '—'}</Row>
+        <Row k="My blinding status">{mine ? attrLabel(mine.attr) : '—'}</Row>
         <Row k="Lifecycle"><LifecycleTag v={s.lifecycle} /></Row>
         <Row k="Tenant">{s.tenant}</Row>
         <Row k="Created by">{s.createdBy}</Row>

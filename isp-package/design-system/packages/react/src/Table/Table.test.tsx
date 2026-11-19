@@ -34,40 +34,16 @@ describe('Table', () => {
   });
 });
 
-describe('Steps / Status / List', () => {
-  it('Steps 状态推导', () => {
-    const { container } = render(<Steps current={1} steps={[{ label: 'a' }, { label: 'b' }, { label: 'c' }]} />);
-    expect(container.querySelectorAll('.wiz-step--completed')).toHaveLength(1);
-    expect(container.querySelectorAll('.wiz-step--active')).toHaveLength(1);
-    expect(container.querySelectorAll('.wiz-step--upcoming')).toHaveLength(1);
-  });
-  it('Status 默认配色', () => {
-    const { container } = render(<Status variant="style2">x</Status>);
-    expect(container.firstChild).toHaveClass('wiz-status--green');
-  });
-  it('TreeList 展开与选中', () => {
-    const fn = vi.fn();
-    render(<TreeList nodes={[{ id: 'p', label: 'P', children: [{ id: 'c', label: 'C' }] }]} onSelect={fn} />);
-    expect(screen.queryByText('C')).toBeNull();
-    fireEvent.click(screen.getByText('P'));
-    fireEvent.click(screen.getByText('C'));
-    expect(fn).toHaveBeenCalledWith('c');
-  });
-  it('ListItem 键盘触发', () => {
-    const fn = vi.fn();
-    render(<ListItem label="x" onClick={fn} />);
-    fireEvent.keyDown(screen.getByRole('button'), { key: 'Enter' });
-    expect(fn).toHaveBeenCalled();
-  });
-});
-
-describe('Splitter', () => {
-  it('键盘步长 16，reverse 取反，带 aria 值', () => {
-    const fn = vi.fn();
-    render(<Splitter value={200} min={120} max={320} onResize={fn} reverse />);
-    const s = screen.getByRole('separator');
-    expect(s).toHaveAttribute('aria-valuenow', '200');
-    fireEvent.keyDown(s, { key: 'ArrowRight' });
-    expect(fn).toHaveBeenCalledWith(-16);
+describe('Table 跳页', () => {
+  it('点省略号输入页码，回车跳转，超界取边界', () => {
+    const many = Array.from({ length: 30 }, (_, i) => ({ ...rows[0], id: 'r' + i }));
+    render(<Table columns={columns} rows={many} paginated jumpToPage pageSize={1} pageSizeOptions={[1]} />);
+    expect(screen.getByRole('button', { name: 'Page 1' })).toHaveAttribute('aria-current', 'page');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Go to page' })[0]);
+    const input = screen.getByRole('spinbutton', { name: 'Page number' });
+    fireEvent.change(input, { target: { value: '99' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(screen.getByText('Total 30')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Page 30' })).toHaveAttribute('aria-current', 'page');
   });
 });

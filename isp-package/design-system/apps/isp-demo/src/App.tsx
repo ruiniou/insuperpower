@@ -12,6 +12,7 @@ import { useDb } from './store/store';
 import { ToastBridge } from './toast';
 import { AssetPage } from './pages/study/AssetPage';
 import { DatasetOverviewPage, DatasetSpacePage } from './pages/study/DatasetPage';
+import { MemberPage } from './pages/study/MemberPage';
 import { EventsPage } from './pages/study/EventsPage';
 import { StudyModals } from './pages/study/StudyModals';
 
@@ -24,6 +25,7 @@ function Page() {
     if (!S.study(R.sid)) return <NotFoundPage what="Study" id={R.sid} />;
     if (R.tab === 'events') return <EventsPage sid={R.sid} />;
     if (R.tab === 'asset') return <AssetPage sid={R.sid} />;
+    if (R.tab === 'member') return <MemberPage sid={R.sid} />;
     if (R.tab === 'dataset') return R.space ? <DatasetSpacePage sid={R.sid} space={R.space} /> : <DatasetOverviewPage sid={R.sid} />;
     return <PlaceholderPage route={R} title={'Study · ' + R.tab} />;
   }

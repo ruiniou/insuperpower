@@ -1,0 +1,7 @@
+.wiz-divider { box-sizing: border-box; color: var(--wiz-grey-50); }
+.wiz-divider--horizontal { width: 100%; height: 1px; background: var(--wiz-grey-30); }
+.wiz-divider--vertical { align-self: stretch; width: 1px; min-height: 1em; background: var(--wiz-grey-30); }
+.wiz-divider--text { display: flex; align-items: center; gap: var(--wiz-spacing-xs); height: auto; background: none; font-family: var(--wiz-text-label-family); font-size: var(--wiz-text-label-size); font-weight: var(--wiz-font-weight-semibold); }
+.wiz-divider--text::before, .wiz-divider--text::after { content: ''; flex: 1; height: 1px; background: var(--wiz-grey-30); }
+.wiz-divider--left::before, .wiz-divider--right::after { display: none; }
+.wiz-divider__text { flex: none; }

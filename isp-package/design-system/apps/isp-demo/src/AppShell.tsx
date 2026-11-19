@@ -8,6 +8,7 @@ import { StudyDetailsDrawer } from './pages/study/StudyDetailsDrawer';
 import { go, useRoute, type Route } from './router';
 import { hrefEvent, hrefStudy } from './store/actions';
 import { eventCounts } from './store/selectors';
+import { memberCount } from './store/members';
 import { S, SPACES } from './store/selectors';
 import { can, DUTIES, session, setDuty, type Duty } from './store/role';
 import { toast, useDb } from './store/store';
@@ -26,7 +27,7 @@ function useHeader(R: Route): { crumbs: BreadcrumbItem[]; tabs: ReactNode } {
   if (R.name === 'studyNew') return { crumbs: [{ label: 'New Study' }], tabs: null };
   if (R.name === 'study') {
     const s = S.study(R.sid);
-    const items = [{ value: 'events', label: <>Events <i className="app-count">{S.eventsOf(R.sid).length}</i></> }, { value: 'asset', label: <>Asset <i className="app-count">{S.assetsOf(R.sid).length}</i></> }, { value: 'dataset', label: <>Dataset <i className="app-count">{S.datasetsOf(R.sid).length}</i></> }, { value: 'member', label: <>Member <i className="app-count">{s?.members ?? 0}</i></> }];
+    const items = [{ value: 'events', label: <>Events <i className="app-count">{S.eventsOf(R.sid).length}</i></> }, { value: 'asset', label: <>Asset <i className="app-count">{S.assetsOf(R.sid).length}</i></> }, { value: 'dataset', label: <>Dataset <i className="app-count">{S.datasetsOf(R.sid).length}</i></> }, { value: 'member', label: <>Member <i className="app-count">{memberCount(R.sid)}</i></> }];
     return { crumbs: [studyCrumb(R.sid, true)], tabs: <Tabs variant="underline" aria-label="Study sections" items={items} value={R.tab} onChange={(v) => go(hrefStudy(R.sid, v))} /> };
   }
   const e = S.event(R.eid);

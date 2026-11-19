@@ -1,0 +1,13 @@
+.wiz-radio { position: relative; display: inline-flex; align-items: center; cursor: pointer; font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); color: var(--wiz-grey-90); }
+.wiz-radio.is-disabled { cursor: not-allowed; }
+.wiz-radio__native { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; pointer-events: none; }
+.wiz-radio__hit { display: inline-flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: 28px; height: 28px; border-radius: var(--wiz-radius-full); transition: background-color 0.15s; }
+.wiz-radio:hover:not(.is-disabled) .wiz-radio__hit, .wiz-radio.is-hover .wiz-radio__hit { background: var(--wiz-alpha-black-8); }
+.wiz-radio__ring { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 18px; height: 18px; border: 2px solid var(--wiz-grey-80); border-radius: var(--wiz-radius-full); background: var(--wiz-main-white); transition: border-color 0.15s; }
+.wiz-radio:hover:not(.is-disabled) .wiz-radio__ring, .wiz-radio.is-hover .wiz-radio__ring, .wiz-radio__ring.is-on { border-color: var(--wiz-brand-blue-70); }
+.wiz-radio__dot { width: 8px; height: 8px; border-radius: var(--wiz-radius-full); background: var(--wiz-brand-blue-70); }
+.wiz-radio.is-disabled .wiz-radio__ring { border-color: var(--wiz-grey-70); background: var(--wiz-grey-40); }
+.wiz-radio.is-disabled .wiz-radio__dot { background: var(--wiz-grey-70); }
+.wiz-radio__native:focus-visible + .wiz-radio__hit { outline: 2px solid var(--wiz-agent-brand); outline-offset: 1px; }
+.wiz-radio__label { margin-left: var(--wiz-spacing-xs); }
+.wiz-radio.is-disabled .wiz-radio__label { color: var(--wiz-grey-60); }

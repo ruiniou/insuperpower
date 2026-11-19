@@ -25,6 +25,6 @@ export interface DropdownProps extends Omit<PopoverMenuProps, 'trigger' | 'items
 export function Dropdown({ label = 'Actions', filterName, variant = 'secondary', size = 'medium', shadow, icon, items, disabled, width = 180, ...rest }: DropdownProps) {
   return (
     <PopoverMenu items={items} width={width} {...rest}
-      trigger={<Button className={filterName ? 'wiz-dropdown-filter' : undefined} variant={variant} size={size} shadow={shadow} leftIcon={icon} rightIcon="ri-arrow-down-s-line" status={disabled ? 'disable' : 'default'} disabled={disabled}>{filterName ? <><span className="wiz-dropdown-filter__name">{filterName}</span>{label}</> : label}</Button>} />
+      trigger={<Button className={filterName ? (label ? 'wiz-dropdown-filter' : 'wiz-dropdown-filter is-unset') : undefined} variant={variant} size={size} shadow={shadow} leftIcon={icon} rightIcon="ri-arrow-down-s-line" status={disabled ? 'disable' : 'default'} disabled={disabled}>{filterName ? <><span className="wiz-dropdown-filter__name">{filterName}</span>{label || null}</> : label}</Button>} />
   );
 }

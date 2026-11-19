@@ -49,10 +49,20 @@
 .wiz-table__filter-clear:hover, .wiz-table__filter-row:hover { background: var(--wiz-grey-20); }
 .wiz-table__filter-row { display: flex; align-items: center; gap: var(--wiz-spacing-sm); height: 32px; padding: 0 var(--wiz-spacing-sm); border-radius: var(--wiz-radius-sm); cursor: pointer; }
 .wiz-table__filter-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--wiz-grey-90); }
-.wiz-table__pager { display: flex; align-items: center; justify-content: flex-end; gap: 20px; padding: var(--wiz-spacing-sm) var(--wiz-spacing-md); background: var(--wiz-main-white); font-size: var(--wiz-text-body-2-size); color: var(--wiz-grey-80); }
+.wiz-table__pager { display: flex; align-items: center; justify-content: flex-end; gap: var(--wiz-spacing-md); margin-top: auto; border-top: 1px solid var(--wiz-grey-30); box-sizing: border-box; padding: var(--wiz-spacing-sm) var(--wiz-spacing-md); background: var(--wiz-main-white); font-size: var(--wiz-text-body-2-size); color: var(--wiz-grey-80); }
 .wiz-table__pager-size { display: flex; align-items: center; gap: var(--wiz-spacing-sm); }
 .wiz-table__pager-select { display: inline-block; width: 76px; }
-.wiz-table__pager-range { min-width: 90px; text-align: center; }
+/* 分页条在底部：表格容器撑满时贴底；末行下边线由分页条上边线取代 */
+.wiz-table--paged { display: flex; flex-direction: column; min-height: 100%; }
+.wiz-table--paged > .wiz-table__grid { flex: none; }
+.wiz-table--paged .wiz-table__grid tbody tr:last-child > td { border-bottom: 0; }
+.wiz-table__pager-btns { align-items: center; gap: 0; }
+.wiz-table__pager-page { box-sizing: border-box; min-width: 24px; height: 24px; padding: 0 var(--wiz-spacing-xs); border: 0; border-radius: var(--wiz-radius-sm); background: transparent; color: var(--wiz-grey-80); font: inherit; font-variant-numeric: tabular-nums; cursor: pointer; }
+.wiz-table__pager-page:hover { background: var(--wiz-color-surface-hover); }
+.wiz-table__pager-page.is-current { background: var(--wiz-color-surface-selected); color: var(--wiz-brand-blue-70); font-weight: var(--wiz-font-weight-medium); }
+.wiz-table__pager-gap { position: relative; display: inline-flex; }
+.wiz-table__pager-pop { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); z-index: 60; width: 72px; margin-bottom: var(--wiz-spacing-xs); padding: var(--wiz-spacing-xs); border: 1px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-md); background: var(--wiz-main-white); box-shadow: var(--wiz-shadow-popover); }
+.wiz-table__pager-range { text-align: center; white-space: nowrap; }
 .wiz-table__pager-btns { display: flex; gap: var(--wiz-spacing-xs); }
 .wiz-table__pager-btns .wiz-col-iconbtn { color: var(--wiz-grey-80); }
 

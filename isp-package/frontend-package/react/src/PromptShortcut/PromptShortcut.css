@@ -1,0 +1,20 @@
+.wiz-shortcut {
+  all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: var(--wiz-spacing-xs-sm); cursor: pointer;
+  padding: var(--wiz-spacing-sm) var(--wiz-spacing-md); background: var(--wiz-main-white);
+  border: 0.5px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-sm);
+  font-family: var(--wiz-font-family-ui); font-size: 14px; line-height: 20px; color: var(--wiz-grey-80); white-space: nowrap;
+  transition: border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+.wiz-shortcut--desc { display: flex; width: 100%; align-items: flex-start; white-space: normal; }
+.wiz-shortcut__icon { flex: none; display: flex; align-items: center; height: 20px; font-size: 16px; line-height: 16px; }
+.wiz-shortcut__text { display: flex; flex-direction: column; gap: var(--wiz-spacing-xs); min-width: 0; }
+.wiz-shortcut__desc {
+  font-family: var(--wiz-text-caption-family); font-size: var(--wiz-text-caption-size); font-weight: var(--wiz-text-caption-weight);
+  letter-spacing: var(--wiz-text-caption-letter-spacing); line-height: normal; color: var(--wiz-grey-70);
+}
+.wiz-shortcut:hover:not(.is-disabled), .wiz-shortcut.is-hover {
+  color: var(--wiz-main-brand-blue); border-color: var(--wiz-main-brand-blue); box-shadow: 0 0 0 0.5px var(--wiz-main-brand-blue), var(--wiz-shadow-button);
+}
+.wiz-shortcut:focus-visible { outline: 2px solid var(--wiz-color-focus); outline-offset: 1px; }
+.wiz-shortcut.is-disabled { cursor: not-allowed; color: var(--wiz-grey-50); }
+.wiz-shortcut.is-disabled .wiz-shortcut__desc { color: var(--wiz-grey-50); }

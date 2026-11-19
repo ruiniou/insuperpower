@@ -7,6 +7,8 @@ import { baselineAsset, baselinesOf, baselineUsers, slotCarriedFrom, suggestBase
 import { S, vLabelBl, wfInfo } from './selectors';
 import { uploadAsset } from './study';
 import { getDb, resetDb, setToastHandler } from './store';
+import { activeMembers, addMembers, emptyMemberRow, evKey, memberCount, memberOf, membersOf, removalImpact, removeMember, sortMembers, updateMember, validateMemberRow, wfKey, peopleOf } from './members';
+import { setDuty } from './role';
 
 let toasts: string[] = [];
 beforeEach(() => { vi.useFakeTimers(); resetDb(); toasts = []; setToastHandler((m) => toasts.push(m)); });
@@ -214,31 +216,40 @@ describe('Study 页 MVP：职责与资料', () => {
     const { createStudy, emptyStudyForm } = await import('./study');
     const { setDuty } = await import('./role');
     setDuty('System Owner');
-    const f = { ...emptyStudyForm(), id: 'ABC-001', name: 'Demo Study', members: [{ key: 1, user: 'U-102', role: 'VIEW', from: '2026-12-01', to: '2027-01-01' }] };
+    const f = { ...emptyStudyForm(), id: 'ABC-001', name: 'Demo Study', members: [{ key: 1, userId: 'U-102', role: 'VIEW', attr: 'UNSET', validFrom: '2026-12-01T09:00', validUntil: '2027-01-01T09:00' }] };
     const r = createStudy(f);
     expect('id' in r).toBe(true);
     const s = S.study('ABC-001')!;
-    expect([s.admin, s.blinding, s.lifecycle, s.members]).toEqual([getDb().me.name, 'Not blinded', 'ACTIVE', 2]);
+    expect([s.admin, s.blinding, s.lifecycle, memberCount('ABC-001')]).toEqual([getDb().me.name, 'Not blinded', 'ACTIVE', 2]);
+    const ms = sortMembers(membersOf('ABC-001'));
+    expect(ms.map((m) => [m.name, m.isAdmin, m.role, m.validUntil])).toEqual([['User Name', true, 'STAT', null], ['Li Wei', false, 'VIEW', '2027-01-01T09:00']]);
     expect(toasts.at(-1)).toBe('ABC-001 created');
   });
   it('新建 Study：编号归一化后重复被拒；无资格被拒；成员去重与日期校验', async () => {
     const { createStudy, emptyStudyForm, validateStudyForm } = await import('./study');
     const { setDuty } = await import('./role');
     const base = { ...emptyStudyForm(), name: 'X' };
+    const nStudies = getDb().studies.length;
     setDuty('Study Admin');
     expect('errors' in createStudy({ ...base, id: 'NEW-1' }) && true).toBe(true);
     setDuty('System Owner');
     const dup = createStudy({ ...base, id: ' stu-００1 ' });
     expect('errors' in dup && dup.errors.id).toMatch(/unavailable/);
-    expect(getDb().studies.length).toBe(3);
-    const m = (key: number, user: string, from: string, to: string) => ({ key, user, role: 'VIEW', from, to });
-    const er = validateStudyForm({ ...base, id: 'N2', members: [m(1, 'U-102', '2026-12-02', '2026-12-01'), m(2, 'U-102', '', '2026-12-02')] });
-    expect(er['m:1:to']).toMatch(/before start/);
+    expect(getDb().studies.length).toBe(nStudies);
+    const m = (key: number, userId: string, validFrom: string, validUntil: string) => ({ key, userId, role: 'VIEW', attr: 'UNSET', validFrom, validUntil });
+    const er = validateStudyForm({ ...base, id: 'N2', members: [m(1, 'U-102', '2026-12-02T09:00', '2026-12-02T09:00'), m(2, 'U-102', '', '2026-12-02T10:00')] });
+    expect(er['m:1:to']).toMatch(/after start/);
     expect(er['m:2:user']).toMatch(/already added/);
     expect(er['m:2:from']).toBeTruthy();
   });
+  it('新建 Study：成员结束日期可空；创建者 Role 为空报错', async () => {
+    const { emptyStudyForm, validateStudyForm } = await import('./study');
+    const base = { ...emptyStudyForm(), id: 'N3', name: 'X' };
+    expect(validateStudyForm({ ...base, members: [{ key: 1, userId: 'U-102', role: 'VIEW', attr: 'UNSET', validFrom: '2026-12-01T09:00', validUntil: '' }] })).toEqual({});
+    expect(validateStudyForm({ ...base, role: '' }).role).toBe('Select a Role.');
+  });
   it('交接 Event Owner：更新负责人；候选人来自本 Study', async () => {
-    const { peopleOf, transferEventOwner } = await import('./study');
+    const { transferEventOwner } = await import('./study');
     expect(peopleOf('STU-001')).toEqual(expect.arrayContaining(['User Name', 'Li Wei', 'Chen Yu']));
     transferEventOwner('EVT-001', 'Chen Yu');
     expect(S.event('EVT-001')!.owner).toBe('Chen Yu');
@@ -290,5 +301,109 @@ describe('Study Baseline', () => {
     expect(vLabelBl(S.asset('A1')!, 2)).toBe('Amendment 1, Baseline v3.0');
     expect(vLabelBl(S.asset('A2')!, 2)).toBe('v2.0, Baseline v2.0');
     expect(vLabelBl(S.asset('A4')!, 3)).toBe('v1.2');
+  });
+});
+
+describe('Study Member', () => {
+  const row = (key: number, userId: string, o: Partial<ReturnType<typeof emptyMemberRow>> = {}) => emptyMemberRow(key, { userId, validFrom: '2026-12-01T09:00', ...o });
+  const mid = (sid: string, name: string) => membersOf(sid).find((m) => m.name === name)!;
+
+  it('种子：STU-001 有 5 个 Active 成员，Study Admin 是当前用户并置顶；STU-002 为 3，STU-003 为 2', () => {
+    expect(memberCount('STU-001')).toBe(5);
+    expect(sortMembers(activeMembers('STU-001'))[0]).toMatchObject({ name: 'User Name', isAdmin: true });
+    expect([memberCount('STU-002'), memberCount('STU-003')]).toEqual([3, 2]);
+    expect(peopleOf('STU-001')).toEqual(expect.arrayContaining(['User Name', 'Li Wei', 'Chen Yu']));
+  });
+
+  it('添加成员：Reason、From、Until 校验；Until 可空；添加后计数与 peopleOf 更新', () => {
+    expect(addMembers({ sid: 'STU-001', rows: [row(1, 'U-106')], reason: ' ' }).errors.reason).toBeTruthy();
+    expect(addMembers({ sid: 'STU-001', rows: [row(1, 'U-106', { validFrom: '' })], reason: 'x' }).errors['m:1:from']).toBe('Enter a start time.');
+    expect(addMembers({ sid: 'STU-001', rows: [row(1, 'U-106', { validUntil: '2026-11-30T09:00' })], reason: 'x' }).errors['m:1:to']).toMatch(/after start/);
+    expect(memberCount('STU-001')).toBe(5);
+    const r = addMembers({ sid: 'STU-001', rows: [row(1, 'U-106'), row(2, 'U-107', { validUntil: '2027-01-31T09:00' })], reason: 'Joining the analysis team' });
+    expect(r.errors).toEqual({});
+    expect(r.done).toEqual([1, 2]);
+    expect(memberCount('STU-001')).toBe(7);
+    expect(peopleOf('STU-001')).toEqual(expect.arrayContaining(['Zhang Hui', 'Liu Yang']));
+    expect(toasts.at(-1)).toBe('Added 2 members');
+  });
+
+  it('唯一性：已是 Active 成员的行报 Already a member，其余照常添加且不弹 toast；批内重复被拒', () => {
+    const r = addMembers({ sid: 'STU-001', rows: [row(1, 'U-102'), row(2, 'U-106')], reason: 'x' });
+    expect(r.errors).toEqual({ 'm:1:user': 'Already a member.' });
+    expect(r.done).toEqual([2]);
+    expect(memberCount('STU-001')).toBe(6);
+    expect(toasts).toEqual([]);
+    expect(membersOf('STU-001').filter((m) => m.userId === 'U-102')).toHaveLength(1);
+    expect(addMembers({ sid: 'STU-001', rows: [row(1, 'U-107'), row(2, 'U-107')], reason: 'x' }).errors['m:2:user']).toMatch(/already added/);
+  });
+
+  it('REMOVED 的用户再次加入：恢复原记录并覆盖设置，不产生重复', () => {
+    const chen = mid('STU-001', 'Chen Yu');
+    // 交接后移除
+    const impact = removalImpact('STU-001', 'Chen Yu');
+    const r = removeMember({ sid: 'STU-001', memberId: chen.id, reason: 'Left the project', workflowOwners: Object.fromEntries(impact.workflows.map((x) => [wfKey(x.event.id, x.wf.id), 'Zhao Min'])), eventOwners: Object.fromEntries(impact.events.map((e) => [evKey(e.id), 'Zhao Min'])) });
+    expect('ok' in r).toBe(true);
+    const n = membersOf('STU-001').length;
+    expect(chen.status).toBe('REMOVED');
+    expect(addMembers({ sid: 'STU-001', rows: [row(1, 'U-103', { role: 'DM', attr: 'UNBLINDED', validUntil: '2027-06-30T09:00' })], reason: 'Returned' }).done).toEqual([1]);
+    expect(membersOf('STU-001')).toHaveLength(n);
+    expect(chen).toMatchObject({ status: 'ACTIVE', role: 'DM', attr: 'UNBLINDED', validFrom: '2026-12-01T09:00', validUntil: '2027-06-30T09:00' });
+  });
+
+  it('Study Admin 不能被移除', () => {
+    const r = removeMember({ sid: 'STU-001', memberId: mid('STU-001', 'User Name').id, reason: 'x', workflowOwners: {}, eventOwners: {} });
+    expect('errors' in r && r.errors.form).toMatch(/can’t be removed/);
+    expect(mid('STU-001', 'User Name').status).toBe('ACTIVE');
+  });
+
+  it('移除有 Workflow 的成员必须先交接；交接后 Workflow 与 Event Owner 一并换人', () => {
+    const li = mid('STU-001', 'Li Wei');
+    const impact = removalImpact('STU-001', 'Li Wei');
+    expect(impact.workflows.map((x) => x.event.id + '/' + x.wf.id)).toEqual(['EVT-001/WF-01', 'EVT-004/WF-01']);
+    expect(impact.events.map((e) => e.id)).toEqual(['EVT-001']);
+    const none = removeMember({ sid: 'STU-001', memberId: li.id, reason: 'Left the project', workflowOwners: {}, eventOwners: {} });
+    expect('errors' in none && none.errors['wf:EVT-001:WF-01']).toBe('Select a new owner.');
+    expect(li.status).toBe('ACTIVE');
+    const self = removeMember({ sid: 'STU-001', memberId: li.id, reason: 'x', workflowOwners: { 'wf:EVT-001:WF-01': 'Li Wei', 'wf:EVT-004:WF-01': 'Chen Yu' }, eventOwners: { 'ev:EVT-001': 'Chen Yu' } });
+    expect('errors' in self).toBe(true);
+    const ok = removeMember({ sid: 'STU-001', memberId: li.id, reason: 'Left the project', workflowOwners: { 'wf:EVT-001:WF-01': 'Chen Yu', 'wf:EVT-004:WF-01': 'Zhao Min' }, eventOwners: { 'ev:EVT-001': 'Chen Yu' } });
+    expect('ok' in ok).toBe(true);
+    expect(li.status).toBe('REMOVED');
+    expect([S.event('EVT-001')!.owner, S.event('EVT-001')!.wfs[0].owner, S.event('EVT-004')!.wfs[0].owner]).toEqual(['Chen Yu', 'Chen Yu', 'Zhao Min']);
+    expect(toasts.at(-1)).toBe('Removed Li Wei');
+    expect(memberCount('STU-001')).toBe(4);
+  });
+
+  it('移除没有 Workflow 的成员：只需要 Reason', () => {
+    const wf = mid('STU-001', 'Wang Fang');
+    expect(removalImpact('STU-001', 'Wang Fang')).toEqual({ events: [], workflows: [] });
+    expect('errors' in removeMember({ sid: 'STU-001', memberId: wf.id, reason: '', workflowOwners: {}, eventOwners: {} })).toBe(true);
+    expect('ok' in removeMember({ sid: 'STU-001', memberId: wf.id, reason: 'Contract ended', workflowOwners: {}, eventOwners: {} })).toBe(true);
+    expect(wf.status).toBe('REMOVED');
+  });
+
+  it('盲态校验：Blinded 的 Study 里属性不能是 Unspecified；Unblinded 不能改回 Blinded', () => {
+    expect(validateMemberRow({ userId: 'U-106', role: 'VIEW', attr: 'UNSET', validFrom: '2026-12-01T09:00', validUntil: '' }, { studyBlinded: true }).attr).toBe('Select Blinded or Unblinded.');
+    expect(validateMemberRow({ userId: 'U-106', role: 'VIEW', attr: 'UNSET', validFrom: '2026-12-01T09:00', validUntil: '' }, { studyBlinded: false }).attr).toBeUndefined();
+    expect(addMembers({ sid: 'STU-002', rows: [row(1, 'U-106')], reason: 'x' }).errors['m:1:attr']).toBe('Select Blinded or Unblinded.');
+    expect(addMembers({ sid: 'STU-002', rows: [row(1, 'U-106', { attr: 'BLINDED' })], reason: 'x' }).done).toEqual([1]);
+    setDuty('System Owner');
+    const li = mid('STU-001', 'Li Wei');
+    expect(li.attr).toBe('UNBLINDED');
+    const bad = updateMember({ sid: 'STU-001', memberId: li.id, row: row(1, li.userId, { role: 'DEV', attr: 'BLINDED', validFrom: li.validFrom }), reason: 'x' });
+    expect('errors' in bad && bad.errors['m:1:attr']).toMatch(/back to Blinded/);
+    expect('ok' in updateMember({ sid: 'STU-001', memberId: li.id, row: row(1, li.userId, { role: 'STAT', attr: 'UNBLINDED', validFrom: li.validFrom }), reason: 'Role change' })).toBe(true);
+    expect(li.role).toBe('STAT');
+  });
+
+  it('权限：Event Owner 与 Member 职责不能添加、编辑、移除', () => {
+    setDuty('Event Owner');
+    expect(addMembers({ sid: 'STU-001', rows: [row(1, 'U-106')], reason: 'x' }).errors.form).toMatch(/permission/);
+    setDuty('Member');
+    expect('errors' in removeMember({ sid: 'STU-001', memberId: mid('STU-001', 'Wang Fang').id, reason: 'x', workflowOwners: {}, eventOwners: {} })).toBe(true);
+    expect(mid('STU-001', 'Wang Fang').status).toBe('ACTIVE');
+    setDuty('Study Admin');
+    expect(memberOf('STU-001', 'U-105')).toBeTruthy();
   });
 });

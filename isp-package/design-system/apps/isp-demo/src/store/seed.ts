@@ -1,4 +1,5 @@
-import type { Baseline, Database, EventRec, Flow, Version } from './types';
+import { TENANT_USERS, userByName } from './people';
+import type { Baseline, BlindAttr, Database, EventRec, Flow, MemberRole, Study, Version } from './types';
 
 export const V = (n: number, by: string, date: string, note = '', o: Partial<Version> = {}): Version => ({ n, label: 'v' + n, by, date, note, ...o });
 /** Asset 版本：label 是用户填写的版本号 */
@@ -17,12 +18,13 @@ export const newFlow = (o: Partial<Flow> = {}): Flow => ({
 export function createSeed(): Database {
   const db: Database = {
     me: { name: 'User Name', ini: 'UN' },
-    seq: { study: 3, event: 3, asset: 20, ds: 40, baseline: 4 },
-    studies: [
-      { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'User Name', lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: 'Oct 31, 2026', members: 5, desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
-      { id: 'STU-002', name: 'Breast Cancer Phase II Trial', ta: 'Oncology', phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE', blinding: 'Blinded', updated: 'Oct 26, 2026', members: 3, desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' },
-      { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', admin: 'Wang Fang', lifecycle: 'ARCHIVED', blinding: 'Revealed', updated: 'Sep 18, 2026', members: 2, desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Mar 5, 2026' },
-    ],
+    seq: { study: 3, event: 3, asset: 20, ds: 40, baseline: 4, member: 0 },
+    members: [],
+    studies: ([
+      { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'User Name', lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: 'Oct 31, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
+      { id: 'STU-002', name: 'Breast Cancer Phase II Trial', ta: 'Oncology', phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE', blinding: 'Blinded', updated: 'Oct 26, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' },
+      { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', admin: 'Wang Fang', lifecycle: 'ARCHIVED', blinding: 'Revealed', updated: 'Sep 18, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Mar 5, 2026' },
+    ] as Study[]).concat(Array.from({ length: 45 }, (_, i): Study => ({ id: 'TMP-' + String(i + 1).padStart(3, '0'), name: 'Temp pagination study ' + (i + 1), ta: ['Oncology', 'Hematology', 'Cardiology'][i % 3], phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE' as const, blinding: 'Not blinded' as const, updated: 'Oct 20, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' }))), // TEMP-PAGINATION 预览用，看完删除
     assets: [
       { id: 'A1', studyId: 'STU-001', name: 'STU-001 Protocol', code: 'PROTOCOL', tl: 'Protocol', icon: 'doc', source: 'Uploaded', versions: [AV(2, 'Amendment 1', 'Li Wei', 'Oct 12', 'Approved'), AV(1, 'v1.0', 'Li Wei', 'Oct 3')] },
       { id: 'A2', studyId: 'STU-001', name: 'STU-001 SAP', code: 'SAP', tl: 'SAP', icon: 'doc', source: 'Uploaded', versions: [AV(3, 'v3.0', 'Chen Yu', 'Oct 28', 'Revised sensitivity analyses'), AV(2, 'v2.0', 'Li Wei', 'Oct 15', 'Approved'), AV(1, 'v1.0', 'Li Wei', 'Oct 3')] },
@@ -116,5 +118,22 @@ export function createSeed(): Database {
     },
   ];
   db.events = events;
+
+  // 成员：每个 Study 的 Admin 加上下列成员。Active 数对应原先的 members 数字（STU-001 为 5，STU-002 为 3，STU-003 为 2，其余 Temp 为 2）
+  const mem = (sid: string, name: string, role: MemberRole, attr: BlindAttr, validFrom: string, validUntil: string | null, isAdmin = false) => {
+    const u = userByName(name)!;
+    db.members.push({ id: 'M-' + String(++db.seq.member).padStart(3, '0'), studyId: sid, userId: u.id, name: u.name, email: u.email, role, attr, validFrom, validUntil, status: 'ACTIVE', isAdmin });
+  };
+  mem('STU-001', 'User Name', 'STAT', 'UNSET', '2026-08-12T00:00', null, true);
+  mem('STU-001', 'Li Wei', 'DEV', 'UNBLINDED', '2026-08-12T00:00', '2027-03-01T00:00');
+  mem('STU-001', 'Chen Yu', 'QC', 'UNSET', '2026-08-12T00:00', null);
+  mem('STU-001', 'Zhao Min', 'DM', 'UNSET', '2026-09-01T00:00', null);
+  mem('STU-001', 'Wang Fang', 'VIEW', 'UNSET', '2026-09-01T00:00', '2027-04-01T00:00');
+  mem('STU-002', 'Zhao Min', 'STAT', 'UNBLINDED', '2026-09-02T00:00', null, true);
+  mem('STU-002', 'Li Wei', 'DEV', 'BLINDED', '2026-09-02T00:00', null);
+  mem('STU-002', 'Chen Yu', 'QC', 'BLINDED', '2026-09-10T00:00', null);
+  mem('STU-003', 'Wang Fang', 'STAT', 'UNSET', '2026-03-05T00:00', null, true);
+  mem('STU-003', 'Li Wei', 'VIEW', 'UNSET', '2026-03-05T00:00', null);
+  db.studies.filter((s) => s.id.startsWith('TMP-')).forEach((s) => { mem(s.id, 'Zhao Min', 'STAT', 'UNSET', '2026-09-02T00:00', null, true); mem(s.id, 'Li Wei', 'VIEW', 'UNSET', '2026-09-02T00:00', null); });
   return db;
 }

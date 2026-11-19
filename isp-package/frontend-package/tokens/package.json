@@ -1,0 +1,12 @@
+{
+  "name": "@wiz/tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Wiz design tokens (W3C DTCG JSON source -> CSS variables / JS / JSON / Figma import)",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "files": ["dist"]
+}

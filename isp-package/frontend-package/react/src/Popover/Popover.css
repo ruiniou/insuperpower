@@ -1,0 +1,13 @@
+/* 取自原型 .pop / .tail / .cfmb：圆角 12，描边 grey-40，箭头 10×10 旋转 45° */
+.wiz-popover { position: absolute; z-index: 6; box-sizing: border-box; max-width: 100%; border: 1px solid var(--wiz-color-border-subtle); border-radius: var(--wiz-radius-md); background: var(--wiz-color-surface); box-shadow: var(--wiz-shadow-popover); color: var(--wiz-color-text-primary); font-family: var(--wiz-text-body-1-family); }
+.wiz-popover.is-inline { position: relative; }
+.wiz-popover__head { display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; height: 44px; padding: 0 var(--wiz-spacing-md); border-bottom: 1px solid var(--wiz-grey-30); font-size: var(--wiz-text-body-2-size); font-weight: var(--wiz-font-weight-semibold); }
+.wiz-popover__body { display: flex; flex-direction: column; gap: 2px; padding: var(--wiz-spacing-sm) var(--wiz-spacing-md); }
+.wiz-popover__foot { display: flex; gap: var(--wiz-spacing-sm); padding: var(--wiz-spacing-sm) var(--wiz-spacing-md) var(--wiz-spacing-md); }
+.wiz-popover__tail { position: absolute; box-sizing: border-box; top: -6px; width: 10px; height: 10px; background: var(--wiz-color-surface); border-left: 1px solid var(--wiz-color-border-subtle); border-top: 1px solid var(--wiz-color-border-subtle); transform: rotate(45deg); }
+.wiz-popover__tail.is-down { top: auto; bottom: -6px; border: 0; border-right: 1px solid var(--wiz-color-border-subtle); border-bottom: 1px solid var(--wiz-color-border-subtle); }
+/* confirm：无描边，深阴影；正文次要色；按钮靠右 */
+.wiz-popover--confirm { border-color: transparent; box-shadow: var(--wiz-shadow-modal); font-size: var(--wiz-text-body-1-size); }
+.wiz-popover--confirm .wiz-popover__body { gap: var(--wiz-spacing-sm); padding: 14px var(--wiz-spacing-lg) 0; color: var(--wiz-color-text-secondary); line-height: 1.5; }
+.wiz-popover--confirm .wiz-popover__foot { justify-content: flex-end; padding: var(--wiz-spacing-md) var(--wiz-spacing-lg) 14px; }
+.wiz-popover--confirm .wiz-popover__tail { border-color: transparent; }

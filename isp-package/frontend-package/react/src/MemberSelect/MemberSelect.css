@@ -1,0 +1,39 @@
+.wiz-member {
+  display: flex; align-items: center; gap: var(--wiz-spacing-sm); box-sizing: border-box; width: 100%; max-width: 100%; margin: 0; cursor: pointer; text-align: left;
+  border: 1px solid transparent; background: transparent; color: var(--wiz-grey-90); font: inherit;
+  font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); font-weight: var(--wiz-text-body-2-weight);
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+.wiz-member--small { --wiz-member-pad: var(--wiz-spacing-xs); min-height: 24px; padding: 0 var(--wiz-member-pad); border-radius: var(--wiz-radius-xs); font-size: var(--wiz-text-caption-size); }
+.wiz-member--medium { --wiz-member-pad: var(--wiz-spacing-sm); min-height: 32px; padding: 0 var(--wiz-member-pad); border-radius: var(--wiz-radius-sm); }
+.wiz-member--large { --wiz-member-pad: var(--wiz-spacing-md); min-height: 40px; padding: 0 var(--wiz-member-pad); border-radius: var(--wiz-radius-sm); font-size: var(--wiz-text-body-1-size); }
+.wiz-member--box { border-color: var(--wiz-grey-40); background: var(--wiz-main-white); }
+/* 光学对齐：悬停底色向单元格内边距悬挂，静止态的头像左缘与列头对齐（需单元格左内边距不小于悬挂量） */
+.wiz-member--inline { width: calc(100% + var(--wiz-member-pad) + 1px); margin-left: calc(-1 * (var(--wiz-member-pad) + 1px)); }
+.wiz-member--inline .wiz-member__arrow { display: none; }
+.wiz-member--inline:hover:not(:disabled), .wiz-member--inline:focus-visible, .wiz-member--inline.is-open { background: var(--wiz-grey-30); }
+.wiz-member--box:hover:not(:disabled), .wiz-member--box.is-open, .wiz-member--box:focus-visible { border-color: var(--wiz-brand-blue-70); box-shadow: var(--wiz-shadow-button); }
+.wiz-member:focus-visible { outline: 0; }
+.wiz-member.is-error { border-color: var(--wiz-main-error); }
+.wiz-member:disabled { cursor: not-allowed; background: var(--wiz-grey-30); }
+.wiz-member:disabled > * { opacity: 0.5; }
+.wiz-member__text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiz-member__text.is-placeholder { color: var(--wiz-grey-50); }
+.wiz-member__ph-av { display: inline-flex; flex: none; align-items: center; justify-content: center; border-radius: 50%; background: var(--wiz-grey-30); color: var(--wiz-grey-60); font-size: 14px; }
+.wiz-member__arrow { flex: none; font-size: 16px; line-height: 1; color: var(--wiz-main-grey); transition: transform 0.15s; }
+.wiz-member__arrow.is-open { transform: rotate(180deg); }
+
+.wiz-member__panel {
+  position: fixed; z-index: 1000; box-sizing: border-box; display: flex; flex-direction: column; gap: var(--wiz-spacing-sm); padding: var(--wiz-spacing-sm);
+  background: var(--wiz-main-white); border: 1px solid var(--wiz-grey-30); border-radius: var(--wiz-radius-md); box-shadow: var(--wiz-shadow-popover);
+  font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size);
+}
+.wiz-member__list { margin: 0; padding: 0; list-style: none; max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.wiz-member__opt { display: flex; align-items: center; gap: var(--wiz-spacing-sm); min-height: 40px; padding: 0 var(--wiz-spacing-sm); box-sizing: border-box; border-radius: var(--wiz-radius-sm); cursor: pointer; color: var(--wiz-grey-90); }
+.wiz-member__opt.is-active { background: var(--wiz-grey-30); }
+.wiz-member__opt.is-selected { color: var(--wiz-brand-blue-70); font-weight: var(--wiz-font-weight-medium); }
+.wiz-member__opt.is-disabled { color: var(--wiz-grey-60); cursor: not-allowed; }
+.wiz-member__name { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiz-member__name small { font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-muted); }
+.wiz-member__tick { flex: none; font-size: 16px; line-height: 1; }
+.wiz-member__empty { min-height: 32px; padding: 0 var(--wiz-spacing-sm); display: flex; align-items: center; color: var(--wiz-grey-60); }

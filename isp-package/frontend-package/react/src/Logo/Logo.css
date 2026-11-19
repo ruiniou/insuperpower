@@ -1,0 +1,6 @@
+/* Wiz 标志（Copilot 入口）：渐变圆底 + 白色标记，图内固定色，用作 IconButton 的 icon 类名 */
+.wiz-logo-icon { display: inline-block; width: 20px; height: 20px; background: center / 100% 100% no-repeat url('./assets/wiz-logo.svg'); }
+
+/* ISP 标志：src/ISP-Text.svg，58×24（图内固定色，暗色主题下文字为深灰） */
+.wiz-logo { display: inline-flex; align-items: center; }
+.wiz-logo__symbol { flex: none; width: 58px; height: 24px; background: center / 100% 100% no-repeat url('./assets/isp-text.svg'); }

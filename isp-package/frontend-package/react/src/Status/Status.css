@@ -1,0 +1,18 @@
+.wiz-status--purple { --_c10: var(--wiz-purple-10); --_c30: var(--wiz-purple-30); --_c70: var(--wiz-purple-70); --_c60: var(--wiz-purple-60); }
+.wiz-status--blue { --_c10: var(--wiz-blue-10); --_c30: var(--wiz-blue-20); --_c70: var(--wiz-blue-60); --_c60: var(--wiz-blue-60); }
+.wiz-status--green { --_c10: var(--wiz-green-10); --_c30: var(--wiz-green-30); --_c70: var(--wiz-green-70); --_c60: var(--wiz-green-60); }
+.wiz-status--red { --_c10: var(--wiz-red-10); --_c30: var(--wiz-red-30); --_c70: var(--wiz-red-70); --_c60: var(--wiz-red-60); }
+.wiz-status--yellow { --_c10: var(--wiz-yellow-10); --_c30: var(--wiz-yellow-30); --_c70: var(--wiz-yellow-70); --_c60: var(--wiz-yellow-60); }
+.wiz-status--grey { --_c10: var(--wiz-grey-20); --_c30: var(--wiz-grey-40); --_c70: var(--wiz-grey-80); --_c60: var(--wiz-grey-80); }
+
+.wiz-status { display: inline-flex; align-items: center; box-sizing: border-box; height: 24px; border-radius: var(--wiz-radius-xs); white-space: nowrap; font-family: var(--wiz-text-overline-family); font-size: var(--wiz-text-overline-size); font-weight: var(--wiz-text-overline-weight); letter-spacing: var(--wiz-text-overline-letter-spacing); text-transform: uppercase; line-height: normal; }
+.wiz-status--style1 { padding: var(--wiz-spacing-xs); background: var(--_c10); box-shadow: inset 0 0 0 1px var(--_c30); color: var(--_c70); }
+.wiz-status--style2 { padding: var(--wiz-spacing-xs); background: var(--_c60); color: var(--wiz-fixed-white); }
+.wiz-status--style3 { gap: 2px; padding: var(--wiz-spacing-xs) var(--wiz-spacing-sm); background: var(--_c10); box-shadow: inset 0 0 0 1px var(--_c30); color: var(--_c70); }
+.wiz-status__icon { font-size: 12px; line-height: 1; }
+.wiz-status--dot { height: 16px; gap: 6px; color: var(--wiz-grey-90); text-transform: none; }
+.wiz-status--dot:not(.has-text) { width: 16px; justify-content: center; }
+.wiz-status__dot { width: 8px; height: 8px; border-radius: var(--wiz-radius-full); background: var(--_c70); flex: none; }
+.wiz-status__dot-text { font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); font-weight: var(--wiz-text-body-2-weight); letter-spacing: var(--wiz-text-body-2-letter-spacing); }
+
+.wiz-status.is-normal-case { text-transform: none; }

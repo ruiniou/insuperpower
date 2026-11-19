@@ -10,3 +10,4 @@ import './InputsCard/InputsCard.css';
 import './WorkflowPopover/WorkflowPopover.css';
 import './AttentionRow/AttentionRow.css';
 import './PipelineLegend/PipelineLegend.css';
+import './ValidityPicker/ValidityPicker.css';

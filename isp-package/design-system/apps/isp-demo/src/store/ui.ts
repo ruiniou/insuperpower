@@ -14,6 +14,9 @@ export type ModalState =
   | { kind: 'createEvent'; sid: string }
   | { kind: 'uploadAsset'; sid: string; assetId: string | null; code: string }
   | { kind: 'uploadDataset'; sid: string; dsId: string | null; mode: string }
+  | { kind: 'addMembers'; sid: string; userId: string | null }
+  | { kind: 'editMember'; sid: string; memberId: string }
+  | { kind: 'removeMember'; sid: string; memberId: string }
   | null;
 export const modalUi: { modal: ModalState } = { modal: null };
 export const openModal = (m: ModalState) => { modalUi.modal = m; emit(); };

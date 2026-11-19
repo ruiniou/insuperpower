@@ -1,0 +1,5 @@
+.wiz-filebox { display: flex; align-items: center; gap: var(--wiz-spacing-sm); box-sizing: border-box; padding: var(--wiz-spacing-sm) 10px; border: 1px dashed var(--wiz-grey-50); border-radius: var(--wiz-radius-sm); background: var(--wiz-grey-10); font-family: var(--wiz-font-family-ui); font-size: var(--wiz-text-body-2-size); }
+.wiz-filebox.is-invalid { border-color: var(--wiz-main-error); }
+.wiz-filebox.is-disabled { opacity: .6; }
+.wiz-filebox__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--wiz-color-text-secondary); }
+.wiz-filebox__name.has-file { color: var(--wiz-color-text-primary); }

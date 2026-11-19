@@ -1,0 +1,8 @@
+.wiz-checkpill { position: relative; display: inline-flex; align-items: flex-start; gap: 6px; box-sizing: border-box; min-height: 28px; padding: 5px 10px; border: 1px solid var(--wiz-grey-50); border-radius: var(--wiz-radius-sm); background: var(--wiz-main-white); color: var(--wiz-color-text-primary); font-family: var(--wiz-font-family-ui); font-size: var(--wiz-text-caption-size); line-height: 1.4; cursor: pointer; }
+.wiz-checkpill.is-on { border-color: var(--wiz-brand-blue-70); background: var(--wiz-color-surface-selected); color: var(--wiz-brand-blue-70); }
+.wiz-checkpill.is-disabled { cursor: not-allowed; color: var(--wiz-color-text-disabled); }
+.wiz-checkpill__input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+.wiz-checkpill__input:focus-visible + .wiz-checkpill__box { outline: 2px solid var(--wiz-color-focus); outline-offset: 1px; }
+.wiz-checkpill__box { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 16px; height: 16px; box-sizing: border-box; margin-top: 1px; border: 1px solid var(--wiz-grey-50); border-radius: var(--wiz-radius-xs); background: var(--wiz-main-white); color: var(--wiz-fixed-white); font-size: 14px; line-height: 1; }
+.wiz-checkpill.is-on .wiz-checkpill__box { border-color: var(--wiz-brand-blue-70); background: var(--wiz-brand-blue-70); }
+.wiz-checkpill__text { min-width: 0; }

@@ -1,0 +1,13 @@
+.wiz-tooltip-trigger { display: inline-flex; }
+.wiz-tooltip { position: fixed; z-index: 9999; display: flex; align-items: center; pointer-events: none; }
+.wiz-tooltip--top { flex-direction: column; }
+.wiz-tooltip--bottom { flex-direction: column-reverse; }
+.wiz-tooltip--left { flex-direction: row; }
+.wiz-tooltip--right { flex-direction: row-reverse; }
+.wiz-tooltip__bubble { box-sizing: border-box; max-width: 232px; padding: var(--wiz-spacing-xs-sm) 10px; border-radius: var(--wiz-radius-xs); overflow-wrap: anywhere; background: var(--wiz-grey-100); color: var(--wiz-main-white); font-family: var(--wiz-text-caption-family); font-size: var(--wiz-text-caption-size); font-weight: var(--wiz-font-weight-medium); line-height: 1.25; box-shadow: var(--wiz-shadow-overlay); }
+.wiz-tooltip.is-nowrap .wiz-tooltip__bubble { max-width: none; white-space: nowrap; }
+.wiz-tooltip__arrow { width: 0; height: 0; flex: none; border-style: solid; border-color: transparent; }
+.wiz-tooltip--top .wiz-tooltip__arrow { border-width: 4px 3.5px 0; border-top-color: var(--wiz-grey-100); }
+.wiz-tooltip--bottom .wiz-tooltip__arrow { border-width: 0 3.5px 4px; border-bottom-color: var(--wiz-grey-100); }
+.wiz-tooltip--left .wiz-tooltip__arrow { border-width: 3.5px 0 3.5px 4px; border-left-color: var(--wiz-grey-100); }
+.wiz-tooltip--right .wiz-tooltip__arrow { border-width: 3.5px 4px 3.5px 0; border-right-color: var(--wiz-grey-100); }

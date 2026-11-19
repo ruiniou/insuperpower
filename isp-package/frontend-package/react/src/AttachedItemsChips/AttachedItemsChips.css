@@ -1,0 +1,16 @@
+.wiz-chip {
+  display: inline-flex; align-items: center; gap: var(--wiz-spacing-sm); box-sizing: border-box; max-width: 100%;
+  padding: var(--wiz-spacing-sm) var(--wiz-spacing-sm) var(--wiz-spacing-sm) var(--wiz-spacing-md);
+  background: var(--wiz-main-white); border: 0.5px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-sm);
+  font-family: var(--wiz-font-family-ui); font-size: 14px; line-height: 20px; color: var(--wiz-grey-80);
+}
+.wiz-chip:hover, .wiz-chip.is-hover { background: var(--wiz-grey-20); }
+.wiz-chip__content { display: flex; align-items: center; gap: var(--wiz-spacing-xs-sm); min-width: 0; }
+.wiz-chip__icon { flex: none; font-size: 16px; line-height: 16px; color: var(--wiz-color-accent-orange); }
+.wiz-chip__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiz-chip__close {
+  all: unset; flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  font-size: 18px; color: var(--wiz-grey-60); cursor: pointer; border-radius: var(--wiz-radius-full);
+}
+.wiz-chip__close:hover { color: var(--wiz-grey-80); }
+.wiz-chip__close:focus-visible { outline: 2px solid var(--wiz-color-focus); }

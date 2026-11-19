@@ -7,7 +7,11 @@ import { can } from './role';
 import { newFlow, V } from './seed';
 import { baselineAsset, baselinesOf, baselineUsers, BL_NAME, currentBaseline, isBlCode } from './baseline';
 import { emit, getDb, toast } from './store';
-import type { Asset, Baseline, Dataset, EventRec } from './types';
+import { memberKey, peopleOf, todayIso, validateMemberRows, validDate, type MemberRow } from './members';
+import { ME_USER, userById } from './people';
+import type { Asset, Baseline, BlindAttr, Dataset, EventRec, MemberRole } from './types';
+
+export { memberKey, peopleOf, validDate };
 
 const extOf = (n: string) => (n.split('.').pop() || '').toLowerCase();
 const noCtl = (s: string) => /[\u0000-\u001f\u007f]/.test(s);
@@ -133,25 +137,12 @@ export function updateStudyDetails(sid: string, f: StudyDetailsForm): { errors: 
   return { ok: true };
 }
 
-export interface NewMemberRow { key: number; user: string; role: string; from: string; to: string }
-export interface CreateStudyForm { id: string; name: string; desc: string; ta: string; phase: string; role: string; members: NewMemberRow[] }
-export const emptyStudyForm = (): CreateStudyForm => ({ id: '', name: '', desc: '', ta: '', phase: '', role: '', members: [] });
+export interface CreateStudyForm { id: string; name: string; desc: string; ta: string; phase: string; role: string; attr: string; members: MemberRow[] }
+export const emptyStudyForm = (): CreateStudyForm => ({ id: '', name: '', desc: '', ta: '', phase: '', role: 'STAT', attr: 'UNSET', members: [] });
 /** 研究编号比较口径：NFKC、去空白、大写 */
 export const normalizeStudyId = (s: string) => s.normalize('NFKC').replace(/\s+/g, '').toUpperCase();
-/** 成员有效期按日期填写：YYYY-MM-DD（固定英文格式，不依赖浏览器语言）；结束日含当天 */
-export const validDate = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); if (!m) return false; const [y, mo, d] = m.slice(1).map(Number); const t = new Date(y, mo - 1, d); return t.getFullYear() === y && t.getMonth() === mo - 1 && t.getDate() === d; };
-/** 单个成员的字段校验（不含去重），返回 user / from / to 的错误 */
-export function validateMemberRow(m: { user: string; from: string; to: string }): Partial<Record<'user' | 'from' | 'to', string>> {
-  const er: Partial<Record<'user' | 'from' | 'to', string>> = {}, from = m.from.trim(), to = m.to.trim();
-  if (!m.user) er.user = 'Select a person.';
-  if (!from) er.from = 'Enter a start date.'; else if (!validDate(from)) er.from = 'Use YYYY-MM-DD.';
-  if (!to) er.to = 'Enter an end date.'; else if (!validDate(to)) er.to = 'Use YYYY-MM-DD.';
-  else if (!er.from && to < from) er.to = 'End date can’t be before start.';
-  return er;
-}
-export const memberKey = (key: number, field: 'user' | 'role' | 'from' | 'to') => 'm:' + key + ':' + field;
 
-/** 表单校验（不含唯一性：编号唯一由提交时裁决，前端不做实时查重）。键：id / name / desc / ta / m:<行键>:<字段> */
+/** 表单校验（不含唯一性：编号唯一由提交时裁决，前端不做实时查重）。键：id / name / desc / ta / role / m:<行键>:<字段>。新建时 Study 为 Not blinded，成员盲态属性不强制 */
 export function validateStudyForm(f: CreateStudyForm): Errors {
   const er: Errors = {}, id = f.id.trim(), name = f.name.trim();
   if (!id) er.id = 'Study ID is required.'; else if (id.length > 64) er.id = 'Use 64 characters or fewer.'; else if (noCtl(id)) er.id = 'Remove control characters.';
@@ -159,20 +150,11 @@ export function validateStudyForm(f: CreateStudyForm): Errors {
   if (f.desc.trim().length > 2000) er.desc = 'Use 2000 characters or fewer.';
   if (f.ta.trim().length > 200) er.ta = 'Use 200 characters or fewer.';
   if (f.phase && !PHASES.includes(f.phase)) er.phase = 'Choose a listed phase.';
-  const seen = new Set<string>();
-  f.members.forEach((m) => {
-    const e = validateMemberRow(m);
-    if (e.user) er[memberKey(m.key, 'user')] = e.user; else if (seen.has(m.user)) er[memberKey(m.key, 'user')] = 'This person is already added.';
-    if (e.from) er[memberKey(m.key, 'from')] = e.from;
-    if (e.to) er[memberKey(m.key, 'to')] = e.to;
-    seen.add(m.user);
-    if (!m.role) er[memberKey(m.key, 'role')] = 'Select a Role.';
-    if (!m.role) er[memberKey(m.key, 'role')] = 'Select a Role.';
-  });
-  return er;
+  if (!f.role) er.role = 'Select a Role.';
+  return Object.assign(er, validateMemberRows(f.members, { studyBlinded: false }));
 }
 
-/** 新建 Study：创建者成为 Study Admin，初始非盲、ACTIVE，成员数含创建者。编号重复、无创建资格由这里裁决（模拟服务端），失败不改数据 */
+/** 新建 Study：创建者成为 Study Admin（成员记录，有效期从创建当天起、无结束日），初始非盲、ACTIVE；初始成员一并入库。编号重复、无创建资格由这里裁决（模拟服务端），失败不改数据 */
 export function createStudy(f: CreateStudyForm): { errors: Errors } | { id: string } {
   const db = getDb();
   if (!can('study.create')) return { errors: { form: 'You no longer have permission to create Studies.' } };
@@ -180,17 +162,16 @@ export function createStudy(f: CreateStudyForm): { errors: Errors } | { id: stri
   if (Object.keys(er).length) return { errors: er };
   const id = f.id.trim();
   if (db.studies.some((s) => normalizeStudyId(s.id) === normalizeStudyId(id))) return { errors: { id: 'ID unavailable. Change it, or contact an authorized administrator.' } };
-  db.studies.unshift({ id, name: f.name.trim(), ta: f.ta.trim(), phase: f.phase, admin: db.me.name, lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: dLong(), members: 1 + f.members.length, desc: f.desc.trim(), tenant: 'Demo Tenant', createdBy: db.me.name, createdAt: dLong() });
+  db.studies.unshift({ id, name: f.name.trim(), ta: f.ta.trim(), phase: f.phase, admin: db.me.name, lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: dLong(), desc: f.desc.trim(), tenant: 'Demo Tenant', createdBy: db.me.name, createdAt: dLong() });
   db.seq.study++;
+  const mk = (userId: string, role: string, attr: string, validFrom: string, validUntil: string | null, isAdmin: boolean) => {
+    const u = userById(userId)!;
+    db.members.push({ id: 'M-' + String(++db.seq.member).padStart(3, '0'), studyId: id, userId, name: u.name, email: u.email, role: role as MemberRole, attr: attr as BlindAttr, validFrom, validUntil, status: 'ACTIVE', isAdmin });
+  };
+  mk(ME_USER.id, f.role, f.attr, todayIso(), null, true);
+  f.members.forEach((m) => mk(m.userId, m.role, m.attr, m.validFrom.trim(), m.validUntil.trim() || null, false));
   toast(id + ' created'); emit();
   return { id };
-}
-
-/** 本 Study 可选的 Event Owner：Study Admin、各 Event 与 Workflow 的负责人、当前用户。成员模块未做，先从现有数据里取 */
-export function peopleOf(sid: string): string[] {
-  const db = getDb(), st = S.study(sid);
-  const names = [st?.admin, db.me.name, ...S.eventsOf(sid).flatMap((e) => [e.owner, ...e.wfs.map((w) => w.owner)])];
-  return Array.from(new Set(names.filter((n): n is string => !!n)));
 }
 
 /** 交接 Event Owner（event.owner.transfer，仅 Study Admin） */

@@ -3,8 +3,51 @@ import { cx } from '../cx';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Checkbox } from '../Checkbox/Checkbox';
 import { Select } from '../Select/Select';
+import { Input } from '../Input/Input';
 import { Status } from '../Status/Status';
 import './Table.css';
+
+/** 页码序列：首、末、当前及相邻页；相隔多页处为 'gap'（点击可输入页码跳转），仅隔一页时直接显示该页 */
+function pageItems(cur: number, count: number): (number | 'gap')[] {
+  if (count <= 7) return Array.from({ length: count }, (_, i) => i);
+  const keep = Array.from(new Set([0, cur - 1, cur, cur + 1, count - 1].filter((p) => p >= 0 && p < count))).sort((x, y) => x - y);
+  const out: (number | 'gap')[] = [];
+  keep.forEach((p, i) => {
+    const prev = keep[i - 1];
+    if (prev !== undefined && p - prev === 2) out.push(prev + 1); else if (prev !== undefined && p - prev > 2) out.push('gap');
+    out.push(p);
+  });
+  return out;
+}
+
+/** 省略号：点击弹出页码输入，回车跳转，超界取边界，非法输入忽略；Esc、失焦或点外部关闭 */
+function PagerGap({ page, count, onJump }: { page: number; count: number; onJump: (p: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const [v, setV] = useState('');
+  const box = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const off = (e: globalThis.MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', off);
+    return () => document.removeEventListener('mousedown', off);
+  }, [open]);
+  const commit = () => {
+    const n = Number(v);
+    if (v.trim() && Number.isInteger(n)) onJump(Math.min(count, Math.max(1, n)) - 1);
+    setOpen(false);
+  };
+  return (
+    <span className="wiz-table__pager-gap" ref={box}>
+      <button type="button" className="wiz-table__pager-page" aria-label="Go to page" aria-expanded={open} onClick={() => { setV(String(page + 1)); setOpen((o) => !o); }}>…</button>
+      {open && (
+        <span className="wiz-table__pager-pop">
+          <Input size="small" type="number" min={1} max={count} autoFocus aria-label="Page number" value={v} onChange={(e) => setV(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } else if (e.key === 'Escape') { e.preventDefault(); setOpen(false); } }} />
+        </span>
+      )}
+    </span>
+  );
+}
 
 /* ───────── 单元格（主库 Column 356:875 / Column Header 337:1959 / Column Body 339:510） ───────── */
 
@@ -128,6 +171,8 @@ export interface TableProps extends HTMLAttributes<HTMLDivElement> {
   paginated?: boolean;
   pageSize?: number;
   pageSizeOptions?: number[];
+  /** 分页条显示「Go to」页码输入框（输入后回车或失焦跳页，超出范围取边界） */
+  jumpToPage?: boolean;
   /** 勾选变化（行在传入 rows 中的下标） */
   onSelectionChange?: (selected: number[]) => void;
   /** 受控选中（行在传入 rows 中的下标）；传入后以它为准，勾选只触发 onSelectionChange */
@@ -196,7 +241,7 @@ function FilterPopover({ values, selected, onChange, onClose }: { values: string
 }
 
 export function Table({
-  columns, rows, selectable = false, paginated = false, pageSize: initialPageSize = 5, pageSizeOptions = [5, 10, 20],
+  columns, rows, selectable = false, paginated = false, pageSize: initialPageSize = 5, pageSizeOptions = [5, 10, 20], jumpToPage = false,
   onSelectionChange, selectedRows, onRowClick, rowHeight = 32, variant = 'default', groupBy, renderGroup, activeRow, rowClickable, columnLayout = 'auto', className, style, striped: _striped, ...rest
 }: TableProps) {
   const [innerSel, setInnerSel] = useState<Set<number>>(() => new Set());
@@ -268,7 +313,7 @@ export function Table({
   const rangeEnd = paginated ? Math.min(total, (curPage + 1) * pageSize) : total;
 
   return (
-    <div className={cx('wiz-table', variant === 'plain' && 'wiz-table--plain', className)}
+    <div className={cx('wiz-table', variant === 'plain' && 'wiz-table--plain', paginated && 'wiz-table--paged', className)}
       style={{ ...(rowHeight !== 32 && ({ '--wiz-table-row-height': `${rowHeight}px` } as CSSProperties)), ...style }} {...rest}>
       <table className={cx('wiz-table__grid', (measured || columnLayout === 'fixed') && 'is-fixed')}>
         <colgroup>
@@ -350,9 +395,12 @@ export function Table({
                 onChange={(v) => { setPageSize(Number(v)); setPage(0); }} />
             </span>
           </span>
-          <span className="wiz-table__pager-range">{rangeStart}–{rangeEnd} of {total}</span>
+          <span className="wiz-table__pager-range">{jumpToPage ? `Total ${total}` : `${rangeStart}–${rangeEnd} of ${total}`}</span>
           <span className="wiz-table__pager-btns">
             <Tooltip content="Previous page" nowrap><button type="button" className="wiz-col-iconbtn" aria-label="Previous page" disabled={curPage === 0} onClick={() => setPage(Math.max(0, curPage - 1))}><i className="ri-arrow-left-s-line" aria-hidden="true" /></button></Tooltip>
+            {jumpToPage && pageItems(curPage, pageCount).map((it, i) => it === 'gap'
+              ? <PagerGap key={'g' + i} page={curPage} count={pageCount} onJump={setPage} />
+              : <button key={it} type="button" className={cx('wiz-table__pager-page', it === curPage && 'is-current')} aria-label={`Page ${it + 1}`} aria-current={it === curPage ? 'page' : undefined} onClick={() => setPage(it)}>{it + 1}</button>)}
             <Tooltip content="Next page" nowrap><button type="button" className="wiz-col-iconbtn" aria-label="Next page" disabled={curPage >= pageCount - 1} onClick={() => setPage(Math.min(pageCount - 1, curPage + 1))}><i className="ri-arrow-right-s-line" aria-hidden="true" /></button></Tooltip>
           </span>
         </div>

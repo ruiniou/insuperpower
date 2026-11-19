@@ -1,0 +1,16 @@
+/* 取自原型 .segs/.seg（高 32、圆角 8、选中灰底），颜色映射到 --wiz-* */
+.wiz-seg { display: inline-flex; align-items: center; box-sizing: border-box; }
+.wiz-seg__item { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; border: 0; background: transparent; color: var(--wiz-grey-80); cursor: pointer; font-family: var(--wiz-text-body-1-family); font-size: var(--wiz-text-body-1-size); line-height: normal; white-space: nowrap; transition: background-color 0.12s, color 0.12s; }
+.wiz-seg__item > i { font-size: 16px; line-height: 1; }
+.wiz-seg__item:focus-visible { outline: 2px solid var(--wiz-agent-brand); outline-offset: -2px; }
+.wiz-seg__item:disabled { opacity: 0.45; cursor: not-allowed; }
+/* text */
+.wiz-seg--text { gap: var(--wiz-spacing-xs); }
+.wiz-seg--text .wiz-seg__item { height: 32px; padding: 0 var(--wiz-spacing-md); gap: var(--wiz-spacing-xs-sm); border-radius: var(--wiz-radius-sm); }
+.wiz-seg--text .wiz-seg__item:hover:not(:disabled) { background: var(--wiz-grey-20); }
+.wiz-seg--text .wiz-seg__item.is-on { background: var(--wiz-grey-20); color: var(--wiz-grey-90); font-weight: var(--wiz-font-weight-medium); }
+/* boxed：外框 1px 计入 32，内部每格 30 × 30 */
+.wiz-seg--boxed { height: 32px; border: 1px solid var(--wiz-grey-40); border-radius: var(--wiz-radius-sm); overflow: hidden; background: var(--wiz-main-white); }
+.wiz-seg--boxed .wiz-seg__item { width: 30px; height: 30px; padding: 0; }
+.wiz-seg--boxed .wiz-seg__item:hover:not(:disabled) { background: var(--wiz-grey-20); }
+.wiz-seg--boxed .wiz-seg__item.is-on { background: var(--wiz-grey-30); color: var(--wiz-grey-90); }
