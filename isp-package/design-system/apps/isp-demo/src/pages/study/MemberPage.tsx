@@ -52,7 +52,7 @@ export function MemberPage({ sid }: { sid: string }) {
       return [
         ...(manage ? [{ label: 'Edit role and validity', value: 'edit' }] : []),
         ...(blindingPerm ? [{ label: 'Change blinding status', value: 'blinding' }] : []),
-        ...(m.isAdmin && transferPerm ? [{ label: 'Transfer Study Admin', value: 'transfer' }] : []),
+        ...(m.isAdmin && transferPerm ? [{ label: 'Transfer Study Admin', value: 'transfer', danger: true }] : []),
         ...(manage && !m.isAdmin ? [{ label: 'Remove member', value: 'remove', danger: true }] : []),
       ];
     };
