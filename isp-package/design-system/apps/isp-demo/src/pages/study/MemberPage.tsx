@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Avatar, Button, Dropdown, Search, Status, Table, type TableColumn } from '@wiz/react';
 import { formatRange, systemTimeZone } from '@wiz/isp';
-import { attrLabel, membersOf, roleLabel, sortMembers } from '../../store/members';
+import { attrLabel, canAddMembers, canChangeBlinding, canTransferAdmin, membersOf, roleLabel, sortMembers } from '../../store/members';
 import { ROLES } from '../../store/people';
 import { can, session } from '../../store/role';
 import { S } from '../../store/selectors';
@@ -20,6 +20,7 @@ export function MemberPage({ sid }: { sid: string }) {
   useDb();
   const study = S.study(sid);
   const manage = can('study.member.manage', { study });
+  const blindingPerm = canChangeBlinding(sid), transferPerm = canTransferAdmin(sid), addAllowed = canAddMembers(sid);
   const duty = session.duty;
   const [q, setQ] = useState('');
   const [roles, setRoles] = useState<string[]>([]);
@@ -46,18 +47,31 @@ export function MemberPage({ sid }: { sid: string }) {
       { key: 'validity', header: 'Validity · ' + tz, width: 340, render: (_v, m: StudyMember) => dim(m, formatRange(m.validFrom, m.validUntil)) },
       { key: 'status', header: 'Status', width: 120, render: (_v, m: StudyMember) => dim(m, m.status === 'ACTIVE' ? 'Active' : 'Removed') },
     ];
-    if (manage) {
-      cols.push({ key: 'more', header: '', width: 56, align: 'right', render: (_v, m: StudyMember) => (
-        <RowMenu label={m.name} onSelect={(v) => {
-          if (v === 'edit') openModal({ kind: 'editMember', sid, memberId: m.id });
-          else if (v === 'remove') openModal({ kind: 'removeMember', sid, memberId: m.id });
-          else openModal({ kind: 'addMembers', sid, userId: m.userId });
-        }} items={m.status === 'REMOVED' ? [{ label: 'Re-add', value: 're-add' }]
-          : [{ label: 'Edit role and validity', value: 'edit' }, ...(m.isAdmin ? [] : [{ label: 'Remove member', value: 'remove', danger: true }])]} />
-      ) });
+    const itemsOf = (m: StudyMember) => {
+      if (m.status === 'REMOVED') return addAllowed ? [{ label: 'Re-add', value: 're-add' }] : [];
+      return [
+        ...(manage ? [{ label: 'Edit role and validity', value: 'edit' }] : []),
+        ...(blindingPerm ? [{ label: 'Change blinding status', value: 'blinding' }] : []),
+        ...(m.isAdmin && transferPerm ? [{ label: 'Transfer Study Admin', value: 'transfer' }] : []),
+        ...(manage && !m.isAdmin ? [{ label: 'Remove member', value: 'remove', danger: true }] : []),
+      ];
+    };
+    if (manage || blindingPerm || transferPerm) {
+      cols.push({ key: 'more', header: '', width: 56, align: 'right', render: (_v, m: StudyMember) => {
+        const items = itemsOf(m);
+        return items.length === 0 ? null : (
+          <RowMenu label={m.name} onSelect={(v) => {
+            if (v === 'edit') openModal({ kind: 'editMember', sid, memberId: m.id });
+            else if (v === 'blinding') openModal({ kind: 'changeBlinding', sid, memberId: m.id });
+            else if (v === 'transfer') openModal({ kind: 'transferAdmin', sid });
+            else if (v === 'remove') openModal({ kind: 'removeMember', sid, memberId: m.id });
+            else openModal({ kind: 'addMembers', sid, userId: m.userId });
+          }} items={items} />
+        );
+      } });
     }
     return cols;
-  }, [duty, sid, manage]);
+  }, [duty, sid, manage, blindingPerm, transferPerm, addAllowed, tz]);
 
   return (
     <div className="studies">
@@ -69,7 +83,7 @@ export function MemberPage({ sid }: { sid: string }) {
           <Dropdown size="medium" shadow="none" filterName="Status" label={status} width={160} items={STATUS_OPTS.map((t) => ({ label: t, value: t, selected: t === status }))} onSelect={(v) => setStatus(String(v) as StatusFilter)} />
         </>}
         search={<Search size="compact" width={220} placeholder="Search members" aria-label="Search members" value={q} onChange={(e) => setQ(e.target.value)} />}
-        actions={manage && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'addMembers', sid, userId: null })}>Add members</Button>} />
+        actions={addAllowed && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'addMembers', sid, userId: null })}>Add members</Button>} />
       <div className="page-scroll">
         {rows.length === 0
           ? <div className="app-empty" role="status"><b>No members match</b><span>Clear the search or the filters.</span></div>

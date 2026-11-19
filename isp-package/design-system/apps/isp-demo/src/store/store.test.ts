@@ -7,8 +7,8 @@ import { baselineAsset, baselinesOf, baselineUsers, slotCarriedFrom, suggestBase
 import { S, vLabelBl, wfInfo } from './selectors';
 import { uploadAsset } from './study';
 import { getDb, resetDb, setToastHandler } from './store';
-import { activeMembers, addMembers, emptyMemberRow, evKey, memberCount, memberOf, membersOf, removalImpact, removeMember, sortMembers, updateMember, validateMemberRow, wfKey, peopleOf } from './members';
-import { setDuty } from './role';
+import { activeMembers, addMembers, emptyMemberRow, evKey, memberCount, memberOf, membersOf, removalImpact, removeMember, sortMembers, updateMember, validateMemberRow, wfKey, peopleOf, changeBlinding, transferStudyAdmin, canAddMembers } from './members';
+import { can, DUTIES, setDuty } from './role';
 
 let toasts: string[] = [];
 beforeEach(() => { vi.useFakeTimers(); resetDb(); toasts = []; setToastHandler((m) => toasts.push(m)); });
@@ -239,7 +239,7 @@ describe('Study 页 MVP：职责与资料', () => {
     const m = (key: number, userId: string, validFrom: string, validUntil: string) => ({ key, userId, role: 'VIEW', attr: 'UNSET', validFrom, validUntil });
     const er = validateStudyForm({ ...base, id: 'N2', members: [m(1, 'U-102', '2026-12-02T09:00', '2026-12-02T09:00'), m(2, 'U-102', '', '2026-12-02T10:00')] });
     expect(er['m:1:to']).toMatch(/after start/);
-    expect(er['m:2:user']).toMatch(/already added/);
+    expect(er['m:2:user']).toMatch(/Already added/);
     expect(er['m:2:from']).toBeTruthy();
   });
   it('新建 Study：成员结束日期可空；创建者 Role 为空报错', async () => {
@@ -306,6 +306,7 @@ describe('Study Baseline', () => {
 
 describe('Study Member', () => {
   const row = (key: number, userId: string, o: Partial<ReturnType<typeof emptyMemberRow>> = {}) => emptyMemberRow(key, { userId, validFrom: '2026-12-01T09:00', ...o });
+  const errs = (r: { errors: Record<string, string> } | { ok: true }) => ('errors' in r ? r.errors : {}) as Record<string, string>;
   const mid = (sid: string, name: string) => membersOf(sid).find((m) => m.name === name)!;
 
   it('种子：STU-001 有 5 个 Active 成员，Study Admin 是当前用户并置顶；STU-002 为 3，STU-003 为 2', () => {
@@ -335,7 +336,7 @@ describe('Study Member', () => {
     expect(memberCount('STU-001')).toBe(6);
     expect(toasts).toEqual([]);
     expect(membersOf('STU-001').filter((m) => m.userId === 'U-102')).toHaveLength(1);
-    expect(addMembers({ sid: 'STU-001', rows: [row(1, 'U-107'), row(2, 'U-107')], reason: 'x' }).errors['m:2:user']).toMatch(/already added/);
+    expect(addMembers({ sid: 'STU-001', rows: [row(1, 'U-107'), row(2, 'U-107')], reason: 'x' }).errors['m:2:user']).toMatch(/Already added/);
   });
 
   it('REMOVED 的用户再次加入：恢复原记录并覆盖设置，不产生重复', () => {
@@ -388,13 +389,86 @@ describe('Study Member', () => {
     expect(validateMemberRow({ userId: 'U-106', role: 'VIEW', attr: 'UNSET', validFrom: '2026-12-01T09:00', validUntil: '' }, { studyBlinded: false }).attr).toBeUndefined();
     expect(addMembers({ sid: 'STU-002', rows: [row(1, 'U-106')], reason: 'x' }).errors['m:1:attr']).toBe('Select Blinded or Unblinded.');
     expect(addMembers({ sid: 'STU-002', rows: [row(1, 'U-106', { attr: 'BLINDED' })], reason: 'x' }).done).toEqual([1]);
-    setDuty('System Owner');
     const li = mid('STU-001', 'Li Wei');
     expect(li.attr).toBe('UNBLINDED');
-    const bad = updateMember({ sid: 'STU-001', memberId: li.id, row: row(1, li.userId, { role: 'DEV', attr: 'BLINDED', validFrom: li.validFrom }), reason: 'x' });
-    expect('errors' in bad && bad.errors['m:1:attr']).toMatch(/back to Blinded/);
-    expect('ok' in updateMember({ sid: 'STU-001', memberId: li.id, row: row(1, li.userId, { role: 'STAT', attr: 'UNBLINDED', validFrom: li.validFrom }), reason: 'Role change' })).toBe(true);
-    expect(li.role).toBe('STAT');
+    const bad = changeBlinding({ sid: 'STU-001', memberId: li.id, attr: 'BLINDED', reason: 'x' });
+    expect('errors' in bad && bad.errors.attr).toMatch(/back to Blinded/);
+    expect(errs(changeBlinding({ sid: 'STU-001', memberId: li.id, attr: 'UNSET', reason: 'x' })).attr).toMatch(/back to Unspecified/);
+    expect(li.attr).toBe('UNBLINDED');
+  });
+
+  it('Edit 只改 Role 与有效期，不改盲态属性', () => {
+    const li = mid('STU-001', 'Li Wei');
+    const r = updateMember({ sid: 'STU-001', memberId: li.id, row: row(1, li.userId, { role: 'STAT', attr: 'BLINDED', validFrom: li.validFrom }), reason: 'Role change' });
+    expect('ok' in r).toBe(true);
+    expect([li.role, li.attr]).toEqual(['STAT', 'UNBLINDED']);
+    // Blinded 的 Study 里历史 Unspecified 成员也能改 Role
+    const wf = mid('STU-002', 'Chen Yu'); wf.attr = 'UNSET';
+    setDuty('System Owner');
+    expect('ok' in updateMember({ sid: 'STU-002', memberId: wf.id, row: row(1, wf.userId, { role: 'DM', validFrom: wf.validFrom }), reason: 'x' })).toBe(true);
+  });
+
+  it('改盲态：Reason 必填；原值被拒；Blinded 的 Study 不可设 Unspecified；非盲 Study 可自由设置', () => {
+    const li = mid('STU-002', 'Li Wei');
+    expect(li.attr).toBe('BLINDED');
+    expect(errs(changeBlinding({ sid: 'STU-002', memberId: li.id, attr: 'UNSET', reason: 'x' }))).toMatchObject({ attr: 'Select Blinded or Unblinded.' });
+    expect(errs(changeBlinding({ sid: 'STU-002', memberId: li.id, attr: 'BLINDED', reason: 'x' }))).toMatchObject({ attr: 'Choose a different value.' });
+    expect(errs(changeBlinding({ sid: 'STU-002', memberId: li.id, attr: 'UNBLINDED', reason: ' ' })).reason).toBeTruthy();
+    expect(li.attr).toBe('BLINDED');
+    expect('ok' in changeBlinding({ sid: 'STU-002', memberId: li.id, attr: 'UNBLINDED', reason: 'Unblinding approved' })).toBe(true);
+    expect(li.attr).toBe('UNBLINDED');
+    expect(toasts.at(-1)).toBe('Blinding status of Li Wei changed to Unblinded');
+    const chen = mid('STU-001', 'Chen Yu');
+    expect('ok' in changeBlinding({ sid: 'STU-001', memberId: chen.id, attr: 'BLINDED', reason: 'x' })).toBe(true);
+    // 设过属性后不能回到 Unspecified；Blinded 可以升为 Unblinded，Unblinded 之后不能再回头（堵住 Unblinded、Unspecified、Blinded 的绕路）
+    expect(errs(changeBlinding({ sid: 'STU-001', memberId: chen.id, attr: 'UNSET', reason: 'x' })).attr).toMatch(/back to Unspecified/);
+    expect('ok' in changeBlinding({ sid: 'STU-001', memberId: chen.id, attr: 'UNBLINDED', reason: 'x' })).toBe(true);
+    expect(errs(changeBlinding({ sid: 'STU-001', memberId: chen.id, attr: 'BLINDED', reason: 'x' })).attr).toMatch(/back to Blinded/);
+  });
+
+  it('新点位对四种职责：改盲 SO/SA 开，移交仅 SA 开（且仅在自己担任 Admin 的 Study）', () => {
+    const study = S.study('STU-001')!;
+    const res = (p: Parameters<typeof can>[0]) => DUTIES.map((d) => can(p, { study }, d));
+    expect(res('study.member_blinding.manage')).toEqual([true, true, false, false]);
+    expect(res('study.owner.transfer')).toEqual([false, true, false, false]);
+    expect(can('study.owner.transfer', { study: S.study('STU-002')! }, 'Study Admin')).toBe(false);
+  });
+
+  it('Add members：没有改盲点位时属性固定为 Unspecified；Blinded 的 Study 需要两个点位', () => {
+    expect(canAddMembers('STU-001')).toBe(true);
+    const r = addMembers({ sid: 'STU-001', rows: [row(1, 'U-106', { attr: 'UNBLINDED' })], reason: 'x' });
+    expect(r.done).toEqual([1]);
+    expect(mid('STU-001', 'Zhang Hui').attr).toBe('UNBLINDED');
+    const st = S.study('STU-001')!; st.blinding = 'Blinded';
+    setDuty('Event Owner');
+    expect(canAddMembers('STU-001')).toBe(false);
+    setDuty('Study Admin');
+    expect(canAddMembers('STU-001')).toBe(true);
+  });
+
+  it('移交 Study Admin：Admin 唯一，Study.admin 同步，原 Admin 保留成员身份；移交后当前用户失去管理入口', () => {
+    expect(errs(transferStudyAdmin({ sid: 'STU-001', toMemberId: '', reason: 'x' })).to).toBeTruthy();
+    const li = mid('STU-001', 'Li Wei'), me = mid('STU-001', 'User Name');
+    expect(errs(transferStudyAdmin({ sid: 'STU-001', toMemberId: li.id, reason: '' })).reason).toBeTruthy();
+    expect(errs(transferStudyAdmin({ sid: 'STU-001', toMemberId: me.id, reason: 'x' })).to).toBeTruthy();
+    const eo = S.event('EVT-001')!.owner;
+    expect('ok' in transferStudyAdmin({ sid: 'STU-001', toMemberId: li.id, reason: 'Handover' })).toBe(true);
+    expect(membersOf('STU-001').filter((m) => m.isAdmin).map((m) => m.name)).toEqual(['Li Wei']);
+    expect(S.study('STU-001')!.admin).toBe('Li Wei');
+    expect(me).toMatchObject({ status: 'ACTIVE', role: 'STAT', attr: 'UNSET', isAdmin: false });
+    expect(S.event('EVT-001')!.owner).toBe(eo);
+    expect(toasts.at(-1)).toBe('Study Admin transferred to Li Wei');
+    expect(can('study.member.manage', { study: S.study('STU-001')! })).toBe(false);
+    expect(addMembers({ sid: 'STU-001', rows: [row(1, 'U-106')], reason: 'x' }).errors.form).toMatch(/permission/);
+  });
+
+  it('只有 Admin 一个 Active 成员时没有可选的新 Admin', () => {
+    membersOf('STU-003').filter((m) => !m.isAdmin).forEach((m) => { m.status = 'REMOVED'; });
+    expect(activeMembers('STU-003').filter((m) => !m.isAdmin)).toHaveLength(0);
+    setDuty('Study Admin'); getDb().me.name = 'Wang Fang'; S.study('STU-003')!.lifecycle = 'ACTIVE';
+    expect(errs(transferStudyAdmin({ sid: 'STU-003', toMemberId: mid('STU-003', 'Li Wei').id, reason: 'x' })).to).toBeTruthy();
+    S.study('STU-003')!.lifecycle = 'ARCHIVED';
+    expect(errs(transferStudyAdmin({ sid: 'STU-003', toMemberId: mid('STU-003', 'Li Wei').id, reason: 'x' })).form).toMatch(/permission/);
   });
 
   it('权限：Event Owner 与 Member 职责不能添加、编辑、移除', () => {

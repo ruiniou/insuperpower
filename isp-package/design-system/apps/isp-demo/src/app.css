@@ -171,3 +171,16 @@ button { font-family: inherit; }
 .mem-impact__row { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: var(--wiz-spacing-md); align-items: start; padding-top: var(--wiz-spacing-sm); border-top: 1px solid var(--wiz-grey-30); }
 .mem-impact__what { display: flex; flex-direction: column; min-height: 32px; justify-content: center; min-width: 0; }
 .mem-impact__sub { font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
+.mre-ro { display: flex; align-items: center; min-height: 32px; }
+
+/* MemberRowsEditor 弹窗版：每人一块，字段带标签 */
+.mre--stacked { gap: var(--wiz-spacing-md); }
+.mre-block { position: relative; display: flex; flex-direction: column; gap: 14px; }
+.mre-block + .mre-block { padding-top: var(--wiz-spacing-md); border-top: 1px solid var(--wiz-grey-30); }
+.mre-block__2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--wiz-spacing-md); align-items: start; }
+.mre-block__rm { position: absolute; right: 0; top: 0; z-index: 1; }
+.mre-block + .mre-block .mre-block__rm { top: var(--wiz-spacing-md); }
+.mre-add-link { align-self: flex-start; }
+.mem-who-line { display: flex; align-items: baseline; gap: var(--wiz-spacing-sm); }
+.mem-hints { display: flex; flex-direction: column; }
+.mre-hint--tight { margin-top: calc(-1 * var(--wiz-spacing-xs)); }

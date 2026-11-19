@@ -13,6 +13,8 @@ const POINTS = {
   'event.create': [0, 1, 0, 0],
   'event.duplicate': [1, 1, 1, 0],
   'study.member.manage': [1, 1, 0, 0],
+  'study.member_blinding.manage': [1, 1, 0, 0],
+  'study.owner.transfer': [0, 1, 0, 0],
   'event.member.manage': [1, 1, 1, 0],
   'event.archive': [1, 1, 1, 0],
   'event.owner.transfer': [0, 1, 0, 0],

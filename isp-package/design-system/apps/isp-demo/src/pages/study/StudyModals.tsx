@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Avatar, Button, Field, FileBox, Input, Message, Modal, PickList, CheckPill, Radio, Select, Textarea } from '@wiz/react';
 import { go } from '../../router';
-import { AddMembersModal, EditMemberModal, RemoveMemberModal } from './MemberModals';
+import { AddMembersModal, ChangeBlindingModal, EditMemberModal, RemoveMemberModal, TransferAdminModal } from './MemberModals';
 import { CAT_ORDER, FILE_OK, TYPE, TYPES, SCOPES } from '../../store/assets';
 import { hrefEvent, hrefStudy } from '../../store/actions';
 import { baselineTag, baselineUsers, currentBaseline, isBlCode, baselineAsset, suggestBaselineLabel } from '../../store/baseline';
@@ -166,6 +166,8 @@ export function StudyModals() {
   if (m.kind === 'uploadAsset') return <UploadAssetModal key={key} sid={m.sid} assetId={m.assetId} code={m.code} />;
   if (m.kind === 'addMembers') return <AddMembersModal key={key} sid={m.sid} userId={m.userId} />;
   if (m.kind === 'editMember') return <EditMemberModal key={key} sid={m.sid} memberId={m.memberId} />;
+  if (m.kind === 'changeBlinding') return <ChangeBlindingModal key={key} sid={m.sid} memberId={m.memberId} />;
+  if (m.kind === 'transferAdmin') return <TransferAdminModal key={key} sid={m.sid} />;
   if (m.kind === 'removeMember') return <RemoveMemberModal key={key} sid={m.sid} memberId={m.memberId} />;
   return <UploadDatasetModal key={key} sid={m.sid} dsId={m.dsId} mode={m.mode} />;
 }

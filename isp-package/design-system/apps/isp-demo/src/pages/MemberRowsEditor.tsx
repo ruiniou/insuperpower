@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { Button, IconButton, MemberSelect, Select, Tooltip } from '@wiz/react';
+import { Button, Field, IconButton, MemberSelect, Select, Tooltip } from '@wiz/react';
 import { systemTimeZone, ValidityPicker } from '@wiz/isp';
-import { emptyMemberRow, memberKey, type MemberErrors, type MemberRow } from '../store/members';
+import { attrLabel, emptyMemberRow, memberKey, type MemberErrors, type MemberRow } from '../store/members';
 import { BLIND_ATTRS, ROLES, TENANT_USERS, userById } from '../store/people';
 
 export { validateMemberRow, validateMemberRows } from '../store/members';
@@ -19,12 +19,16 @@ export interface MemberRowsEditorProps {
   errors?: MemberErrors;
   /** 行内字段被改动后，清掉该字段的错误 */
   onClearError?: (errorKey: string) => void;
-  /** 已是 Unblinded 的用户：Blinding 里不能选回 Blinded */
-  unblindedUserIds?: string[];
+  /** 这些用户已有的盲态属性：设过 Blinded 或 Unblinded 后不能回到 Unspecified，Unblinded 不能改回 Blinded（对应选项禁用） */
+  prevAttrs?: Record<string, string>;
+  /** 盲态属性只读：显示文字而不是下拉（没有改盲点位，或属性由独立动作修改） */
+  attrLocked?: boolean;
   /** 曾被移除的用户：选中后行下提示将恢复 */
   restorableUserIds?: string[];
   /** 表头下、成员行前的固定行（Create Study 的创建者行），与成员行共用列 */
   lead?: ReactNode;
+  /** grid：表头加一行一条（Create Study 页）；stacked：每人一块、字段带标签（弹窗里用，窄宽度） */
+  layout?: 'grid' | 'stacked';
   /** 读屏名称 */
   'aria-label'?: string;
 }
@@ -34,7 +38,7 @@ const ATTRS = BLIND_ATTRS.map((a) => ({ value: a.value, label: a.label }));
 const optionOf = (u: { id: string; name: string; email: string }) => ({ value: u.id, name: u.name, hint: u.email });
 
 /** 成员行表格：Add members 弹窗、Edit 单行、Create Study 的初始成员共用。列：User、Role、Blinding、Validity（开始必填，结束可选，精确到分钟）、删除 */
-export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBlinded, mode, errors = {}, onClearError, unblindedUserIds = [], restorableUserIds = [], lead, ...rest }: MemberRowsEditorProps) {
+export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBlinded, mode, errors = {}, onClearError, prevAttrs = {}, attrLocked, restorableUserIds = [], lead, layout = 'grid', ...rest }: MemberRowsEditorProps) {
   const single = mode === 'single';
   const FIELD: Record<keyof Omit<MemberRow, 'key'>, 'user' | 'role' | 'attr' | 'from' | 'to'> = { userId: 'user', role: 'role', attr: 'attr', validFrom: 'from', validUntil: 'to' };
   const patch = (key: number, p: Partial<MemberRow>) => {
@@ -43,6 +47,38 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
   };
   const chosen = (key: number) => new Set(rows.filter((r) => r.key !== key && r.userId).map((r) => r.userId));
   const candidates = TENANT_USERS.filter((u) => !excludeUserIds.includes(u.id));
+
+  if (layout === 'stacked') {
+    return (
+      <div className="mre mre--stacked" role="group" aria-label={rest['aria-label'] ?? 'Members'}>
+        {rows.map((r, i) => {
+          const u = userById(r.userId);
+          const who = u?.name ?? 'member ' + (i + 1);
+          const prev = prevAttrs[r.userId];
+          const attrOff = (v: string) => (v === 'UNSET' && !!prev && prev !== 'UNSET') || (v === 'BLINDED' && prev === 'UNBLINDED');
+          const opts = single && u ? [optionOf(u)] : candidates.filter((c) => c.id === r.userId || !chosen(r.key).has(c.id)).map(optionOf);
+          return (
+            <div className="mre-block" key={r.key}>
+              {!single && rows.length > 1 && <Button className="mre-block__rm" variant="link" size="small" onClick={() => onChange(rows.filter((x) => x.key !== r.key))}>Remove</Button>}
+              <MemberSelect label="User" required={!single} aria-label={`User ${i + 1}`} placeholder="Select a person" disabled={single} options={opts} value={r.userId || null} error={errors[memberKey(r.key, 'user')]}
+                hint={r.userId && restorableUserIds.includes(r.userId) ? 'Will be restored with the settings below.' : undefined} onChange={(v) => patch(r.key, { userId: v })} />
+              <div className="mre-block__2">
+                <Select label="Role" aria-label={`Role of ${who}`} options={ROLES} value={r.role} error={errors[memberKey(r.key, 'role')]} onChange={(v) => patch(r.key, { role: v })} />
+                {attrLocked
+                  ? <Field label="Blinding"><span className={r.attr === 'UNSET' ? 'mre-ro app-muted' : 'mre-ro'}>{attrLabel(r.attr)}</span></Field>
+                  : <Select label="Blinding" aria-label={`Blinding of ${who}`} options={ATTRS.map((a) => ({ ...a, disabled: attrOff(a.value) }))} value={r.attr} error={errors[memberKey(r.key, 'attr')]}
+                      onChange={(v) => patch(r.key, { attr: v })} />}
+              </div>
+              {!attrLocked && !studyBlinded && <p className="mre-hint mre-hint--tight">Blinding is not enforced while the study is not blinded.</p>}
+              <ValidityPicker endable label={<>Validity <span className="mre-tz">{systemTimeZone().label}</span></>} required aria-label={`Validity, ${who}`} placeholder="Select start time" value={{ start: r.validFrom, end: r.validUntil || null }}
+                error={errors[memberKey(r.key, 'from')] ?? errors[memberKey(r.key, 'to')]} onChange={(v) => patch(r.key, { validFrom: v.start, validUntil: v.end ?? '' })} />
+            </div>
+          );
+        })}
+        {!single && <Button className="mre-add-link" variant="link" leftIcon="ri-add-line" onClick={() => onChange([...rows, emptyMemberRow(nextKey(rows))])}>Add another</Button>}
+      </div>
+    );
+  }
 
   return (
     <div className="mre" role="table" aria-label={rest['aria-label'] ?? 'Members'}>
@@ -64,7 +100,8 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
       {rows.map((r, i) => {
         const u = userById(r.userId);
         const who = u?.name ?? 'member ' + (i + 1);
-        const wasUnblinded = unblindedUserIds.includes(r.userId);
+        const prev = prevAttrs[r.userId];
+          const attrOff = (v: string) => (v === 'UNSET' && !!prev && prev !== 'UNSET') || (v === 'BLINDED' && prev === 'UNBLINDED');
         const opts = single && u ? [optionOf(u)] : candidates.filter((c) => c.id === r.userId || !chosen(r.key).has(c.id)).map(optionOf);
         return (
           <div className="mre-item" key={r.key} role="row">
@@ -75,7 +112,9 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
               </span>
               <span role="cell"><Select aria-label={`Role of ${who}`} options={ROLES} value={r.role} error={errors[memberKey(r.key, 'role')]} onChange={(v) => patch(r.key, { role: v })} /></span>
               <span role="cell">
-                <Select aria-label={`Blinding of ${who}`} options={ATTRS.map((a) => ({ ...a, disabled: wasUnblinded && a.value === 'BLINDED' }))} value={r.attr} error={errors[memberKey(r.key, 'attr')]} onChange={(v) => patch(r.key, { attr: v })} />
+                {attrLocked
+                  ? <span className={r.attr === 'UNSET' ? 'mre-ro app-muted' : 'mre-ro'}>{attrLabel(r.attr)}</span>
+                  : <Select aria-label={`Blinding of ${who}`} options={ATTRS.map((a) => ({ ...a, disabled: attrOff(a.value) }))} value={r.attr} error={errors[memberKey(r.key, 'attr')]} onChange={(v) => patch(r.key, { attr: v })} />}
               </span>
               <span role="cell">
                 <ValidityPicker endable aria-label={`Validity, ${who}`} placeholder="Select start time" value={{ start: r.validFrom, end: r.validUntil || null }}

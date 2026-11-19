@@ -17,6 +17,8 @@ export type ModalState =
   | { kind: 'addMembers'; sid: string; userId: string | null }
   | { kind: 'editMember'; sid: string; memberId: string }
   | { kind: 'removeMember'; sid: string; memberId: string }
+  | { kind: 'changeBlinding'; sid: string; memberId: string }
+  | { kind: 'transferAdmin'; sid: string }
   | null;
 export const modalUi: { modal: ModalState } = { modal: null };
 export const openModal = (m: ModalState) => { modalUi.modal = m; emit(); };
