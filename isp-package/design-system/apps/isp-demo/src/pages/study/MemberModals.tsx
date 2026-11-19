@@ -103,8 +103,8 @@ export function RemoveMemberModal({ sid, memberId }: { sid: string; memberId: st
   };
   const pick = (k: string, set: (f: (p: Record<string, string>) => Record<string, string>) => void) => (v: string) => { set((p) => ({ ...p, [k]: v })); setEr((p) => { const n = { ...p }; delete n[k]; return n; }); };
   return (
-    <Modal title={'Remove ' + m.name} width={480} onClose={closeModal}
-      footer={<Footer confirm={needsHandover ? 'Reassign and remove' : 'Remove'} disabled={!complete} onConfirm={submit} />}>
+    <Modal title={<><span className="wiz-confirm__icon" aria-hidden="true"><i className="ri-error-warning-line" /></span>{'Remove ' + m.name}</>} width={480} onClose={closeModal}
+      footer={<Footer danger confirm={needsHandover ? 'Reassign and remove' : 'Remove'} disabled={!complete} onConfirm={submit} />}>
       <div className="app-form">
         {er.form && <Message tone="error">{er.form}</Message>}
         {needsHandover
@@ -190,7 +190,7 @@ export function TransferAdminModal({ sid }: { sid: string }) {
     <Modal title={<><span className="wiz-confirm__icon" aria-hidden="true"><i className="ri-error-warning-line" /></span>Transfer Study Admin</>} width={480} onClose={closeModal} footer={<Footer danger confirm="Transfer" disabled={none} onConfirm={submit} />}>
       <div className="app-form">
         {er.form && <Message tone="error">{er.form}</Message>}
-        <Message tone="warning">You’ll stop being Study Admin, and only the new Study Admin can hand it back. You stay a member with the same Role, blinding status and validity.</Message>
+        <p className="mem-impact__h">You’ll stay a member but lose Study Admin rights. Only the new Study Admin can hand them back.</p>
         <MemberSelect label="New Study Admin" required aria-label="New Study Admin" disabled={none} placeholder={none ? 'No other active members' : 'Select a person'} options={options} value={to || null} error={er.to}
           onChange={(v) => { setTo(v); setEr((p) => { const n = { ...p }; delete n.to; return n; }); }} />
         <Textarea label="Reason" required rows={2} maxLength={1000} placeholder="Why the Study Admin is changing hands" value={reason} error={er.reason}
