@@ -35,7 +35,7 @@ export function MemberPage({ sid }: { sid: string }) {
     const cols: TableColumn[] = [
       { key: 'name', header: 'Name', render: (_v, m: StudyMember) => (
         <span className="mem-who">
-          <Avatar size={28} color="brand-blue" initials={initials(m.name)} />
+          <Avatar size={20} color="brand-blue" initials={initials(m.name)} />
           <span className="mem-who__txt">
             <span className="mem-who__name"><span className={m.status === 'REMOVED' ? 'app-ell mem-dim' : 'app-ell'}>{m.name}</span>{m.isAdmin && <Status variant="style1" tone="blue" textCase="normal">Admin</Status>}</span>
           </span>
@@ -53,7 +53,7 @@ export function MemberPage({ sid }: { sid: string }) {
           else if (v === 'remove') openModal({ kind: 'removeMember', sid, memberId: m.id });
           else openModal({ kind: 'addMembers', sid, userId: m.userId });
         }} items={m.status === 'REMOVED' ? [{ label: 'Re-add', value: 're-add' }]
-          : [{ label: 'Edit role and validity', value: 'edit' }, ...(m.isAdmin ? [] : [{ label: 'Remove member', value: 'remove' }])]} />
+          : [{ label: 'Edit role and validity', value: 'edit' }, ...(m.isAdmin ? [] : [{ label: 'Remove member', value: 'remove', danger: true }])]} />
       ) });
     }
     return cols;

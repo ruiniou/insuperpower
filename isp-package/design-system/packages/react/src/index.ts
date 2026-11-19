@@ -151,7 +151,7 @@ export { Card } from './Card/Card';
 export type { CardProps, CardElevation } from './Card/Card';
 export { CodeEditor } from './CodeEditor/CodeEditor';
 export type { CodeEditorProps } from './CodeEditor/CodeEditor';
-export { PopoverMenu, MenuItem } from './PopoverMenu/PopoverMenu';
+export { PopoverMenu, MenuItem, normalizeMenuItems, MENU_GROUP_THRESHOLD } from './PopoverMenu/PopoverMenu';
 export type { PopoverMenuProps, PopoverMenuItem, MenuItemProps } from './PopoverMenu/PopoverMenu';
 export { Dropdown } from './Dropdown/Dropdown';
 export type { DropdownProps, DropdownItem } from './Dropdown/Dropdown';

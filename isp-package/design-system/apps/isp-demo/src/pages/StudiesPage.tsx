@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Avatar, Button, Dropdown, EmptyState, Search, Table, type TableColumn } from '@wiz/react';
-import { PageToolbar } from './study/common';
+import { Button, Dropdown, EmptyState, Search, Table, type TableColumn } from '@wiz/react';
+import { PageToolbar, Owner } from './study/common';
 import { go } from '../router';
 import { hrefStudy } from '../store/actions';
 import { can } from '../store/role';
@@ -11,7 +11,6 @@ import type { Study } from '../store/types';
 import { LifecycleMark } from './study/common';
 
 const LIFE = { ACTIVE: 'Active', ARCHIVED: 'Archived', DELETED: 'Deleted' } as const;
-const initials = (n: string) => n.split(' ').map((x) => x[0]).join('').toUpperCase();
 
 /** #/studies：Studies 列表（TA 筛选、搜索、仅列表视图、生命周期只读、盲态、New Study 在页头） */
 /** Studies 随租户增长，超过最小页长才出分页条 */
@@ -45,7 +44,7 @@ export function StudiesPage() {
       </span>
     ) },
     { key: 'ta', header: 'Therapeutic Area', width: 160, render: (v) => v || '—' },
-    { key: 'admin', header: 'Study Admin', width: 170, render: (_v, s: Study) => <span className="studies-owner"><Avatar size={20} color="brand-blue" initials={initials(s.admin)} />{s.admin}</span> },
+    { key: 'admin', header: 'Study Admin', width: 170, render: (_v, s: Study) => <Owner name={s.admin} /> },
     { key: 'events', header: 'Events', width: 80, render: (_v, s: Study) => S.eventsOf(s.id).length },
     { key: 'blinding', header: 'Blinding', width: 120, render: (_v, s: Study) => <span className="studies-blind">{s.blinding}</span> },
     { key: 'updated', header: 'Updated', width: 130 },

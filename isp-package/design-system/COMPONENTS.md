@@ -90,7 +90,7 @@
 | TopNav | 顶栏（Mac / Win 项目选择器） | 稳定 |
 | Logo | ISP 标志 | 稳定 |
 | Breadcrumb | 面包屑，悬停层级名称展开同级切换（无 ▾） | 无 Wiz 稿 |
-| Dropdown | 下拉菜单按钮；菜单本体是 PopoverMenu / MenuItem（目录 `PopoverMenu/`）。`multiple` 为多选筛选：行前带复选框，点选不关菜单，选中状态由 `items[].selected` 给；`filterName` 下 `label` 为空时只显示图标加名称（借鉴 Atlas FilterChip 的多选行为） | 无 Wiz 稿 |
+| Dropdown | 下拉菜单按钮；菜单本体是 PopoverMenu / MenuItem（目录 `PopoverMenu/`）。`multiple` 为多选筛选：行前带复选框，点选不关菜单，选中状态由 `items[].selected` 给；`filterName` 下 `label` 为空时只显示图标加名称（借鉴 Atlas FilterChip 的多选行为）。菜单项规则：破坏性项设 `danger: true`，自动沉底并与前面分隔；超过 6 项用 `group` 分组，组间自动加分隔线（`normalizeMenuItems`） | 无 Wiz 稿 |
 | TitleBar | 标题栏（标题、描述、右侧操作） | 稳定 |
 | Splitter | 可拖拽分隔条 | 稳定 |
 | Card | 卡片容器；`--wiz-card-padding` 钩子 | 无 Wiz 稿 |

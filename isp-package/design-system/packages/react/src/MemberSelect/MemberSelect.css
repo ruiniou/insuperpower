@@ -9,7 +9,8 @@
 .wiz-member--large { --wiz-member-pad: var(--wiz-spacing-md); min-height: 40px; padding: 0 var(--wiz-member-pad); border-radius: var(--wiz-radius-sm); font-size: var(--wiz-text-body-1-size); }
 .wiz-member--box { border-color: var(--wiz-grey-40); background: var(--wiz-main-white); }
 /* 光学对齐：悬停底色向单元格内边距悬挂，静止态的头像左缘与列头对齐（需单元格左内边距不小于悬挂量） */
-.wiz-member--inline { width: calc(100% + var(--wiz-member-pad) + 1px); margin-left: calc(-1 * (var(--wiz-member-pad) + 1px)); }
+/* 表格单元格内与只读人员单元格同字号（body-2） */
+.wiz-member--inline { font-size: var(--wiz-text-body-2-size); width: calc(100% + var(--wiz-member-pad) + 1px); margin-left: calc(-1 * (var(--wiz-member-pad) + 1px)); }
 .wiz-member--inline .wiz-member__arrow { display: none; }
 .wiz-member--inline:hover:not(:disabled), .wiz-member--inline:focus-visible, .wiz-member--inline.is-open { background: var(--wiz-grey-30); }
 .wiz-member--box:hover:not(:disabled), .wiz-member--box.is-open, .wiz-member--box:focus-visible { border-color: var(--wiz-brand-blue-70); box-shadow: var(--wiz-shadow-button); }

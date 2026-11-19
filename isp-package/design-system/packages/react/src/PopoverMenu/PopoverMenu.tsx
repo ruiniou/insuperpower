@@ -16,7 +16,30 @@ export interface PopoverMenuItem {
   selected?: boolean;
   /** 为 true 时该项渲染为分隔线 */
   divider?: boolean;
+  /** 分组名：相邻且分组不同的项之间自动插入分隔线（超过 MENU_GROUP_THRESHOLD 项时应分组） */
+  group?: string;
   onClick?: () => void;
+}
+
+/** 菜单项超过此数量时必须分组（用 group 或 divider）——设计规则，供页面自检 */
+export const MENU_GROUP_THRESHOLD = 6;
+
+/**
+ * 规整菜单项：danger 项（删除、移除、归档等破坏性操作）统一沉到末尾并与前面隔开；
+ * 相邻分组不同的项之间自动插入分隔线；已有的 divider 项原样保留，且不会出现首尾或连续分隔线。
+ */
+export function normalizeMenuItems(items: PopoverMenuItem[]): PopoverMenuItem[] {
+  const normal = items.filter((it) => !it.danger);
+  const danger = items.filter((it) => it.danger);
+  const out: PopoverMenuItem[] = [];
+  let prev: PopoverMenuItem | undefined;
+  for (const it of normal) {
+    if (!it.divider && prev && !prev.divider && it.group !== prev.group && (it.group !== undefined || prev.group !== undefined)) out.push({ divider: true });
+    out.push(it);
+    prev = it;
+  }
+  if (danger.length) { if (out.length) out.push({ divider: true }); out.push(...danger); }
+  return out.filter((it, i, a) => !it.divider || (i > 0 && i < a.length - 1 && !a[i - 1].divider));
 }
 
 export interface MenuItemProps {
@@ -66,6 +89,7 @@ export function PopoverMenu({ trigger, items, onSelect, multiple = false, align 
   const menu = useRef<HTMLDivElement>(null);
   useEdgeFit(menu, open);
   const menuId = useUid('wiz-menu');
+  const list = normalizeMenuItems(items);
 
   useEffect(() => {
     if (!open) return;
@@ -107,7 +131,7 @@ export function PopoverMenu({ trigger, items, onSelect, multiple = false, align 
       <span className="wiz-popover-menu__trigger" aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => setOpen(!open)}>{trigger}</span>
       {open && (
         <div ref={menu} id={menuId} role="menu" aria-multiselectable={multiple || undefined} className={cx('wiz-menu', align === 'right' && 'is-right')} style={{ minWidth: width }}>
-          {items.map((it, i) => it.divider
+          {list.map((it, i) => it.divider
             ? <span key={`d${i}`} role="separator" className="wiz-menu__divider" />
             : <MenuItem key={it.value ?? String(it.label ?? i)} item={it} multiple={multiple} onClick={() => choose(it)} />)}
         </div>
