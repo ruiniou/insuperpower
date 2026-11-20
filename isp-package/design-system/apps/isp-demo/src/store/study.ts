@@ -7,6 +7,7 @@ import { can } from './role';
 import { newFlow, V } from './seed';
 import { baselineAsset, baselinesOf, baselineUsers, BL_NAME, currentBaseline, isBlCode } from './baseline';
 import { emit, getDb, toast } from './store';
+import { diff, logAudit } from './audit';
 import { memberKey, peopleOf, todayIso, validateMemberRows, validDate, type MemberRow } from './members';
 import { ME_USER, userById } from './people';
 import type { Asset, Baseline, BlindAttr, Dataset, EventRec, MemberRole } from './types';
@@ -84,6 +85,7 @@ export function uploadAsset(f: UploadAssetForm): { errors: Errors } | { asset: A
     db.assets = db.assets.filter((x) => !(x.required && x.studyId === f.sid && x.code === t!.code));
   }
   const st = S.study(f.sid); if (st) st.updated = dLong();
+  logAudit({ studyId: f.sid, action: 'Version registered', changes: target!.name + ' ' + version, reason: f.reason });
   if (bl) {
     const slot = { assetId: target!.id, n: nextN };
     if (asNew) {
@@ -132,6 +134,7 @@ export function uploadDataset(f: UploadDatasetForm): { errors: Errors } | { ds: 
   if (d) d.versions.unshift(V(S.latest(d).n + 1, db.me.name, dShort(), note, { label: version, meta, file: f.fileName }));
   else { d = { id: 'D' + (++db.seq.ds), studyId: f.sid, space, cat: f.cat, name: nm, label: (f.name || '').trim(), versions: [V(1, db.me.name, dShort(), note, { label: version, meta, file: f.fileName })] }; db.datasets.push(d); }
   const st = S.study(f.sid); if (st) st.updated = dLong();
+  logAudit({ studyId: f.sid, action: 'Version registered', changes: d.name + ' ' + version, reason: f.reason });
   toast('Uploaded ' + d.name + ' ' + version + '.');
   emit();
   return { ds: d, space };
@@ -167,7 +170,15 @@ export function updateStudyDetails(sid: string, f: StudyDetailsForm): { errors: 
   if (f.phase && f.phase !== s.phase && !PHASES.includes(f.phase)) er.phase = 'Choose a listed phase.';
   if (!reason) er.reason = 'Reason for change is required (1–1000 characters).'; else if (reason.length > 1000) er.reason = 'Use 1000 characters or fewer.';
   if (Object.keys(er).length) return { errors: er };
-  Object.assign(s, { name, desc: f.desc.trim(), ta: f.ta.trim(), phase: f.phase, updated: dLong() });
+  const next = { name, desc: f.desc.trim(), ta: f.ta.trim(), phase: f.phase };
+  const changed = [
+    next.name !== s.name && diff('Study name', s.name, next.name),
+    next.desc !== s.desc && 'Description',
+    next.ta !== s.ta && diff('Therapeutic area', s.ta, next.ta),
+    next.phase !== s.phase && diff('Phase', s.phase, next.phase),
+  ].filter(Boolean).join('; ');
+  Object.assign(s, next, { updated: dLong() });
+  logAudit({ studyId: sid, action: 'Study details updated', changes: changed || 'No fields changed', reason });
   toast('Study details updated'); emit();
   return { ok: true };
 }
@@ -177,7 +188,7 @@ export const emptyStudyForm = (): CreateStudyForm => ({ id: '', name: '', desc: 
 /** 研究编号比较口径：NFKC、去空白、大写 */
 export const normalizeStudyId = (s: string) => s.normalize('NFKC').replace(/\s+/g, '').toUpperCase();
 
-/** 表单校验（不含唯一性：编号唯一由提交时裁决，前端不做实时查重）。键：id / name / desc / ta / role / m:<行键>:<字段>。新建时 Study 为 Not blinded，成员盲态属性不强制 */
+/** 表单校验（不含唯一性：编号唯一由提交时裁决，前端不做实时查重）。键：id / name / desc / ta / role / m:<行键>:<字段>。新建时 Study 为 Unblinded，成员盲态属性不强制 */
 export function validateStudyForm(f: CreateStudyForm): Errors {
   const er: Errors = {}, id = f.id.trim(), name = f.name.trim();
   if (!id) er.id = 'Study ID is required.'; else if (id.length > 64) er.id = 'Use 64 characters or fewer.'; else if (noCtl(id)) er.id = 'Remove control characters.';
@@ -197,7 +208,7 @@ export function createStudy(f: CreateStudyForm): { errors: Errors } | { id: stri
   if (Object.keys(er).length) return { errors: er };
   const id = f.id.trim();
   if (db.studies.some((s) => normalizeStudyId(s.id) === normalizeStudyId(id))) return { errors: { id: 'ID unavailable. Change it, or contact an authorized administrator.' } };
-  db.studies.unshift({ id, name: f.name.trim(), ta: f.ta.trim(), phase: f.phase, admin: db.me.name, lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: dLong(), desc: f.desc.trim(), tenant: 'Demo Tenant', createdBy: db.me.name, createdAt: dLong() });
+  db.studies.unshift({ id, name: f.name.trim(), ta: f.ta.trim(), phase: f.phase, admin: db.me.name, lifecycle: 'ACTIVE', blinding: 'Unblinded', updated: dLong(), desc: f.desc.trim(), tenant: 'Demo Tenant', createdBy: db.me.name, createdAt: dLong() });
   db.seq.study++;
   const mk = (userId: string, role: string, attr: string, validFrom: string, validUntil: string | null, isAdmin: boolean) => {
     const u = userById(userId)!;
@@ -205,6 +216,7 @@ export function createStudy(f: CreateStudyForm): { errors: Errors } | { id: stri
   };
   mk(ME_USER.id, f.role, f.attr, todayIso(), null, true);
   f.members.forEach((m) => mk(m.userId, m.role, m.attr, m.validFrom.trim(), m.validUntil.trim() || null, false));
+  logAudit({ studyId: id, action: 'Study created', changes: id });
   toast(id + ' created'); emit();
   return { id };
 }
@@ -212,6 +224,7 @@ export function createStudy(f: CreateStudyForm): { errors: Errors } | { id: stri
 /** 交接 Event Owner（event.owner.transfer，仅 Study Admin） */
 export function transferEventOwner(eid: string, name: string) {
   const e = S.event(eid); if (!e || e.owner === name) return;
+  logAudit({ studyId: e.studyId, action: 'Event Owner changed', changes: diff(e.name, e.owner, name) });
   e.owner = name; e.updated = dLong();
   toast('Event Owner changed to ' + name); emit();
 }

@@ -44,7 +44,7 @@ export function MemberPage({ sid }: { sid: string }) {
       ) },
       { key: 'role', header: 'Role', width: 180, render: (_v, m: StudyMember) => dim(m, roleLabel(m.role)) },
       { key: 'attr', header: 'Blinding', width: 160, render: (_v, m: StudyMember) => (m.status === 'REMOVED' || m.attr === 'UNSET' ? <span className={m.status === 'REMOVED' ? 'mem-dim' : 'app-muted'}>{attrLabel(m.attr)}</span> : attrLabel(m.attr)) },
-      { key: 'validity', header: 'Validity · ' + tz, width: 340, render: (_v, m: StudyMember) => dim(m, formatRange(m.validFrom, m.validUntil)) },
+      { key: 'validity', header: 'Validity (' + tz + ')', width: 340, render: (_v, m: StudyMember) => dim(m, formatRange(m.validFrom, m.validUntil)) },
       { key: 'status', header: 'Status', width: 120, render: (_v, m: StudyMember) => dim(m, m.status === 'ACTIVE' ? 'Active' : 'Removed') },
     ];
     const itemsOf = (m: StudyMember) => {

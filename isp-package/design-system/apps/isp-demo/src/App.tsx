@@ -14,6 +14,7 @@ import { AssetPage } from './pages/study/AssetPage';
 import { DatasetPage } from './pages/study/DatasetPage';
 import { MemberPage } from './pages/study/MemberPage';
 import { EventsPage } from './pages/study/EventsPage';
+import { AuditTrailPage } from './pages/study/AuditTrailPage';
 import { StudyModals } from './pages/study/StudyModals';
 
 function Page() {
@@ -27,6 +28,7 @@ function Page() {
     if (R.tab === 'asset') return <AssetPage sid={R.sid} />;
     if (R.tab === 'member') return <MemberPage sid={R.sid} />;
     if (R.tab === 'dataset') return <DatasetPage sid={R.sid} space={R.space} />;
+    if (R.tab === 'audit') return <AuditTrailPage sid={R.sid} />;
     return <PlaceholderPage route={R} title={'Study · ' + R.tab} />;
   }
   const e = S.event(R.eid);

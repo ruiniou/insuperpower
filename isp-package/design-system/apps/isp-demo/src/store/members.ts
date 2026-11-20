@@ -3,6 +3,8 @@ import { ME_USER, ROLES, TENANT_USERS, userById } from './people';
 import { can } from './role';
 import { S } from './selectors';
 import { emit, getDb, toast } from './store';
+import { logAudit } from './audit';
+import { formatRange } from '@wiz/isp';
 import type { BlindAttr, EventRec, MemberRole, StudyMember, Workflow } from './types';
 import { isValidIso, nowIso } from '@wiz/isp';
 
@@ -106,7 +108,11 @@ export function addMembers(f: AddMembersForm): AddMembersResult {
     if (memberOf(f.sid, r.userId)?.status === 'ACTIVE') { bad[memberKey(r.key, 'user')] = 'Already a member.'; return; }
     apply(f.sid, r); done.push(r.key);
   });
-  if (done.length) { const st = S.study(f.sid); if (st) st.updated = dLong(); }
+  if (done.length) {
+    const st = S.study(f.sid); if (st) st.updated = dLong();
+    const added = rows.filter((r) => done.includes(r.key)).map((r) => userById(r.userId)!.name + ' (' + roleLabel(r.role) + ')').join(', ');
+    logAudit({ studyId: f.sid, action: 'Member added', changes: added, reason });
+  }
   if (done.length && !Object.keys(bad).length) toast('Added ' + plural(done.length, 'member'));
   emit();
   return { errors: bad, done };
@@ -123,7 +129,13 @@ export function updateMember(f: EditForm): { errors: MemberErrors } | { ok: true
   const reason = f.reason.trim();
   if (!reason) er.reason = 'Enter a reason.'; else if (reason.length > 1000) er.reason = 'Use 1000 characters or fewer.';
   if (Object.keys(er).length) return { errors: er };
-  Object.assign(m, { role: f.row.role as MemberRole, validFrom: f.row.validFrom.trim(), validUntil: f.row.validUntil.trim() || null });
+  const role = f.row.role as MemberRole, validFrom = f.row.validFrom.trim(), validUntil = f.row.validUntil.trim() || null;
+  const changed = [
+    role !== m.role && 'Role ' + roleLabel(m.role) + ' → ' + roleLabel(role),
+    (validFrom !== m.validFrom || validUntil !== m.validUntil) && 'Validity ' + formatRange(m.validFrom, m.validUntil) + ' → ' + formatRange(validFrom, validUntil),
+  ].filter(Boolean).join('; ');
+  logAudit({ studyId: f.sid, action: 'Member updated', changes: m.name + ': ' + (changed || 'No fields changed'), reason });
+  Object.assign(m, { role, validFrom, validUntil });
   const st = S.study(f.sid); if (st) st.updated = dLong();
   toast('Updated ' + m.name); emit();
   return { ok: true };
@@ -142,6 +154,7 @@ export function changeBlinding(f: ChangeBlindingForm): { errors: MemberErrors } 
   const reason = f.reason.trim();
   if (!reason) er.reason = 'Enter a reason.'; else if (reason.length > 1000) er.reason = 'Use 1000 characters or fewer.';
   if (Object.keys(er).length) return { errors: er };
+  logAudit({ studyId: f.sid, action: 'Blinding status changed', changes: m.name + ': ' + attrLabel(m.attr) + ' → ' + attrLabel(f.attr), reason });
   m.attr = f.attr as BlindAttr;
   const st = S.study(f.sid); if (st) st.updated = dLong();
   toast('Blinding status of ' + m.name + ' changed to ' + attrLabel(f.attr)); emit();
@@ -161,6 +174,7 @@ export function transferStudyAdmin(f: TransferForm): { errors: MemberErrors } | 
   if (!reason) er.reason = 'Enter a reason.'; else if (reason.length > 1000) er.reason = 'Use 1000 characters or fewer.';
   if (Object.keys(er).length || !to) return { errors: er };
   cur.isAdmin = false; to.isAdmin = true; st.admin = to.name; st.updated = dLong();
+  logAudit({ studyId: f.sid, action: 'Study Admin transferred', changes: cur.name + ' → ' + to.name, reason });
   toast('Study Admin transferred to ' + to.name); emit();
   return { ok: true };
 }
@@ -194,6 +208,8 @@ export function removeMember(f: RemoveForm): { errors: MemberErrors } | { ok: tr
   impact.workflows.forEach(({ event, wf }) => { wf.owner = f.workflowOwners[wfKey(event.id, wf.id)]; wf.updated = dLong(); event.updated = dLong(); });
   impact.events.forEach((e) => { e.owner = f.eventOwners[evKey(e.id)]; e.updated = dLong(); });
   m.status = 'REMOVED';
+  const handed = impact.workflows.length + impact.events.length;
+  logAudit({ studyId: f.sid, action: 'Member removed', changes: m.name + (handed ? ', handed over ' + plural(handed, 'item') : ''), reason });
   const st = S.study(f.sid); if (st) st.updated = dLong();
   toast('Removed ' + m.name); emit();
   return { ok: true };

@@ -8,7 +8,7 @@ export type Rec<T> = Record<NodeId, T>;
 /** n 是内部序号（不显示）；label 是上传时用户填写的版本号 */
 export interface Version { n: number; label: string; by: string; date: string; note: string; file?: string; meta?: Record<string, string> }
 export type Lifecycle = 'ACTIVE' | 'ARCHIVED' | 'DELETED';
-export type Blinding = 'Not blinded' | 'Blinded' | 'Revealed';
+export type Blinding = 'Unblinded' | 'Blinded' | 'Revealed';
 export interface Study {
   id: string; name: string; ta: string; phase: string; admin: string; lifecycle: Lifecycle; blinding: Blinding;
   updated: string; desc: string; tenant: string; createdBy: string; createdAt: string;
@@ -55,10 +55,20 @@ export interface EventRec {
   refs: { assets: Record<string, Ref>; datasets: Record<string, Ref> };
   produced: Produced[]; flow: Flow;
 }
+/** 审计 Action 取值固定（Action 筛选的选项来自实际出现过的记录） */
+export type AuditAction =
+  | 'Study created' | 'Study details updated'
+  | 'Member added' | 'Member updated' | 'Blinding status changed' | 'Member removed'
+  | 'Study Admin transferred' | 'Event Owner changed' | 'Version registered'
+  | 'Study archived' | 'Study restored' | 'Blinding enabled' | 'Study unblinded';
+/** 审计记录：time 为本地 ISO 串 YYYY-MM-DDTHH:mm；changes 一句话；reason 可空 */
+export interface AuditEvent { id: string; studyId: string; time: string; actor: string; action: AuditAction; changes: string; reason: string | null }
 export interface Database {
   me: { name: string; ini: string };
-  seq: { study: number; event: number; asset: number; ds: number; baseline: number; member: number };
+  seq: { study: number; event: number; asset: number; ds: number; baseline: number; member: number; audit: number };
   studies: Study[]; members: StudyMember[]; assets: Asset[]; baselines: Baseline[]; datasets: Dataset[]; events: EventRec[];
+  /** 只增，新的在前 */
+  audit: AuditEvent[];
 }
 
 export interface NodeDef {

@@ -28,7 +28,9 @@ function useHeader(R: Route): { crumbs: BreadcrumbItem[]; tabs: ReactNode } {
   if (R.name === 'study') {
     const s = S.study(R.sid);
     const items = [{ value: 'events', label: <>Events <i className="app-count">{S.eventsOf(R.sid).length}</i></> }, { value: 'asset', label: <>Asset <i className="app-count">{S.assetsOf(R.sid).length}</i></> }, { value: 'dataset', label: <>Dataset <i className="app-count">{S.datasetsOf(R.sid).length}</i></> }, { value: 'member', label: <>Member <i className="app-count">{memberCount(R.sid)}</i></> }];
-    return { crumbs: [studyCrumb(R.sid, true)], tabs: <Tabs variant="underline" aria-label="Study sections" items={items} value={R.tab} onChange={(v) => go(hrefStudy(R.sid, v))} /> };
+    /** Audit trail 是 Study 内的二级页：页签栏保留但不高亮，面包屑多一级 */
+    const crumbs = R.tab === 'audit' ? [studyCrumb(R.sid, false), { label: 'Audit trail' }] : [studyCrumb(R.sid, true)];
+    return { crumbs, tabs: <Tabs variant="underline" aria-label="Study sections" items={items} value={R.tab} onChange={(v) => go(hrefStudy(R.sid, v))} /> };
   }
   const e = S.event(R.eid);
   if (!e) return { crumbs: [{ label: 'Event not found' }], tabs: null };
@@ -121,9 +123,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       {!mainNavCollapsed && navSplitter}
       <section className="app-main" aria-label="Main" ref={mainRef}>
         <header className="app-hdr">
-          <div className="app-crumb">{mainNavCollapsed && <SideBarToggle onClick={() => setMainNavCollapsed(false)} />}<Breadcrumb size="sm" items={crumbs} aria-label="Breadcrumb" />{study && study.blinding !== 'Not blinded' && <BlindTag v={study.blinding} />}</div>
+          <div className="app-crumb">{mainNavCollapsed && <SideBarToggle onClick={() => setMainNavCollapsed(false)} />}<Breadcrumb size="sm" items={crumbs} aria-label="Breadcrumb" />{study && study.blinding !== 'Unblinded' && <BlindTag v={study.blinding} />}</div>
           <div className="app-acts">
-            {R.name === 'study' && <PopoverMenu align="right" width={160} trigger={<IconButton size="compact" icon="ri-more-2-fill" aria-label="More" />} items={[{ label: 'Study details', value: 'details' }]} onSelect={() => openDrawer({ kind: 'studyDetails', id: R.sid })} />}
+            {R.name === 'study' && <PopoverMenu align="right" width={160} trigger={<IconButton size="compact" icon="ri-more-2-fill" aria-label="More" />} items={[{ label: 'Study details', value: 'details' }, { divider: true }, { label: 'Audit trail', value: 'audit' }]} onSelect={(v) => (v === 'audit' ? go(hrefStudy(R.sid, 'audit')) : openDrawer({ kind: 'studyDetails', id: R.sid }))} />}
             {!copilot && R.name !== 'studyNew' && <><span className="app-acts__sep" aria-hidden="true" /><IconButton size="compact" className="app-copilot-btn" icon="wiz-logo-icon" aria-label="Open Copilot" title="Copilot" onClick={() => setCopilot(true)} /></>}
           </div>
         </header>

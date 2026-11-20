@@ -18,6 +18,10 @@ export interface ValidityPickerProps {
   onChange: (v: Validity) => void;
   /** 提供「End time」开关：打开后加一行选结束时间；关闭则 end 为 null。默认只选开始时间 */
   endable?: boolean;
+  /** 点开时若尚未设置结束时间，默认启用结束时间（如时间范围筛选场景） */
+  defaultEnd?: boolean;
+  /** 允许清空：有值时浮层底部出现 Clear，清空后 start 为空串、end 为 null（用作筛选条件时，空即不限） */
+  clearable?: boolean;
   label?: ReactNode;
   required?: boolean;
   error?: ReactNode;
@@ -82,7 +86,7 @@ function TimeInput({ iso, label, onFocusRow, onIso }: { iso: string; label: stri
   );
 }
 
-export function ValidityPicker({ value, onChange, endable = false, label, required, error, size = 'medium', disabled, placeholder = 'Select start time', className, ...rest }: ValidityPickerProps) {
+export function ValidityPicker({ value, onChange, endable = false, defaultEnd = false, clearable = false, label, required, error, size = 'medium', disabled, placeholder = 'Select start time', className, ...rest }: ValidityPickerProps) {
   const uid = 'wiz-isp-vp-' + useId().replace(/:/g, '');
   const tz = useMemo(systemTimeZone, []);
   const hasError = error != null && error !== false && error !== '';
@@ -101,7 +105,9 @@ export function ValidityPicker({ value, onChange, endable = false, label, requir
   const openPop = () => {
     if (disabled) return;
     const start = isValidIso(value.start) ? value.start : nowIso();
-    const d: Validity = { start, end: endable && value.end && isValidIso(value.end) ? value.end : null };
+    const hasEnd = endable && value.end && isValidIso(value.end);
+    const end = hasEnd ? value.end : (endable && defaultEnd && !value.start ? addMinutes(start, 60) : null);
+    const d: Validity = { start, end };
     const p = parseIso(start)!;
     setDraft(d); sync(d); setTxtErr(null); setActive('start'); setView({ y: p.y, mo: p.mo }); setPos(null); setOpen(true);
   };
@@ -232,6 +238,7 @@ export function ValidityPicker({ value, onChange, endable = false, label, requir
           </div>
           <div className="wiz-isp-vp__foot">
             {endable && <Switch size="small" label="End time" checked={!!draft.end} onChange={toggleEnd} />}
+            {clearable && isValidIso(value.start) && <Button variant="link" size="small" onClick={() => { onChange({ start: '', end: null }); close(); }}>Clear</Button>}
             <span className="wiz-isp-vp__tz" title={tz.name}>{tz.label}</span>
           </div>
         </div>,

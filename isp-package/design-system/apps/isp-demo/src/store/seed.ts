@@ -1,5 +1,5 @@
 import { TENANT_USERS, userByName } from './people';
-import type { Baseline, BlindAttr, Database, EventRec, Flow, MemberRole, Study, Version } from './types';
+import type { AuditAction, Baseline, BlindAttr, Database, EventRec, Flow, MemberRole, Study, Version } from './types';
 
 export const V = (n: number, by: string, date: string, note = '', o: Partial<Version> = {}): Version => ({ n, label: 'v' + n, by, date, note, ...o });
 /** Asset 版本：label 是用户填写的版本号 */
@@ -18,13 +18,14 @@ export const newFlow = (o: Partial<Flow> = {}): Flow => ({
 export function createSeed(): Database {
   const db: Database = {
     me: { name: 'User Name', ini: 'UN' },
-    seq: { study: 3, event: 3, asset: 20, ds: 40, baseline: 4, member: 0 },
+    seq: { study: 3, event: 3, asset: 20, ds: 40, baseline: 4, member: 0, audit: 0 },
     members: [],
+    audit: [],
     studies: ([
-      { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'User Name', lifecycle: 'ACTIVE', blinding: 'Not blinded', updated: 'Oct 31, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
+      { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'User Name', lifecycle: 'ACTIVE', blinding: 'Unblinded', updated: 'Oct 31, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
       { id: 'STU-002', name: 'Breast Cancer Phase II Trial', ta: 'Oncology', phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE', blinding: 'Blinded', updated: 'Oct 26, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' },
       { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', admin: 'Wang Fang', lifecycle: 'ARCHIVED', blinding: 'Revealed', updated: 'Sep 18, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Mar 5, 2026' },
-    ] as Study[]).concat(Array.from({ length: 45 }, (_, i): Study => ({ id: 'TMP-' + String(i + 1).padStart(3, '0'), name: 'Temp pagination study ' + (i + 1), ta: ['Oncology', 'Hematology', 'Cardiology'][i % 3], phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE' as const, blinding: 'Not blinded' as const, updated: 'Oct 20, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' }))), // TEMP-PAGINATION 预览用，看完删除
+    ] as Study[]).concat(Array.from({ length: 45 }, (_, i): Study => ({ id: 'TMP-' + String(i + 1).padStart(3, '0'), name: 'Temp pagination study ' + (i + 1), ta: ['Oncology', 'Hematology', 'Cardiology'][i % 3], phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE' as const, blinding: 'Unblinded' as const, updated: 'Oct 20, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' }))), // TEMP-PAGINATION 预览用，看完删除
     assets: [
       { id: 'A1', studyId: 'STU-001', name: 'STU-001 Protocol', code: 'PROTOCOL', tl: 'Protocol', icon: 'doc', source: 'Uploaded', versions: [AV(2, 'Amendment 1', 'Li Wei', 'Oct 12', 'Approved'), AV(1, 'v1.0', 'Li Wei', 'Oct 3')] },
       { id: 'A2', studyId: 'STU-001', name: 'STU-001 SAP', code: 'SAP', tl: 'SAP', icon: 'doc', source: 'Uploaded', versions: [AV(3, 'v3.0', 'Chen Yu', 'Oct 28', 'Revised sensitivity analyses'), AV(2, 'v2.0', 'Li Wei', 'Oct 15', 'Approved'), AV(1, 'v1.0', 'Li Wei', 'Oct 3')] },
@@ -144,6 +145,26 @@ export function createSeed(): Database {
   mem('STU-002', 'Chen Yu', 'QC', 'BLINDED', '2026-09-10T00:00', null);
   mem('STU-003', 'Wang Fang', 'STAT', 'UNSET', '2026-03-05T00:00', null, true);
   mem('STU-003', 'Li Wei', 'VIEW', 'UNSET', '2026-03-05T00:00', null);
+  // 审计历史：日期不晚于该 Study 的 updated，操作人为租户用户。Action 名与 12、13、14 单一致
+  const au = (studyId: string, time: string, actor: string, action: AuditAction, changes: string, reason: string | null = null) => {
+    db.audit.push({ id: 'AU-' + String(++db.seq.audit).padStart(4, '0'), studyId, time, actor, action, changes, reason });
+  };
+  au('STU-001', '2026-08-12T10:05', 'Wang Fang', 'Study created', 'STU-001');
+  au('STU-001', '2026-08-14T09:20', 'Wang Fang', 'Study Admin transferred', 'Wang Fang → User Name', 'Wang Fang moves to the Lymphoma program. User Name leads NSCLC statistics.');
+  au('STU-001', '2026-09-01T14:30', 'User Name', 'Member added', 'Zhao Min (DM), Wang Fang (VIEW)', 'Data management and sponsor oversight join for the first data cut.');
+  au('STU-001', '2026-09-20T11:12', 'User Name', 'Blinding status changed', 'Li Wei: Unspecified → Unblinded', 'Li Wei prepares unblinded safety outputs for the DMC.');
+  au('STU-001', '2026-10-30T16:48', 'User Name', 'Study details updated', 'Therapeutic area: Thoracic oncology → Oncology', 'Align with the therapeutic area list in the tenant.');
+  au('STU-002', '2026-09-02T09:40', 'Zhao Min', 'Study created', 'STU-002');
+  au('STU-002', '2026-09-02T09:52', 'Zhao Min', 'Member added', 'Li Wei (DEV)', 'Lead programmer for SDTM and ADaM.');
+  au('STU-002', '2026-09-10T15:05', 'Zhao Min', 'Member added', 'Chen Yu (QC)', 'Independent QC programmer for the interim TFLs.');
+  au('STU-002', '2026-10-26T09:58', 'Zhao Min', 'Blinding status changed', 'Li Wei: Unspecified → Blinded', 'Programming team stays blinded until database lock.');
+  au('STU-002', '2026-10-26T10:03', 'Zhao Min', 'Blinding status changed', 'Chen Yu: Unspecified → Blinded', 'Programming team stays blinded until database lock.');
+  au('STU-002', '2026-10-26T10:18', 'Zhao Min', 'Blinding enabled', 'Unblinded → Blinded', 'Interim analysis runs under blinded review per the DMC charter.');
+  au('STU-003', '2026-03-05T11:00', 'Wang Fang', 'Study created', 'STU-003');
+  au('STU-003', '2026-03-05T11:06', 'Wang Fang', 'Member added', 'Li Wei (VIEW)', 'Read access for the CSR appendix review.');
+  au('STU-003', '2026-06-22T14:40', 'Wang Fang', 'Study details updated', 'Phase: Exploratory → Phase I', 'Protocol Amendment 2 confirms Phase I.');
+  au('STU-003', '2026-09-18T17:25', 'Wang Fang', 'Study archived', 'Active → Archived', 'Final CSR delivered. Study closed at the sponsor’s request.');
+  db.audit.sort((x, y) => (x.time < y.time ? 1 : x.time > y.time ? -1 : 0));
   db.studies.filter((s) => s.id.startsWith('TMP-')).forEach((s) => { mem(s.id, 'Zhao Min', 'STAT', 'UNSET', '2026-09-02T00:00', null, true); mem(s.id, 'Li Wei', 'VIEW', 'UNSET', '2026-09-02T00:00', null); });
   return db;
 }

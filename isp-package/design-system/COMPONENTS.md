@@ -128,7 +128,7 @@
 | RefLink | 资产或 Dataset 引用链接 | 无 Wiz 稿 |
 | VersionRow | 版本行（版本号、Latest / Official、人加日期、Used by） | 无 Wiz 稿 |
 | DatasetCard | Dataset 空间卡；DatasetCardMore 为「+N more」占位 | 无 Wiz 稿 |
-| ValidityPicker | 有效期选择：开始必填、结束可选（End time 开关），精确到分钟，欧美格式，时区由系统判定；`formatRange` 生成显示文案 | 提案中 |
+| ValidityPicker | 有效期选择：开始必填、结束可选（End time 开关），精确到分钟，欧美格式，时区由系统判定；`formatRange` 生成显示文案；`clearable` 有值时浮层底部出现 Clear，清空为 `{ start: '', end: null }`，用作时间范围筛选（Audit trail） | 提案中 |
 
 ## 提案中（未实现）
 

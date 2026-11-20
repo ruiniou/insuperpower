@@ -190,3 +190,9 @@ button { font-family: inherit; }
 .mem-who-line { display: flex; align-items: baseline; gap: var(--wiz-spacing-sm); }
 .mem-hints { display: flex; flex-direction: column; }
 .mre-hint--tight { margin-top: calc(-1 * var(--wiz-spacing-xs)); }
+
+/* Audit trail：Changes 第一行为变更，第二行为 Reason（弱文字，有才显示）；长文本换行不截断 */
+.audit-range { flex: none; width: 280px; }
+.audit-time { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.audit-changes { display: flex; flex-direction: column; gap: 2px; padding: var(--wiz-spacing-sm) 0; overflow-wrap: anywhere; }
+.audit-reason { font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }

@@ -12,7 +12,7 @@ export interface MemberRowsEditorProps {
   onChange: (rows: MemberRow[]) => void;
   /** 已经是 Active 成员的用户不出现在候选里 */
   excludeUserIds?: string[];
-  /** Study 级盲态为 Blinded：属性必填（只在 Not blinded 时表头显示说明） */
+  /** Study 级盲态为 Blinded：属性必填（只在 Unblinded 时表头显示说明） */
   studyBlinded: boolean;
   /** single：用户锁定，不能增删行 */
   mode: 'multi' | 'single';

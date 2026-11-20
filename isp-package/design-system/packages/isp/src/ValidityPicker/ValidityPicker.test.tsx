@@ -110,3 +110,18 @@ describe('ValidityPicker 空值', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+describe('ValidityPicker clearable', () => {
+  it('有值时出现 Clear，点击写回空值并关闭；无值时不出现', () => {
+    const done = vi.fn();
+    function H() { const [v, setV] = useState<Validity>({ start: '2026-09-10T09:00', end: null }); return <ValidityPicker aria-label="Time range" clearable endable value={v} onChange={(x) => { setV(x); done(x); }} placeholder="Time range" />; }
+    render(<H />);
+    fireEvent.mouseDown(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    expect(done).toHaveBeenLastCalledWith({ start: '', end: null });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('combobox').textContent).toContain('Time range');
+    fireEvent.mouseDown(screen.getByRole('combobox'));
+    expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull();
+  });
+});

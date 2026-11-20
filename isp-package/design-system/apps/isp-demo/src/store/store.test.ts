@@ -9,6 +9,7 @@ import { savePinnedDatasets, specOptionsFor, uploadAsset, uploadDataset } from '
 import { getDb, resetDb, setToastHandler } from './store';
 import { activeMembers, addMembers, emptyMemberRow, evKey, memberCount, memberOf, membersOf, removalImpact, removeMember, sortMembers, updateMember, validateMemberRow, wfKey, peopleOf, changeBlinding, transferStudyAdmin, canAddMembers } from './members';
 import { can, DUTIES, setDuty } from './role';
+import { auditOf } from './audit';
 
 let toasts: string[] = [];
 beforeEach(() => { vi.useFakeTimers(); resetDb(); toasts = []; setToastHandler((m) => toasts.push(m)); });
@@ -220,7 +221,7 @@ describe('Study 页 MVP：职责与资料', () => {
     const r = createStudy(f);
     expect('id' in r).toBe(true);
     const s = S.study('ABC-001')!;
-    expect([s.admin, s.blinding, s.lifecycle, memberCount('ABC-001')]).toEqual([getDb().me.name, 'Not blinded', 'ACTIVE', 2]);
+    expect([s.admin, s.blinding, s.lifecycle, memberCount('ABC-001')]).toEqual([getDb().me.name, 'Unblinded', 'ACTIVE', 2]);
     const ms = sortMembers(membersOf('ABC-001'));
     expect(ms.map((m) => [m.name, m.isAdmin, m.role, m.validUntil])).toEqual([['User Name', true, 'STAT', null], ['Li Wei', false, 'VIEW', '2027-01-01T09:00']]);
     expect(toasts.at(-1)).toBe('ABC-001 created');
@@ -521,5 +522,98 @@ describe('Dataset：版本号、Cut / Spec、Event 选数据', () => {
     expect(Object.keys(e.refs.datasets)).toEqual(['D11']);
     expect(toasts.at(-1)).toBe('Cleared pinned datasets');
     expect(prodBefore.D3).toBeTruthy();
+  });
+});
+
+describe('Study 审计', () => {
+  const mid = (sid: string, name: string) => membersOf(sid).find((m) => m.name === name)!;
+  const head = () => getDb().audit[0];
+  const count = () => getDb().audit.length;
+  const row = (key: number, userId: string, o: Partial<ReturnType<typeof emptyMemberRow>> = {}) => emptyMemberRow(key, { userId, validFrom: '2026-12-01T09:00', ...o });
+
+  it('种子：STU-003 有 Study archived，STU-002 有 Blinding enabled，都带 Reason；每个种子 Study 3 到 6 条', () => {
+    expect(auditOf('STU-003').find((a) => a.action === 'Study archived')).toMatchObject({ changes: 'Active → Archived', reason: expect.any(String) });
+    expect(auditOf('STU-002').find((a) => a.action === 'Blinding enabled')).toMatchObject({ changes: 'Unblinded → Blinded', reason: expect.any(String) });
+    ['STU-001', 'STU-002', 'STU-003'].forEach((sid) => { const n = auditOf(sid).length; expect(n >= 3 && n <= 6).toBe(true); });
+    const t = auditOf('STU-001').map((a) => a.time);
+    expect([...t].sort().reverse()).toEqual(t);
+  });
+
+  it('修改资料：逐字段写 旧 → 新，说明只写字段名；校验失败不写', async () => {
+    const { updateStudyDetails } = await import('./study');
+    const n = count();
+    updateStudyDetails('STU-001', { name: 'NSCLC Phase III Trial', desc: 'Long text', ta: 'Oncology', phase: 'Phase II', reason: '' });
+    expect(count()).toBe(n);
+    updateStudyDetails('STU-001', { name: 'NSCLC Phase III Trial', desc: 'Long text', ta: 'Oncology', phase: 'Phase II', reason: 'Protocol amendment' });
+    expect(count()).toBe(n + 1);
+    expect(head()).toMatchObject({ studyId: 'STU-001', actor: getDb().me.name, action: 'Study details updated', changes: 'Description; Phase: Phase III → Phase II', reason: 'Protocol amendment' });
+    expect(head().time).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+  });
+
+  it('新建 Study：写 Study created，Changes 为 Study ID', async () => {
+    const { createStudy, emptyStudyForm } = await import('./study');
+    setDuty('System Owner');
+    const n = count();
+    createStudy({ ...emptyStudyForm(), id: '' , name: 'x' });
+    expect(count()).toBe(n);
+    createStudy({ ...emptyStudyForm(), id: 'ABC-002', name: 'Demo Study' });
+    expect(head()).toMatchObject({ studyId: 'ABC-002', action: 'Study created', changes: 'ABC-002', reason: null });
+  });
+
+  it('成员：添加一次一条、编辑、改盲态、移交 Admin；失败都不写', () => {
+    setDuty('Study Admin');
+    const n = count();
+    addMembers({ sid: 'STU-001', rows: [row(1, 'U-106')], reason: ' ' });
+    expect(count()).toBe(n);
+    addMembers({ sid: 'STU-001', rows: [row(1, 'U-106', { role: 'DEV' }), row(2, 'U-107', { role: 'QC' })], reason: 'Joining' });
+    expect(count()).toBe(n + 1);
+    expect(head()).toMatchObject({ action: 'Member added', changes: 'Zhang Hui (DEV), Liu Yang (QC)', reason: 'Joining' });
+
+    const li = mid('STU-001', 'Li Wei');
+    updateMember({ sid: 'STU-001', memberId: li.id, row: { ...row(0, li.userId), role: 'STAT', validFrom: li.validFrom, validUntil: li.validUntil ?? '' }, reason: '' });
+    expect(count()).toBe(n + 1);
+    updateMember({ sid: 'STU-001', memberId: li.id, row: { ...row(0, li.userId), role: 'STAT', validFrom: li.validFrom, validUntil: li.validUntil ?? '' }, reason: 'New duty' });
+    expect(head()).toMatchObject({ action: 'Member updated', changes: 'Li Wei: Role DEV → STAT' });
+
+    const chen = mid('STU-001', 'Chen Yu');
+    changeBlinding({ sid: 'STU-001', memberId: chen.id, attr: 'UNSET', reason: 'x' });
+    expect(count()).toBe(n + 2);
+    changeBlinding({ sid: 'STU-001', memberId: chen.id, attr: 'BLINDED', reason: 'Stays blinded' });
+    expect(head()).toMatchObject({ action: 'Blinding status changed', changes: 'Chen Yu: Unspecified → Blinded', reason: 'Stays blinded' });
+
+    transferStudyAdmin({ sid: 'STU-001', toMemberId: chen.id, reason: '' });
+    expect(count()).toBe(n + 3);
+    transferStudyAdmin({ sid: 'STU-001', toMemberId: chen.id, reason: 'Handover' });
+    expect(head()).toMatchObject({ action: 'Study Admin transferred', changes: 'User Name → Chen Yu' });
+    expect(count()).toBe(n + 4);
+  });
+
+  it('移除成员：有交接时写交接条数；校验失败不写', () => {
+    const li = mid('STU-001', 'Li Wei'), n = count();
+    removeMember({ sid: 'STU-001', memberId: li.id, reason: 'x', workflowOwners: {}, eventOwners: {} });
+    expect(count()).toBe(n);
+    removeMember({ sid: 'STU-001', memberId: li.id, reason: 'Left the project', workflowOwners: { 'wf:EVT-001:WF-01': 'Chen Yu', 'wf:EVT-004:WF-01': 'Zhao Min' }, eventOwners: { 'ev:EVT-001': 'Chen Yu' } });
+    expect(head()).toMatchObject({ action: 'Member removed', changes: 'Li Wei, handed over 3 items', reason: 'Left the project' });
+    const wf = mid('STU-001', 'Wang Fang');
+    removeMember({ sid: 'STU-001', memberId: wf.id, reason: 'Done', workflowOwners: {}, eventOwners: {} });
+    expect(head().changes).toBe('Wang Fang');
+  });
+
+  it('Event Owner 交接、上传版本各写一条；上传校验失败不写', async () => {
+    const { transferEventOwner } = await import('./study');
+    transferEventOwner('EVT-001', 'Chen Yu');
+    expect(head()).toMatchObject({ studyId: 'STU-001', action: 'Event Owner changed', changes: S.event('EVT-001')!.name + ': Li Wei → Chen Yu' });
+    const n = count();
+    const f = { sid: 'STU-001', dsId: null, name: 'ADSL', cat: 'ADaM', mode: 'PROD', version: '', cut: '', spec: '', fileName: 'adsl.xpt', reason: '' };
+    uploadDataset(f);
+    expect(count()).toBe(n);
+    uploadDataset({ ...f, version: 'v9.0', reason: 'Data cut 3' });
+    expect(head()).toMatchObject({ action: 'Version registered', changes: 'ADSL v9.0', reason: 'Data cut 3' });
+  });
+
+  it('记录只增：已有记录在后续操作后保持原样，顺序不变', () => {
+    const before = getDb().audit.map((a) => ({ ...a }));
+    addMembers({ sid: 'STU-001', rows: [row(1, 'U-106')], reason: 'Joining' });
+    expect(getDb().audit.slice(1)).toEqual(before);
   });
 });
