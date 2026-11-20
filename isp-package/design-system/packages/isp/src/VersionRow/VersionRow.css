@@ -3,3 +3,4 @@
 .wiz-isp-vr__l2 { margin-top: 2px; font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
 .wiz-isp-vr__behind { margin-left: var(--wiz-spacing-xs); vertical-align: middle; }
 .wiz-isp-vr .wiz-status { height: 20px; }
+.wiz-isp-vr__cut { margin-left: auto; font-weight: var(--wiz-font-weight-regular); color: var(--wiz-color-text-secondary); }

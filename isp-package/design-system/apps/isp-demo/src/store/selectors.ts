@@ -36,6 +36,10 @@ export const S = {
 };
 export { DOWN, SPACES };
 
+/** 数据集版本的 Cut 与关联 Spec：目前存在 Version.meta，升级成结构化字段只改这里 */
+export const cutOf = (v: Version): string => v.meta?.cut ?? '';
+export const specOf = (v: Version): string => v.meta?.spec ?? '';
+
 /** Workflow 实例状态由节点状态派生（与 Overview 共用同一份数据） */
 export function wfInfo(e: EventRec, w: Workflow) {
   const f = e.flow, ids = LOOP_NODES[w.loop], st = ids.map((id) => f.st[id]);

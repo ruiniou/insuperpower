@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Avatar, Button, Field, FileBox, Input, Message, Modal, PickList, CheckPill, Radio, Select, Textarea } from '@wiz/react';
+import { Avatar, Button, Checkbox, Field, FileBox, Input, Message, Modal, PickList, Radio, Select, Textarea } from '@wiz/react';
 import { go } from '../../router';
 import { AddMembersModal, ChangeBlindingModal, EditMemberModal, RemoveMemberModal, TransferAdminModal } from './MemberModals';
 import { CAT_ORDER, FILE_OK, TYPE, TYPES, SCOPES } from '../../store/assets';
 import { hrefEvent, hrefStudy } from '../../store/actions';
 import { baselineTag, baselineUsers, currentBaseline, isBlCode, baselineAsset, suggestBaselineLabel } from '../../store/baseline';
-import { SPACE, S } from '../../store/selectors';
+import { cutOf, SPACE, S } from '../../store/selectors';
 import { DS_FILE_OK } from '../../store/actions';
-import { createEvent, defaultEventRefs, uploadAsset, uploadDataset, usedByEvents, type BaselineMode, type Errors } from '../../store/study';
+import { createEvent, defaultEventRefs, savePinnedDatasets, uploadAsset, uploadDataset, usedByEvents, type BaselineMode, type Errors } from '../../store/study';
 import { closeModal, modalUi } from '../../store/ui';
 import { useDb } from '../../store/store';
 import type { Asset } from '../../store/types';
@@ -122,36 +122,72 @@ function UploadAssetModal({ sid, assetId, code: code0 }: { sid: string; assetId:
   );
 }
 
-/** Upload Dataset：模式无默认值、不从文件名推断；PROD 可登记首次盲态保护规则 */
+/** Upload Dataset：模式无默认值、不从文件名推断；版本号由上传者填写 */
 function UploadDatasetModal({ sid, dsId, mode: mode0 }: { sid: string; dsId: string | null; mode: string }) {
+  const db = useDb();
   const d = dsId ? S.ds(dsId) ?? null : null;
-  const [f, setF] = useState({ name: d ? d.name : '', aid: d ? d.name : '', cat: d ? d.cat : 'RawData', mode: d ? SPACE(d.space)!.mode : mode0, fileName: '', blind: false, reason: '' });
+  const [f, setF] = useState({ name: d ? d.name : '', cat: d ? d.cat : 'RawData', mode: d ? SPACE(d.space)!.mode : mode0, version: '', cut: '', spec: '', fileName: '', reason: '' });
   const [er, setEr] = useState<Errors>({});
+  const specs = db.assets.filter((a) => a.studyId === sid && (a.code === 'SDTM_SPEC' || a.code === 'ADAM_SPEC')).flatMap((a) => a.versions.map((v) => a.name + ' ' + v.label));
   const submit = () => {
     const r = uploadDataset({ sid, dsId, ...f });
     if ('errors' in r) { setEr(r.errors); return; }
     closeModal(); go(hrefStudy(sid, 'dataset', r.space), { drawer: { kind: 'dsV', id: r.ds.id } });
   };
   return (
-    <Modal title={d ? 'Upload New Version' : 'Upload Dataset'} width={600} onClose={closeModal}
-      footer={<Footer note="Parsing and validation engines are not connected in this prototype." confirm={d ? 'Upload version' : 'Upload Dataset'} onConfirm={submit} />}>
+    <Modal title={d ? 'Upload new version' : 'Upload Dataset'} width={600} onClose={closeModal}
+      footer={<Footer confirm={d ? 'Upload version' : 'Upload Dataset'} onConfirm={submit} />}>
       <div className="app-form">
-        {d && <Message tone="info">Adding a new version of <b>{d.name}</b> in the <b>{SPACE(d.space)!.name}</b> space (currently {S.latest(d).label}). Data type and mode are locked. The new version will be <b>v{S.latest(d).n + 1}</b>.</Message>}
+        <Input label="Dataset name" placeholder="Uses the file name if empty" readOnly={!!d} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <div className="app-form__row2">
-          <Input label="Dataset name" placeholder="Uses the file name if empty" readOnly={!!d} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
-          <Input label="Artifact ID" placeholder="Auto: dataset-{n}" readOnly={!!d} value={f.aid} onChange={(e) => setF({ ...f, aid: e.target.value })} />
+          <Select label="Data type" required disabled={!!d} options={['RawData', 'SDTM', 'ADaM']} value={f.cat} onChange={(v) => setF({ ...f, cat: v, spec: v === 'RawData' ? '' : f.spec })} />
+          <Select label="Mode" required placeholder="Select mode…" disabled={!!d} options={['Dummy', 'Synthetic', 'PROD']} value={f.mode} error={er.mode}
+            onChange={(v) => { setF({ ...f, mode: v }); setEr({ ...er, mode: '' }); }} />
         </div>
+        <span className="app-hint">Mode is never inferred from the file name.</span>
         <div className="app-form__row2">
-          <Select label="Data type" required disabled={!!d} options={['RawData', 'SDTM', 'ADaM']} value={f.cat} onChange={(v) => setF({ ...f, cat: v })} />
-          <Select label="Actual version mode" required placeholder="Select mode…" disabled={!!d} options={['Dummy', 'Synthetic', 'PROD']} value={f.mode} error={er.mode}
-            onChange={(v) => { setF({ ...f, mode: v, blind: v === 'PROD' ? f.blind : false }); setEr({ ...er, mode: '' }); }} />
+          <Input label="Version" required maxLength={64} value={f.version} error={er.version} onChange={(e) => { setF({ ...f, version: e.target.value }); setEr({ ...er, version: '' }); }} />
+          <Input label="Cut" placeholder="e.g. C01" maxLength={64} value={f.cut} onChange={(e) => setF({ ...f, cut: e.target.value })} />
         </div>
-        <Message tone="warning">Mode has no default and is never inferred from the file name. One version belongs to exactly one mode and is not shared across modes. A wrong mode is corrected only through a controlled request; the original version stays unchanged.</Message>
+        {f.cat !== 'RawData' && specs.length > 0 && <Select label="Spec" placeholder="Select Spec…" options={specs} value={f.spec} onChange={(v) => setF({ ...f, spec: v })} />}
         <Field label="Data file" required error={er.file} hint={'Allowed: ' + DS_FILE_OK.map((x) => '.' + x).join(' ')}>
           <FileBox accept={DS_FILE_OK.map((x) => '.' + x).join(',')} fileName={f.fileName} invalid={!!er.file} onChange={(n) => { setF({ ...f, fileName: n }); setEr({ ...er, file: '' }); }} />
         </Field>
-        {f.mode === 'PROD' && <CheckPill checked={f.blind} onChange={(c) => setF({ ...f, blind: c })}>First blinded PROD: register the direct protection rule first</CheckPill>}
         <Textarea label="Reason" rows={2} maxLength={1000} placeholder='Defaults to "Data intake"' value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} />
+      </div>
+    </Modal>
+  );
+}
+
+/** Choose datasets：Event 在当前 Mode 下固定数据集与版本。Mode 由入口传入，弹窗内不切换；保存只改本 Mode 的固定 */
+function ChooseDatasetsModal({ eid, space }: { eid: string; space: string }) {
+  const e = S.event(eid)!, sp = SPACE(space) ?? SPACE('dummy')!;
+  const list = S.datasetsOf(e.studyId, sp.key);
+  const [pick, setPick] = useState<Record<string, number>>(() => Object.fromEntries(list.filter((d) => e.refs.datasets[d.id]).map((d) => [d.id, e.refs.datasets[d.id].v])));
+  const save = () => { savePinnedDatasets(eid, sp.key, pick); closeModal(); };
+  return (
+    <Modal title="Choose datasets" width={640} onClose={closeModal}
+      footer={<><Button onClick={closeModal}>Cancel</Button><Button variant="primary" onClick={save}>Save datasets</Button></>}>
+      <div className="app-form">
+        <span className="app-hint">{sp.name} datasets</span>
+        {list.length === 0 ? <span className="app-hint">No datasets in this mode yet.</span> : (
+          <div className="ds-pick" role="table" aria-label="Datasets">
+            <div className="ds-pick__row ds-pick__row--head" role="row"><span /><span role="columnheader">Dataset</span><span role="columnheader">Type</span><span role="columnheader">Version</span></div>
+            {list.map((d) => {
+              const on = d.id in pick;
+              return (
+                <div key={d.id} className="ds-pick__row" role="row">
+                  <Checkbox aria-label={'Pin ' + d.name} checked={on} onChange={(c) => { const n = { ...pick }; if (c) n[d.id] = S.latest(d).n; else delete n[d.id]; setPick(n); }} />
+                  <span className="ds-name"><span className="app-mono app-ell">{d.name}</span><small className="app-ell">{d.label}</small></span>
+                  <span className="app-sm">{d.cat}</span>
+                  <Select aria-label={'Version of ' + d.name} value={String(on ? pick[d.id] : S.latest(d).n)} disabled={!on}
+                    options={d.versions.map((v) => ({ value: String(v.n), label: cutOf(v) ? v.label + ' · ' + cutOf(v) : v.label }))}
+                    onChange={(v) => setPick({ ...pick, [d.id]: Number(v) })} />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </Modal>
   );
@@ -164,6 +200,7 @@ export function StudyModals() {
   const key = JSON.stringify(m);
   if (m.kind === 'createEvent') return <CreateEventModal key={key} sid={m.sid} />;
   if (m.kind === 'uploadAsset') return <UploadAssetModal key={key} sid={m.sid} assetId={m.assetId} code={m.code} />;
+  if (m.kind === 'chooseDatasets') return <ChooseDatasetsModal key={key} eid={m.eid} space={m.space} />;
   if (m.kind === 'addMembers') return <AddMembersModal key={key} sid={m.sid} userId={m.userId} />;
   if (m.kind === 'editMember') return <EditMemberModal key={key} sid={m.sid} memberId={m.memberId} />;
   if (m.kind === 'changeBlinding') return <ChangeBlindingModal key={key} sid={m.sid} memberId={m.memberId} />;

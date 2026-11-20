@@ -50,7 +50,11 @@ export function createSeed(): Database {
 
   const d = (id: string, space: 'dummy' | 'synthetic' | 'prod', cat: string, name: string, label: string, versions: Version[]) =>
     db.datasets.push({ id, studyId: 'STU-001', space, cat, name, label, versions });
-  const dv = (n: number, by: string, date: string, basis: string) => V(n, by, date, basis);
+  // 版本号由上传者填写：按序号给 v1.0、v1.1、v1.2；Spec 取备注里的 Spec 写法，备注保持原样
+  const dv = (n: number, by: string, date: string, basis: string) => {
+    const m = /Generated from (SDTM|ADaM) Spec (v\d)/.exec(basis);
+    return V(n, by, date, m ? '' : basis, { label: 'v1.' + (n - 1), meta: m ? { spec: `STU-001 ${m[1]} Spec ${m[2]}` } : {} });
+  };
   d('D1', 'dummy', 'SDTM', 'DM', 'Demographics', [dv(3, 'Chen Yu', 'Oct 30', 'Generated from SDTM Spec v2'), dv(2, 'Li Wei', 'Oct 21', 'Generated from SDTM Spec v2'), dv(1, 'Li Wei', 'Oct 10', 'Generated from SDTM Spec v1')]);
   d('D2', 'dummy', 'SDTM', 'AE', 'Adverse Events', [dv(3, 'Chen Yu', 'Oct 30', 'Generated from SDTM Spec v2'), dv(2, 'Li Wei', 'Oct 21', 'Generated from SDTM Spec v2'), dv(1, 'Li Wei', 'Oct 10', 'Generated from SDTM Spec v1')]);
   d('D3', 'dummy', 'ADaM', 'ADSL', 'Subject-level', [dv(3, 'Chen Yu', 'Nov 1', 'Generated from ADaM Spec v1'), dv(2, 'Li Wei', 'Oct 21', 'Generated from ADaM Spec v1'), dv(1, 'Li Wei', 'Oct 10', 'Generated from ADaM Spec v1')]);
@@ -63,6 +67,12 @@ export function createSeed(): Database {
   d('D10', 'synthetic', 'ADaM', 'ADSL', 'Subject-level', [dv(1, 'Chen Yu', 'Oct 25', 'Generated from ADaM Spec v1')]);
   d('D11', 'prod', 'SDTM', 'DM', 'Demographics', [dv(1, 'Wang Fang', 'Oct 27', 'Source batch B-0412')]);
   d('D12', 'prod', 'ADaM', 'ADSL', 'Subject-level', [dv(1, 'Wang Fang', 'Oct 28', 'Source batch B-0412')]);
+  d('D13', 'dummy', 'RawData', 'DEMOG_RAW', 'Demographics', [dv(2, 'Li Wei', 'Oct 18', 'Data intake'), dv(1, 'Li Wei', 'Oct 8', 'Data intake')]);
+  d('D14', 'dummy', 'RawData', 'LAB_RAW', 'Laboratory', [dv(1, 'Li Wei', 'Oct 8', 'Data intake')]);
+  d('D15', 'prod', 'RawData', 'DEMOG_RAW', 'Demographics', [dv(1, 'Wang Fang', 'Oct 26', 'Source batch B-0412')]);
+
+  const CUT: Record<string, Record<number, string>> = { D1: { 1: 'C01', 2: 'C01', 3: 'C02' }, D2: { 1: 'C01', 2: 'C01', 3: 'C02' }, D3: { 2: 'C01', 3: 'C02' } };
+  Object.entries(CUT).forEach(([id, byN]) => db.datasets.find((x) => x.id === id)!.versions.forEach((v) => { if (byN[v.n]) v.meta = { ...v.meta, cut: byN[v.n] }; }));
 
   const events: EventRec[] = [
     {

@@ -99,23 +99,45 @@ export function uploadAsset(f: UploadAssetForm): { errors: Errors } | { asset: A
   return { asset: target! };
 }
 
-export interface UploadDatasetForm { sid: string; dsId: string | null; name: string; aid: string; cat: string; mode: string; fileName: string; blind: boolean; reason: string }
-/** 上传数据集 / 新版本：模式必须显式选择，不从文件名推断；同空间同类别同名则追加版本 */
+export interface UploadDatasetForm { sid: string; dsId: string | null; name: string; cat: string; mode: string; version: string; cut: string; spec: string; fileName: string; reason: string }
+/** 上传数据集 / 新版本：模式必须显式选择，不从文件名推断；版本号由上传者填写，同一数据集内不区分大小写唯一；同空间同类别同名则追加版本 */
 export function uploadDataset(f: UploadDatasetForm): { errors: Errors } | { ds: Dataset; space: string } {
   const db = getDb(), er: Errors = {}, d0 = f.dsId ? S.ds(f.dsId) ?? null : null;
   if (!f.mode) er.mode = 'Select an explicit mode (Dummy, Synthetic or PROD).';
+  const space = MODE_SPACE[f.mode], stem = f.fileName.replace(/\.[^.]+$/, '');
+  const nm = (d0 ? d0.name : ((f.name || stem).trim() || stem)).toUpperCase().replace(/\s+/g, '_');
+  let d = d0 || (space ? db.datasets.find((x) => x.studyId === f.sid && x.space === space && x.cat === f.cat && x.name === nm) : undefined);
+  const version = f.version.trim();
+  if (!version) er.version = 'Enter a version.';
+  else if (d && d.versions.some((v) => sameLabel(v.label, version))) er.version = 'This version already exists.';
   if (!f.fileName) er.file = 'Choose a data file.'; else if (DS_FILE_OK.indexOf(extOf(f.fileName)) < 0) er.file = 'Unsupported format. Allowed: ' + DS_FILE_OK.map((x) => '.' + x).join(' ');
   if (Object.keys(er).length) return { errors: er };
-  const space = MODE_SPACE[f.mode], stem = f.fileName.replace(/\.[^.]+$/, '');
-  const nm = (d0 ? d0.name : ((f.aid || f.name || stem).trim() || stem)).toUpperCase().replace(/\s+/g, '_');
-  let d = d0 || db.datasets.find((x) => x.studyId === f.sid && x.space === space && x.cat === f.cat && x.name === nm);
-  const note = (f.reason.trim() || 'Data intake') + ', quality not evaluated' + (f.blind ? ', protection rule registered' : '');
-  if (d) d.versions.unshift(V(S.latest(d).n + 1, db.me.name, dShort(), note, { file: f.fileName }));
-  else { d = { id: 'D' + (++db.seq.ds), studyId: f.sid, space, cat: f.cat, name: nm, label: (f.name || '').trim(), versions: [V(1, db.me.name, dShort(), note, { file: f.fileName })] }; db.datasets.push(d); }
+  const meta: Record<string, string> = {};
+  if (f.cut.trim()) meta.cut = f.cut.trim();
+  if (f.spec && f.cat !== 'RawData') meta.spec = f.spec;
+  const note = f.reason.trim() || 'Data intake';
+  if (d) d.versions.unshift(V(S.latest(d).n + 1, db.me.name, dShort(), note, { label: version, meta, file: f.fileName }));
+  else { d = { id: 'D' + (++db.seq.ds), studyId: f.sid, space, cat: f.cat, name: nm, label: (f.name || '').trim(), versions: [V(1, db.me.name, dShort(), note, { label: version, meta, file: f.fileName })] }; db.datasets.push(d); }
   const st = S.study(f.sid); if (st) st.updated = dLong();
-  toast('Demo version registered (' + d.name + ' ' + S.latest(d).label + ', ' + SPACES.find((s) => s.key === space)!.name + '). Real parsing, validation and release engine are not connected.');
+  toast('Uploaded ' + d.name + ' ' + version + '.');
   emit();
   return { ds: d, space };
+}
+
+/** Event 选数据：只改本空间（Mode）的固定，其他空间已有的固定不动。picks 为 数据集 id → 版本序号 n；返回固定数量 */
+export function savePinnedDatasets(eventId: string, space: string, picks: Record<string, number>): number {
+  const e = S.event(eventId);
+  if (!e) return 0;
+  const keep: Record<string, { v: number; use: string }> = {};
+  Object.entries(e.refs.datasets).forEach(([id, r]) => { const d = S.ds(id); if (d && d.space !== space) keep[id] = r; });
+  Object.entries(picks).forEach(([id, n]) => { const d = S.ds(id); if (d && d.space === space && S.vOf(d, n)) keep[id] = { v: n, use: e.refs.datasets[id]?.use ?? 'Generate Code' }; });
+  e.refs.datasets = keep;
+  e.updated = dLong();
+  const st = S.study(e.studyId); if (st) st.updated = dLong();
+  const n = Object.keys(picks).length;
+  toast(n ? 'Pinned ' + plural(n, 'dataset') : 'Cleared pinned datasets');
+  emit();
+  return n;
 }
 export { DS_CATS };
 

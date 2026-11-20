@@ -10,3 +10,6 @@
 .wiz-drawer__sec { display: flex; align-items: center; justify-content: space-between; height: 48px; box-sizing: border-box; padding: 0 var(--wiz-spacing-lg); }
 .wiz-drawer__sec-t { font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); }
 .wiz-drawer__sec-t > i { margin-left: var(--wiz-spacing-sm); font-style: normal; font-weight: var(--wiz-font-weight-regular); font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
+/* 头部关闭钮：28 见方、20 图标，图标右缘与内容区右内边距（lg）对齐；::after 把点击区扩到 40 */
+.wiz-drawer__head .wiz-close-button { position: relative; width: 28px; height: 28px; padding: 0; font-size: 20px; }
+.wiz-drawer__head .wiz-close-button::after { content: ''; position: absolute; inset: -6px; }

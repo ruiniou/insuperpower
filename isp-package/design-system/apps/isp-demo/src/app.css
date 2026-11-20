@@ -19,6 +19,8 @@ button { font-family: inherit; }
 .page-head { height: 48px; padding: 0 var(--wiz-spacing-lg); display: flex; align-items: center; justify-content: space-between; flex: none; }
 .page-title { margin-right: var(--wiz-spacing-sm); display: flex; align-items: center; gap: var(--wiz-spacing-sm); font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); }
 .page-title i { font-style: normal; font-weight: var(--wiz-font-weight-regular); font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
+.page-head .wiz-seg { margin-left: calc(-1 * var(--wiz-spacing-md)); } /* 光学对齐：首项文字与页面左内容线（页签、表头文字）对齐，选中底色向左悬挂 */
+.page-head .wiz-seg__item { font-size: var(--wiz-text-body-2-size); } /* 筛选类控件 13px，不高于同行主操作 */
 .page-tools { display: flex; align-items: center; gap: var(--wiz-spacing-sm); }
 .page-scroll { flex: 1; min-height: 0; overflow: auto; }
 
@@ -56,6 +58,10 @@ button { font-family: inherit; }
 .app-lcn { margin-left: var(--wiz-spacing-xs); color: var(--wiz-color-text-muted); font-variant-numeric: tabular-nums; }
 .ds-name { display: flex; flex-direction: column; line-height: 1.35; min-width: 0; }
 .ds-name small { font-size: var(--wiz-text-caption-size); font-weight: var(--wiz-font-weight-regular); color: var(--wiz-color-text-secondary); }
+.ds-pick { display: flex; flex-direction: column; border: 1px solid var(--wiz-color-border-default); border-radius: var(--wiz-radius-md); }
+.ds-pick__row { display: grid; grid-template-columns: 32px minmax(0, 1fr) 80px 170px; align-items: center; gap: var(--wiz-spacing-sm); min-height: 48px; padding: 0 var(--wiz-spacing-md); border-top: 1px solid var(--wiz-color-border-default); }
+.ds-pick__row:first-child { border-top: 0; }
+.ds-pick__row--head { min-height: 36px; font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
 .ds-sec { padding: var(--wiz-spacing-sm) var(--wiz-spacing-lg) var(--wiz-spacing-xs); }
 .ds-sec__head { display: flex; align-items: center; gap: var(--wiz-spacing-sm); height: 36px; font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); }
 .ds-sec__head .app-sm { font-weight: var(--wiz-font-weight-regular); }

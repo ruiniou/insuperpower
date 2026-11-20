@@ -11,6 +11,7 @@ import { ovCtx } from '../store/flow';
 import { attentionRows, inputsGroups, nodeCard, popoverFor, type Target } from '../store/overview';
 import { dsCnt, S } from '../store/selectors';
 import { toast, useDb } from '../store/store';
+import { openModal } from '../store/ui';
 import type { NodeId } from '../store/types';
 
 /** #/event/:eid/overview：流水线（18b）。全部状态由 event.flow 派生，UI 只做渲染与分发 */
@@ -26,7 +27,7 @@ export function EventOverviewPage({ eid }: { eid: string }) {
     switch (t.act) {
       case 'jumpAsset': case 'jumpEventAsset': case 'pinAsset': case 'refAsset': go(hrefEvent(e.id, 'asset')); break;
       case 'jumpDs': go(hrefEvent(e.id, 'dataset', t.arg)); break;
-      case 'pinDs': go(hrefEvent(e.id, 'dataset', t.arg || 'dummy')); break;
+      case 'pinDs': openModal({ kind: 'chooseDatasets', eid: e.id, space: t.arg || 'dummy' }); break;
       case 'jumpWf': go(hrefEvent(e.id, 'workflow')); break;
     }
   };

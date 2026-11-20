@@ -4,8 +4,8 @@ import { btnFor, ovCtx } from './flow';
 import { ovDoReplace, ovKeep, ovLock, ovRun, ovStartOrFix, quickUploadDs } from './actions';
 import { attentionRows, inputsGroups, nodeCard, popoverFor } from './overview';
 import { baselineAsset, baselinesOf, baselineUsers, slotCarriedFrom, suggestBaselineLabel } from './baseline';
-import { S, vLabelBl, wfInfo } from './selectors';
-import { uploadAsset } from './study';
+import { cutOf, S, specOf, vLabelBl, wfInfo } from './selectors';
+import { savePinnedDatasets, uploadAsset, uploadDataset } from './study';
 import { getDb, resetDb, setToastHandler } from './store';
 import { activeMembers, addMembers, emptyMemberRow, evKey, memberCount, memberOf, membersOf, removalImpact, removeMember, sortMembers, updateMember, validateMemberRow, wfKey, peopleOf, changeBlinding, transferStudyAdmin, canAddMembers } from './members';
 import { can, DUTIES, setDuty } from './role';
@@ -125,7 +125,7 @@ describe('Needs your attention（节点状态的投影）', () => {
     expect(rows[0].title).toBe('QC Code can use Shell v2');
     expect(rows[0].keepLabel).toBe('Keep v1');
     expect(rows[1].primary).toBe(true);
-    expect(rows[2].sub).toBe('SAP v3.0, ADSL v3. This Event stays on v2.0 and v2');
+    expect(rows[2].sub).toBe('SAP v3.0, ADSL v1.2. This Event stays on v2.0 and v1.1');
   });
   it('全部处理完显示为空（EVT-003 无引用更新、全 empty → 只有 Ready TOC）', () => {
     const rows = attentionRows(evt('EVT-003'), ovCtx(evt('EVT-003')));
@@ -141,7 +141,7 @@ describe('Inputs / 卡片行 / 气泡', () => {
   it('Inputs：SAP/Protocol/ADaM Spec 带 newer 提示；Datasets 汇总', () => {
     const g = inputsGroups(evt());
     expect(g.find((x) => x.label === 'Analysis plan')).toMatchObject({ text: 'SAP v2.0, Baseline v2.0', badge: 'v3.0 newer' });
-    expect(g.find((x) => x.label === 'Datasets')).toMatchObject({ text: 'ADaM 3', badge: 'ADSL v3 newer' });
+    expect(g.find((x) => x.label === 'Datasets')).toMatchObject({ text: 'ADaM 3', badge: 'ADSL v1.2 newer' });
     expect(g.find((x) => x.label === 'CRF')).toMatchObject({ text: 'None pinned' });
   });
   it('stale 节点卡片只留前两行；locked 无主按钮', () => {
@@ -479,5 +479,34 @@ describe('Study Member', () => {
     expect(mid('STU-001', 'Wang Fang').status).toBe('ACTIVE');
     setDuty('Study Admin');
     expect(memberOf('STU-001', 'U-105')).toBeTruthy();
+  });
+});
+
+describe('Dataset：版本号、Cut / Spec、Event 选数据', () => {
+  const form = { sid: 'STU-001', dsId: null, name: 'ADSL', cat: 'ADaM', mode: 'Dummy', version: 'v2.0', cut: 'C03', spec: 'STU-001 ADaM Spec v1.2', fileName: 'adsl.csv', reason: '' };
+  it('版本号由用户填写，必填，同一数据集内不区分大小写唯一', () => {
+    expect(uploadDataset({ ...form, version: ' ' })).toEqual({ errors: { version: 'Enter a version.' } });
+    expect(uploadDataset({ ...form, version: 'V1.2' })).toEqual({ errors: { version: 'This version already exists.' } });
+    const r = uploadDataset(form);
+    expect('ds' in r && S.latest(r.ds).label).toBe('v2.0');
+    expect(toasts.at(-1)).toBe('Uploaded ADSL v2.0.');
+  });
+  it('Cut 与 Spec 存入 meta，RawData 不存 Spec', () => {
+    const r = uploadDataset(form);
+    expect('ds' in r && cutOf(S.latest(r.ds))).toBe('C03');
+    expect('ds' in r && specOf(S.latest(r.ds))).toBe('STU-001 ADaM Spec v1.2');
+    const raw = uploadDataset({ ...form, name: 'RAW1', cat: 'RawData', version: 'r1' });
+    expect('ds' in raw && specOf(S.latest(raw.ds))).toBe('');
+  });
+  it('保存固定只影响当前 Mode，全部取消时 toast 为 Cleared', () => {
+    const e = evt('EVT-001'), prodBefore = { ...e.refs.datasets };
+    e.refs.datasets.D11 = { v: 1, use: 'Generate Code' };
+    expect(savePinnedDatasets(e.id, 'dummy', { D1: 3 })).toBe(1);
+    expect(Object.keys(e.refs.datasets).sort()).toEqual(['D1', 'D11']);
+    expect(e.refs.datasets.D1.v).toBe(3);
+    expect(savePinnedDatasets(e.id, 'dummy', {})).toBe(0);
+    expect(Object.keys(e.refs.datasets)).toEqual(['D11']);
+    expect(toasts.at(-1)).toBe('Cleared pinned datasets');
+    expect(prodBefore.D3).toBeTruthy();
   });
 });

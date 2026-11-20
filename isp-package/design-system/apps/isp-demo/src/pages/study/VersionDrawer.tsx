@@ -3,7 +3,7 @@ import { Button, Drawer, DrawerRow, DrawerSectionHead, IconButton } from '@wiz/r
 import { VersionRow } from '@wiz/isp';
 import { TYPE } from '../../store/assets';
 import { baselinesOfVersion } from '../../store/baseline';
-import { catOf, SPACE, S } from '../../store/selectors';
+import { catOf, cutOf, specOf, SPACE, S } from '../../store/selectors';
 import { openModal, setDrawerWidth, ui, openDrawer } from '../../store/ui';
 import { soon } from './common';
 
@@ -32,20 +32,18 @@ export function AssetVersionDrawer({ id, n }: { id: string; n?: number }) {
   );
 }
 
-/** 数据集版本抽屉 */
+/** 数据集版本抽屉：标题只放名称，副标题「Type, Mode」；label 表格里已有，抽屉不重复；版本行右侧显示 Cut，Spec 单独一行 */
 export function DatasetVersionDrawer({ id }: { id: string }) {
   const d = S.ds(id);
   if (!d) return null;
   const lv = S.latest(d), users = S.dsUsers(d);
   return (
-    <Drawer title={d.name} subtitle="Versions" top={HEADER_H} width={ui.drawerWidth} onWidthChange={setDrawerWidth} onClose={() => openDrawer(null)} aria-label="Version history">
-      <DrawerRow label="Dataset">{d.name} {d.label}</DrawerRow>
-      <DrawerRow label="Category">{d.cat}, {SPACE(d.space)!.name} space</DrawerRow>
-      <DrawerSectionHead title="Versions" count={d.versions.length} style={{ marginTop: 8 }}
+    <Drawer title={d.name} subtitle={`${d.cat}, ${SPACE(d.space)!.name}`} top={HEADER_H} width={ui.drawerWidth} onWidthChange={setDrawerWidth} onClose={() => openDrawer(null)} aria-label="Version history">
+      <DrawerSectionHead title="Versions" count={d.versions.length}
         actions={<Button leftIcon="ri-upload-2-line" onClick={() => openModal({ kind: 'uploadDataset', sid: d.studyId, dsId: d.id, mode: SPACE(d.space)!.mode })}>Upload new version</Button>} />
       {d.versions.map((v, i) => {
         const us = users.filter((e) => e.refs.datasets[d.id].v === v.n);
-        return <VersionRow key={v.n} label={v.label} latest={i === 0} by={v.by} date={v.date} note={v.note} usedBy={us.map((e) => e.name)} behind={v.n < lv.n} action={more(`More actions for ${d.name} ${v.label}`)} />;
+        return <VersionRow key={v.n} label={v.label} latest={i === 0} by={v.by} date={v.date} note={v.note} cut={cutOf(v)} spec={specOf(v)} hideUnused usedBy={us.map((e) => e.name)} behind={v.n < lv.n} />;
       })}
     </Drawer>
   );

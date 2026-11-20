@@ -11,7 +11,7 @@ import { S } from './store/selectors';
 import { useDb } from './store/store';
 import { ToastBridge } from './toast';
 import { AssetPage } from './pages/study/AssetPage';
-import { DatasetOverviewPage, DatasetSpacePage } from './pages/study/DatasetPage';
+import { DatasetPage } from './pages/study/DatasetPage';
 import { MemberPage } from './pages/study/MemberPage';
 import { EventsPage } from './pages/study/EventsPage';
 import { StudyModals } from './pages/study/StudyModals';
@@ -26,7 +26,7 @@ function Page() {
     if (R.tab === 'events') return <EventsPage sid={R.sid} />;
     if (R.tab === 'asset') return <AssetPage sid={R.sid} />;
     if (R.tab === 'member') return <MemberPage sid={R.sid} />;
-    if (R.tab === 'dataset') return R.space ? <DatasetSpacePage sid={R.sid} space={R.space} /> : <DatasetOverviewPage sid={R.sid} />;
+    if (R.tab === 'dataset') return <DatasetPage sid={R.sid} space={R.space} />;
     return <PlaceholderPage route={R} title={'Study · ' + R.tab} />;
   }
   const e = S.event(R.eid);
