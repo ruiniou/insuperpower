@@ -5,7 +5,7 @@ import { ovDoReplace, ovKeep, ovLock, ovRun, ovStartOrFix, quickUploadDs } from 
 import { attentionRows, inputsGroups, nodeCard, popoverFor } from './overview';
 import { baselineAsset, baselinesOf, baselineUsers, slotCarriedFrom, suggestBaselineLabel } from './baseline';
 import { cutOf, S, specOf, vLabelBl, wfInfo } from './selectors';
-import { savePinnedDatasets, uploadAsset, uploadDataset } from './study';
+import { savePinnedDatasets, specOptionsFor, uploadAsset, uploadDataset } from './study';
 import { getDb, resetDb, setToastHandler } from './store';
 import { activeMembers, addMembers, emptyMemberRow, evKey, memberCount, memberOf, membersOf, removalImpact, removeMember, sortMembers, updateMember, validateMemberRow, wfKey, peopleOf, changeBlinding, transferStudyAdmin, canAddMembers } from './members';
 import { can, DUTIES, setDuty } from './role';
@@ -497,6 +497,17 @@ describe('Dataset：版本号、Cut / Spec、Event 选数据', () => {
     expect('ds' in r && specOf(S.latest(r.ds))).toBe('STU-001 ADaM Spec v1.2');
     const raw = uploadDataset({ ...form, name: 'RAW1', cat: 'RawData', version: 'r1' });
     expect('ds' in raw && specOf(S.latest(raw.ds))).toBe('');
+  });
+  it('Spec 候选集由 Data type 决定，类型与 Spec 不匹配时不保存', () => {
+    expect(specOptionsFor('STU-001', 'SDTM')).toEqual(['STU-001 SDTM Spec v1.0']);
+    expect(specOptionsFor('STU-001', 'ADaM')).toEqual(['STU-001 ADaM Spec v1.2', 'STU-001 ADaM Spec v1.1', 'STU-001 ADaM Spec v1.0']);
+    expect(specOptionsFor('STU-001', 'RawData')).toEqual([]);
+    const r = uploadDataset({ ...form, name: 'DM2', cat: 'SDTM', version: 'v1.0', spec: 'STU-001 ADaM Spec v1.2' });
+    expect('ds' in r && specOf(S.latest(r.ds))).toBe('');
+  });
+  it('种子 Spec 都指向真实存在的 Asset 版本', () => {
+    const all = ['SDTM', 'ADaM'].flatMap((c) => specOptionsFor('STU-001', c));
+    S.datasetsOf('STU-001').forEach((d) => d.versions.forEach((v) => { if (specOf(v)) expect(all).toContain(specOf(v)); }));
   });
   it('保存固定只影响当前 Mode，全部取消时 toast 为 Cleared', () => {
     const e = evt('EVT-001'), prodBefore = { ...e.refs.datasets };

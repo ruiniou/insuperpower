@@ -99,6 +99,13 @@ export function uploadAsset(f: UploadAssetForm): { errors: Errors } | { asset: A
   return { asset: target! };
 }
 
+/** Spec 候选集由 Data type 决定：SDTM 只能关联 SDTM Spec，ADaM 只能关联 ADaM Spec，RawData 没有 Spec；显示为「{名称} {版本号}」 */
+export function specOptionsFor(sid: string, cat: string): string[] {
+  const code = cat === 'SDTM' ? 'SDTM_SPEC' : cat === 'ADaM' ? 'ADAM_SPEC' : '';
+  if (!code) return [];
+  return getDb().assets.filter((a) => a.studyId === sid && a.code === code).flatMap((a) => a.versions.map((v) => a.name + ' ' + v.label));
+}
+
 export interface UploadDatasetForm { sid: string; dsId: string | null; name: string; cat: string; mode: string; version: string; cut: string; spec: string; fileName: string; reason: string }
 /** 上传数据集 / 新版本：模式必须显式选择，不从文件名推断；版本号由上传者填写，同一数据集内不区分大小写唯一；同空间同类别同名则追加版本 */
 export function uploadDataset(f: UploadDatasetForm): { errors: Errors } | { ds: Dataset; space: string } {
@@ -114,7 +121,7 @@ export function uploadDataset(f: UploadDatasetForm): { errors: Errors } | { ds: 
   if (Object.keys(er).length) return { errors: er };
   const meta: Record<string, string> = {};
   if (f.cut.trim()) meta.cut = f.cut.trim();
-  if (f.spec && f.cat !== 'RawData') meta.spec = f.spec;
+  if (f.spec && specOptionsFor(f.sid, f.cat).includes(f.spec)) meta.spec = f.spec;
   const note = f.reason.trim() || 'Data intake';
   if (d) d.versions.unshift(V(S.latest(d).n + 1, db.me.name, dShort(), note, { label: version, meta, file: f.fileName }));
   else { d = { id: 'D' + (++db.seq.ds), studyId: f.sid, space, cat: f.cat, name: nm, label: (f.name || '').trim(), versions: [V(1, db.me.name, dShort(), note, { label: version, meta, file: f.fileName })] }; db.datasets.push(d); }

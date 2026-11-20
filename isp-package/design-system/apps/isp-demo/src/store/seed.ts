@@ -53,7 +53,7 @@ export function createSeed(): Database {
   // 版本号由上传者填写：按序号给 v1.0、v1.1、v1.2；Spec 取备注里的 Spec 写法，备注保持原样
   const dv = (n: number, by: string, date: string, basis: string) => {
     const m = /Generated from (SDTM|ADaM) Spec (v\d)/.exec(basis);
-    return V(n, by, date, m ? '' : basis, { label: 'v1.' + (n - 1), meta: m ? { spec: `STU-001 ${m[1]} Spec ${m[2]}` } : {} });
+    return V(n, by, date, m ? '' : basis, { label: 'v1.' + (n - 1), meta: m ? { spec: `STU-001 ${m[1]} Spec v1.0` } : {} });
   };
   d('D1', 'dummy', 'SDTM', 'DM', 'Demographics', [dv(3, 'Chen Yu', 'Oct 30', 'Generated from SDTM Spec v2'), dv(2, 'Li Wei', 'Oct 21', 'Generated from SDTM Spec v2'), dv(1, 'Li Wei', 'Oct 10', 'Generated from SDTM Spec v1')]);
   d('D2', 'dummy', 'SDTM', 'AE', 'Adverse Events', [dv(3, 'Chen Yu', 'Oct 30', 'Generated from SDTM Spec v2'), dv(2, 'Li Wei', 'Oct 21', 'Generated from SDTM Spec v2'), dv(1, 'Li Wei', 'Oct 10', 'Generated from SDTM Spec v1')]);

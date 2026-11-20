@@ -7,7 +7,7 @@ import { hrefEvent, hrefStudy } from '../../store/actions';
 import { baselineTag, baselineUsers, currentBaseline, isBlCode, baselineAsset, suggestBaselineLabel } from '../../store/baseline';
 import { cutOf, SPACE, S } from '../../store/selectors';
 import { DS_FILE_OK } from '../../store/actions';
-import { createEvent, defaultEventRefs, savePinnedDatasets, uploadAsset, uploadDataset, usedByEvents, type BaselineMode, type Errors } from '../../store/study';
+import { createEvent, defaultEventRefs, savePinnedDatasets, specOptionsFor, uploadAsset, uploadDataset, usedByEvents, type BaselineMode, type Errors } from '../../store/study';
 import { closeModal, modalUi } from '../../store/ui';
 import { useDb } from '../../store/store';
 import type { Asset } from '../../store/types';
@@ -124,11 +124,11 @@ function UploadAssetModal({ sid, assetId, code: code0 }: { sid: string; assetId:
 
 /** Upload Dataset：模式无默认值、不从文件名推断；版本号由上传者填写 */
 function UploadDatasetModal({ sid, dsId, mode: mode0 }: { sid: string; dsId: string | null; mode: string }) {
-  const db = useDb();
+  useDb();
   const d = dsId ? S.ds(dsId) ?? null : null;
   const [f, setF] = useState({ name: d ? d.name : '', cat: d ? d.cat : 'RawData', mode: d ? SPACE(d.space)!.mode : mode0, version: '', cut: '', spec: '', fileName: '', reason: '' });
   const [er, setEr] = useState<Errors>({});
-  const specs = db.assets.filter((a) => a.studyId === sid && (a.code === 'SDTM_SPEC' || a.code === 'ADAM_SPEC')).flatMap((a) => a.versions.map((v) => a.name + ' ' + v.label));
+  const specs = specOptionsFor(sid, f.cat);
   const submit = () => {
     const r = uploadDataset({ sid, dsId, ...f });
     if ('errors' in r) { setEr(r.errors); return; }
@@ -140,7 +140,7 @@ function UploadDatasetModal({ sid, dsId, mode: mode0 }: { sid: string; dsId: str
       <div className="app-form">
         <Input label="Dataset name" placeholder="Uses the file name if empty" readOnly={!!d} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <div className="app-form__row2">
-          <Select label="Data type" required disabled={!!d} options={['RawData', 'SDTM', 'ADaM']} value={f.cat} onChange={(v) => setF({ ...f, cat: v, spec: v === 'RawData' ? '' : f.spec })} />
+          <Select label="Data type" required disabled={!!d} options={['RawData', 'SDTM', 'ADaM']} value={f.cat} onChange={(v) => setF({ ...f, cat: v, spec: '' })} />
           <Select label="Mode" required placeholder="Select mode…" disabled={!!d} options={['Dummy', 'Synthetic', 'PROD']} value={f.mode} error={er.mode}
             onChange={(v) => { setF({ ...f, mode: v }); setEr({ ...er, mode: '' }); }} />
         </div>
@@ -149,7 +149,7 @@ function UploadDatasetModal({ sid, dsId, mode: mode0 }: { sid: string; dsId: str
           <Input label="Version" required maxLength={64} value={f.version} error={er.version} onChange={(e) => { setF({ ...f, version: e.target.value }); setEr({ ...er, version: '' }); }} />
           <Input label="Cut" placeholder="e.g. C01" maxLength={64} value={f.cut} onChange={(e) => setF({ ...f, cut: e.target.value })} />
         </div>
-        {f.cat !== 'RawData' && specs.length > 0 && <Select label="Spec" placeholder="Select Spec…" options={specs} value={f.spec} onChange={(v) => setF({ ...f, spec: v })} />}
+        {specs.length > 0 && <Select label="Spec" placeholder="Select Spec…" options={specs} value={f.spec} onChange={(v) => setF({ ...f, spec: v })} />}
         <Field label="Data file" required error={er.file} hint={'Allowed: ' + DS_FILE_OK.map((x) => '.' + x).join(' ')}>
           <FileBox accept={DS_FILE_OK.map((x) => '.' + x).join(',')} fileName={f.fileName} invalid={!!er.file} onChange={(n) => { setF({ ...f, fileName: n }); setEr({ ...er, file: '' }); }} />
         </Field>
@@ -181,7 +181,7 @@ function ChooseDatasetsModal({ eid, space }: { eid: string; space: string }) {
                   <span className="ds-name"><span className="app-mono app-ell">{d.name}</span><small className="app-ell">{d.label}</small></span>
                   <span className="app-sm">{d.cat}</span>
                   <Select aria-label={'Version of ' + d.name} value={String(on ? pick[d.id] : S.latest(d).n)} disabled={!on}
-                    options={d.versions.map((v) => ({ value: String(v.n), label: cutOf(v) ? v.label + ' · ' + cutOf(v) : v.label }))}
+                    options={d.versions.map((v) => ({ value: String(v.n), label: cutOf(v) ? `${v.label} (Cut ${cutOf(v)})` : v.label }))}
                     onChange={(v) => setPick({ ...pick, [d.id]: Number(v) })} />
                 </div>
               );

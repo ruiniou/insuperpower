@@ -30,7 +30,7 @@ export const PIPE_H = 508;
 export const SPACES = [
   { key: 'dummy', name: 'Dummy', badge: 'Non-production', mode: 'Dummy' },
   { key: 'synthetic', name: 'Synthetic', badge: 'Non-production', mode: 'Synthetic' },
-  { key: 'prod', name: 'Prod', badge: 'Production, real data', mode: 'PROD' },
+  { key: 'prod', name: 'PROD', badge: 'Production, real data', mode: 'PROD' },
 ] as const;
 export const GROUP_LABEL: Record<string, string> = { SAP: 'Analysis plan', CRF: 'CRF', PROTOCOL: 'Protocol' };
 /** 节点完成项数（原型写死 24） */
