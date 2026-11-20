@@ -99,9 +99,15 @@ export function uploadAsset(f: UploadAssetForm): { errors: Errors } | { asset: A
   return { asset: target! };
 }
 
-/** Spec 候选集由 Data type 决定：SDTM 只能关联 SDTM Spec，ADaM 只能关联 ADaM Spec，RawData 没有 Spec；显示为「{名称} {版本号}」 */
+/** 每种 Data type 对应唯一一类 Spec（Asset 类型）；候选只取该类已有的版本。该类 Asset 还没有时候选为空，字段不渲染，有了自然出现 */
+export const SPEC_OF: Record<string, { code: string; label: string }> = {
+  RawData: { code: 'RAW_DATA_SPEC', label: 'Raw Data Spec' },
+  SDTM: { code: 'SDTM_SPEC', label: 'SDTM Spec' },
+  ADaM: { code: 'ADAM_SPEC', label: 'ADaM Spec' },
+};
+/** 候选显示为「{名称} {版本号}」 */
 export function specOptionsFor(sid: string, cat: string): string[] {
-  const code = cat === 'SDTM' ? 'SDTM_SPEC' : cat === 'ADaM' ? 'ADAM_SPEC' : '';
+  const code = SPEC_OF[cat]?.code;
   if (!code) return [];
   return getDb().assets.filter((a) => a.studyId === sid && a.code === code).flatMap((a) => a.versions.map((v) => a.name + ' ' + v.label));
 }

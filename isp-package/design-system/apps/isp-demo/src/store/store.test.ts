@@ -501,7 +501,9 @@ describe('Dataset：版本号、Cut / Spec、Event 选数据', () => {
   it('Spec 候选集由 Data type 决定，类型与 Spec 不匹配时不保存', () => {
     expect(specOptionsFor('STU-001', 'SDTM')).toEqual(['STU-001 SDTM Spec v1.0']);
     expect(specOptionsFor('STU-001', 'ADaM')).toEqual(['STU-001 ADaM Spec v1.2', 'STU-001 ADaM Spec v1.1', 'STU-001 ADaM Spec v1.0']);
-    expect(specOptionsFor('STU-001', 'RawData')).toEqual([]);
+    expect(specOptionsFor('STU-001', 'RawData')).toEqual([]); // 目录里还没有 Raw Data Spec
+    getDb().assets.push({ id: 'A90', studyId: 'STU-001', name: 'STU-001 Raw Data Spec', code: 'RAW_DATA_SPEC', tl: 'Raw Data Spec', icon: 'doc', versions: [{ n: 1, label: 'v1.0', by: 'Li Wei', date: 'Oct 1', note: '' }] });
+    expect(specOptionsFor('STU-001', 'RawData')).toEqual(['STU-001 Raw Data Spec v1.0']);
     const r = uploadDataset({ ...form, name: 'DM2', cat: 'SDTM', version: 'v1.0', spec: 'STU-001 ADaM Spec v1.2' });
     expect('ds' in r && specOf(S.latest(r.ds))).toBe('');
   });

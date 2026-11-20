@@ -7,7 +7,7 @@ import { hrefEvent, hrefStudy } from '../../store/actions';
 import { baselineTag, baselineUsers, currentBaseline, isBlCode, baselineAsset, suggestBaselineLabel } from '../../store/baseline';
 import { cutOf, SPACE, S } from '../../store/selectors';
 import { DS_FILE_OK } from '../../store/actions';
-import { createEvent, defaultEventRefs, savePinnedDatasets, specOptionsFor, uploadAsset, uploadDataset, usedByEvents, type BaselineMode, type Errors } from '../../store/study';
+import { createEvent, defaultEventRefs, savePinnedDatasets, SPEC_OF, specOptionsFor, uploadAsset, uploadDataset, usedByEvents, type BaselineMode, type Errors } from '../../store/study';
 import { closeModal, modalUi } from '../../store/ui';
 import { useDb } from '../../store/store';
 import type { Asset } from '../../store/types';
@@ -122,6 +122,7 @@ function UploadAssetModal({ sid, assetId, code: code0 }: { sid: string; assetId:
   );
 }
 
+const NO_SPEC = '__none';
 /** Upload Dataset：模式无默认值、不从文件名推断；版本号由上传者填写 */
 function UploadDatasetModal({ sid, dsId, mode: mode0 }: { sid: string; dsId: string | null; mode: string }) {
   useDb();
@@ -149,7 +150,7 @@ function UploadDatasetModal({ sid, dsId, mode: mode0 }: { sid: string; dsId: str
           <Input label="Version" required maxLength={64} value={f.version} error={er.version} onChange={(e) => { setF({ ...f, version: e.target.value }); setEr({ ...er, version: '' }); }} />
           <Input label="Cut" placeholder="e.g. C01" maxLength={64} value={f.cut} onChange={(e) => setF({ ...f, cut: e.target.value })} />
         </div>
-        {specs.length > 0 && <Select label="Spec" placeholder="Select Spec…" options={specs} value={f.spec} onChange={(v) => setF({ ...f, spec: v })} />}
+        {specs.length > 0 && <Select label={SPEC_OF[f.cat].label} placeholder="None" options={[{ value: NO_SPEC, label: 'None' }, ...specs.map((x) => ({ value: x, label: x }))]} value={f.spec || undefined} onChange={(v) => setF({ ...f, spec: v === NO_SPEC ? '' : v })} />}
         <Field label="Data file" required error={er.file} hint={'Allowed: ' + DS_FILE_OK.map((x) => '.' + x).join(' ')}>
           <FileBox accept={DS_FILE_OK.map((x) => '.' + x).join(',')} fileName={f.fileName} invalid={!!er.file} onChange={(n) => { setF({ ...f, fileName: n }); setEr({ ...er, file: '' }); }} />
         </Field>
