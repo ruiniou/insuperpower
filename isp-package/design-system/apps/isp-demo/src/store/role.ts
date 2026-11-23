@@ -14,6 +14,7 @@ const POINTS = {
   'event.duplicate': [1, 1, 1, 0],
   'study.member.manage': [1, 1, 0, 0],
   'study.member_blinding.manage': [1, 1, 0, 0],
+  'study.blinding.manage': [0, 1, 0, 0],
   'study.owner.transfer': [0, 1, 0, 0],
   'event.member.manage': [1, 1, 1, 0],
   'event.archive': [1, 1, 1, 0],
@@ -36,4 +37,4 @@ export function effectiveDuty(scope: Scope = {}, d: Duty = session.duty): Duty {
 }
 
 /** 点位判定。租户级点位（study.create）不传范围；Study 级传 study；Event 级传 event */
-export const can = (p: Point, scope: Scope = {}, d: Duty = session.duty): boolean => POINTS[p][DUTIES.indexOf(effectiveDuty(scope, d))] === 1;
+export const can = (p: Point, scope: Scope = {}, d: Duty = session.duty): boolean => (p !== 'study.blinding.manage' || scope.study?.lifecycle === 'ACTIVE') && POINTS[p][DUTIES.indexOf(effectiveDuty(scope, d))] === 1;

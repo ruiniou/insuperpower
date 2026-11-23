@@ -617,3 +617,49 @@ describe('Study 审计', () => {
     expect(getDb().audit.slice(1)).toEqual(before);
   });
 });
+
+describe('Study Blinding management (handoff 14)', () => {
+  beforeEach(() => { resetDb(); setDuty('Study Admin'); });
+
+  it('两态种子、权限与归档守卫', async () => {
+    const s = S.study('STU-001')!;
+    expect(s.blinding).toBe('Unblinded');
+    expect(S.study('STU-003')!.blinding).toBe('Unblinded');
+    expect(getDb().datasets.find((d) => d.id === 'D13')).toMatchObject({ studyId: 'STU-002', space: 'prod' });
+    expect(can('study.blinding.manage', { study: s })).toBe(true);
+    for (const duty of ['System Owner', 'Event Owner', 'Member'] as const) {
+      setDuty(duty); expect(can('study.blinding.manage', { study: s })).toBe(false);
+    }
+    setDuty('Study Admin'); s.lifecycle = 'ARCHIVED';
+    expect(can('study.blinding.manage', { study: s })).toBe(false);
+    const { enableBlinding } = await import('./blinding');
+    expect('errors' in enableBlinding(s.id, 'Reason')).toBe(true);
+  });
+
+  it('启用前置、原因、保护记录、审计、揭盲与再次启用', async () => {
+    const { enableBlinding, unblindStudy, protectionsOf, unspecifiedMembers } = await import('./blinding');
+    const s = S.study('STU-001')!;
+    const before = activeMembers(s.id).map((m) => [m.id, m.attr]);
+    expect(unspecifiedMembers(s.id).length).toBeGreaterThan(0);
+    expect('errors' in enableBlinding(s.id, 'Reason')).toBe(true);
+    activeMembers(s.id).forEach((m) => { if (m.attr === 'UNSET') m.attr = 'BLINDED'; });
+    const setAttrs = activeMembers(s.id).map((m) => [m.id, m.attr]);
+    expect('errors' in enableBlinding(s.id, '')).toBe(true);
+    expect('errors' in enableBlinding(s.id, 'x'.repeat(1001))).toBe(true);
+    expect(enableBlinding(s.id, 'Interim analysis')).toEqual({ ok: true });
+    expect(s.blinding).toBe('Blinded');
+    expect(activeMembers(s.id).map((m) => [m.id, m.attr])).toEqual(setAttrs);
+    expect(protectionsOf(s.id).map((p) => p.datasetId).sort()).toEqual(getDb().datasets.filter((d) => d.studyId === s.id && d.space === 'prod').map((d) => d.id).sort());
+    expect(protectionsOf(s.id).every((p) => p.future && p.versions.length)).toBe(true);
+    expect(auditOf(s.id)[0]).toMatchObject({ action: 'Blinding enabled', changes: 'Unblinded → Blinded', reason: 'Interim analysis' });
+    expect('errors' in enableBlinding(s.id, 'Again')).toBe(true);
+    expect(unblindStudy(s.id, 'Analysis complete')).toEqual({ ok: true });
+    expect(s.blinding).toBe('Unblinded');
+    expect(activeMembers(s.id).map((m) => [m.id, m.attr])).toEqual(setAttrs);
+    expect(protectionsOf(s.id)).toHaveLength(getDb().datasets.filter((d) => d.studyId === s.id && d.space === 'prod').length);
+    expect(auditOf(s.id)[0]).toMatchObject({ action: 'Study unblinded', changes: 'Blinded → Unblinded', reason: 'Analysis complete' });
+    expect(enableBlinding(s.id, 'Re-enable')).toEqual({ ok: true });
+    expect(protectionsOf(s.id)).toHaveLength(getDb().datasets.filter((d) => d.studyId === s.id && d.space === 'prod').length);
+    expect(before).not.toEqual(setAttrs);
+  });
+});

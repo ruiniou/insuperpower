@@ -20,6 +20,8 @@ export type ModalState =
   | { kind: 'removeMember'; sid: string; memberId: string }
   | { kind: 'changeBlinding'; sid: string; memberId: string }
   | { kind: 'transferAdmin'; sid: string }
+  | { kind: 'enableBlinding'; sid: string }
+  | { kind: 'unblindStudy'; sid: string }
   | null;
 export const modalUi: { modal: ModalState } = { modal: null };
 export const openModal = (m: ModalState) => { modalUi.modal = m; emit(); };

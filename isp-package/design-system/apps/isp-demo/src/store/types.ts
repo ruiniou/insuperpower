@@ -8,7 +8,7 @@ export type Rec<T> = Record<NodeId, T>;
 /** n 是内部序号（不显示）；label 是上传时用户填写的版本号 */
 export interface Version { n: number; label: string; by: string; date: string; note: string; file?: string; meta?: Record<string, string> }
 export type Lifecycle = 'ACTIVE' | 'ARCHIVED' | 'DELETED';
-export type Blinding = 'Unblinded' | 'Blinded' | 'Revealed';
+export type Blinding = 'Unblinded' | 'Blinded';
 export interface Study {
   id: string; name: string; ta: string; phase: string; admin: string; lifecycle: Lifecycle; blinding: Blinding;
   updated: string; desc: string; tenant: string; createdBy: string; createdAt: string;
@@ -33,6 +33,7 @@ export interface Baseline {
   slots: Partial<Record<BaselineCode, BaselineSlot>>;
   by: string; date: string; note: string;
 }
+export interface Protection { studyId: string; datasetId: string; versions: number[]; future: boolean }
 export interface Dataset { id: string; studyId: string; space: 'dummy' | 'synthetic' | 'prod'; cat: string; name: string; label: string; versions: Version[] }
 export interface Ref { v: number; use: string }
 export interface Workflow { id: string; loop: Loop; owner: string; created: string; updated: string; inputs: Record<string, string> }
@@ -66,7 +67,7 @@ export interface AuditEvent { id: string; studyId: string; time: string; actor: 
 export interface Database {
   me: { name: string; ini: string };
   seq: { study: number; event: number; asset: number; ds: number; baseline: number; member: number; audit: number };
-  studies: Study[]; members: StudyMember[]; assets: Asset[]; baselines: Baseline[]; datasets: Dataset[]; events: EventRec[];
+  studies: Study[]; members: StudyMember[]; assets: Asset[]; baselines: Baseline[]; datasets: Dataset[]; protections: Protection[]; events: EventRec[];
   /** 只增，新的在前 */
   audit: AuditEvent[];
 }

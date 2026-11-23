@@ -16,7 +16,7 @@ const PAGE_SIZES = [10, 20, 50];
 const filterLabel = (sel: string[]) => (sel.length === 0 ? '' : sel.length === 1 ? ROLES.find((r) => r.value === sel[0])?.label ?? sel[0] : String(sel.length));
 
 /** #/study/:sid/member：Study 成员列表。默认只显示 Active；Study Admin 置顶。Add members、行 More 需要 study.member.manage */
-export function MemberPage({ sid }: { sid: string }) {
+export function MemberPage({ sid, initialUnspecified = false }: { sid: string; initialUnspecified?: boolean }) {
   useDb();
   const study = S.study(sid);
   const manage = can('study.member.manage', { study });
@@ -25,10 +25,11 @@ export function MemberPage({ sid }: { sid: string }) {
   const [q, setQ] = useState('');
   const [roles, setRoles] = useState<string[]>([]);
   const [status, setStatus] = useState<StatusFilter>('Active');
+  const [unspecified, setUnspecified] = useState(initialUnspecified);
   const all = membersOf(sid);
   const needle = q.trim().toLowerCase();
   const rows = sortMembers(all.filter((m) => (status === 'All' || (status === 'Active') === (m.status === 'ACTIVE'))
-    && (!roles.length || roles.includes(m.role)) && (!needle || m.name.toLowerCase().includes(needle))));
+    && (!unspecified || m.attr === 'UNSET') && (!roles.length || roles.includes(m.role)) && (!needle || m.name.toLowerCase().includes(needle))));
 
   const tz = systemTimeZone().label;
   const columns = useMemo<TableColumn[]>(() => {
@@ -81,6 +82,7 @@ export function MemberPage({ sid }: { sid: string }) {
             items={ROLES.map((r) => ({ label: r.label, value: r.value, selected: roles.includes(r.value) }))}
             onSelect={(v) => setRoles((p) => (p.includes(String(v)) ? p.filter((x) => x !== v) : [...p, String(v)]))} />
           <Dropdown size="medium" shadow="none" filterName="Status" label={status} width={160} items={STATUS_OPTS.map((t) => ({ label: t, value: t, selected: t === status }))} onSelect={(v) => setStatus(String(v) as StatusFilter)} />
+          <Dropdown size="medium" shadow="none" filterName="Blinding" label={unspecified ? 'Unspecified' : ''} items={[{ label: 'All', value: 'all', selected: !unspecified }, { label: 'Unspecified', value: 'unspecified', selected: unspecified }]} onSelect={(v) => setUnspecified(v === 'unspecified')} />
         </>}
         search={<Search size="compact" width={220} placeholder="Search members" aria-label="Search members" value={q} onChange={(e) => setQ(e.target.value)} />}
         actions={addAllowed && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'addMembers', sid, userId: null })}>Add members</Button>} />

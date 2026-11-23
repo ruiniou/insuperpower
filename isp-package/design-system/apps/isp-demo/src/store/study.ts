@@ -134,6 +134,12 @@ export function uploadDataset(f: UploadDatasetForm): { errors: Errors } | { ds: 
   if (d) d.versions.unshift(V(S.latest(d).n + 1, db.me.name, dShort(), note, { label: version, meta, file: f.fileName }));
   else { d = { id: 'D' + (++db.seq.ds), studyId: f.sid, space, cat: f.cat, name: nm, label: (f.name || '').trim(), versions: [V(1, db.me.name, dShort(), note, { label: version, meta, file: f.fileName })] }; db.datasets.push(d); }
   const st = S.study(f.sid); if (st) st.updated = dLong();
+  if (st?.blinding === 'Blinded' && d.space === 'prod') {
+    const protection = db.protections.find((p) => p.studyId === f.sid && p.datasetId === d.id);
+    const n = d.versions[0].n;
+    if (protection?.future && !protection.versions.includes(n)) protection.versions.push(n);
+    else if (!protection) db.protections.push({ studyId: f.sid, datasetId: d.id, versions: [n], future: true });
+  }
   logAudit({ studyId: f.sid, action: 'Version registered', changes: d.name + ' ' + version, reason: f.reason });
   toast('Uploaded ' + d.name + ' ' + version + '.');
   emit();

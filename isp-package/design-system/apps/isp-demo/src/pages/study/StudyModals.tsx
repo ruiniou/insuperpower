@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Avatar, Button, Checkbox, Field, FileBox, Input, Message, Modal, PickList, Radio, Select, Textarea } from '@wiz/react';
 import { go } from '../../router';
 import { AddMembersModal, ChangeBlindingModal, EditMemberModal, RemoveMemberModal, TransferAdminModal } from './MemberModals';
+import { EnableBlindingModal, UnblindStudyModal } from './BlindingModals';
 import { CAT_ORDER, FILE_OK, TYPE, TYPES, SCOPES } from '../../store/assets';
 import { hrefEvent, hrefStudy } from '../../store/actions';
 import { baselineTag, baselineUsers, currentBaseline, isBlCode, baselineAsset, suggestBaselineLabel } from '../../store/baseline';
@@ -199,6 +200,8 @@ export function StudyModals() {
   const m = modalUi.modal;
   if (!m) return null;
   const key = JSON.stringify(m);
+  if (m.kind === 'enableBlinding') return <EnableBlindingModal key={key} sid={m.sid} />;
+  if (m.kind === 'unblindStudy') return <UnblindStudyModal key={key} sid={m.sid} />;
   if (m.kind === 'createEvent') return <CreateEventModal key={key} sid={m.sid} />;
   if (m.kind === 'uploadAsset') return <UploadAssetModal key={key} sid={m.sid} assetId={m.assetId} code={m.code} />;
   if (m.kind === 'chooseDatasets') return <ChooseDatasetsModal key={key} eid={m.eid} space={m.space} />;

@@ -15,6 +15,7 @@ import { DatasetPage } from './pages/study/DatasetPage';
 import { MemberPage } from './pages/study/MemberPage';
 import { EventsPage } from './pages/study/EventsPage';
 import { AuditTrailPage } from './pages/study/AuditTrailPage';
+import { BlindingPage } from './pages/study/BlindingPage';
 import { StudyModals } from './pages/study/StudyModals';
 
 function Page() {
@@ -26,9 +27,10 @@ function Page() {
     if (!S.study(R.sid)) return <NotFoundPage what="Study" id={R.sid} />;
     if (R.tab === 'events') return <EventsPage sid={R.sid} />;
     if (R.tab === 'asset') return <AssetPage sid={R.sid} />;
-    if (R.tab === 'member') return <MemberPage sid={R.sid} />;
+    if (R.tab === 'member') return <MemberPage key={R.sid + ":" + R.space} sid={R.sid} initialUnspecified={R.space === "unspecified"} />;
     if (R.tab === 'dataset') return <DatasetPage sid={R.sid} space={R.space} />;
     if (R.tab === 'audit') return <AuditTrailPage sid={R.sid} />;
+    if (R.tab === 'blinding') return <BlindingPage sid={R.sid} />;
     return <PlaceholderPage route={R} title={'Study · ' + R.tab} />;
   }
   const e = S.event(R.eid);

@@ -35,8 +35,8 @@ export function PageToolbar({ start, filters, search, actions }: { start?: React
 import { Status, Tooltip } from '@wiz/react';
 import type { Blinding, Lifecycle } from '../../store/types';
 
-export const BLIND_LABEL: Record<Blinding, string> = { 'Unblinded': 'Unblinded', Blinded: 'Blinded', Revealed: 'Revealed' };
-const BLIND_TONE = { 'Unblinded': 'grey', Blinded: 'purple', Revealed: 'blue' } as const;
+export const BLIND_LABEL: Record<Blinding, string> = { Unblinded: 'Unblinded', Blinded: 'Blinded' };
+const BLIND_TONE = { Unblinded: 'grey', Blinded: 'purple' } as const;
 export const BlindTag = ({ v }: { v: Blinding }) => <Status variant="style1" tone={BLIND_TONE[v]} textCase="normal">{BLIND_LABEL[v]}</Status>;
 const LIFE_LABEL: Record<Lifecycle, string> = { ACTIVE: 'Active', ARCHIVED: 'Archived', DELETED: 'Deleted' };
 /** 生命周期图标，16 见方的槽，中心对齐：Active 蓝点，Archived 归档图标，Deleted 垃圾桶（线性图标，无底色） */

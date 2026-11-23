@@ -24,7 +24,7 @@ export function createSeed(): Database {
     studies: ([
       { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'User Name', lifecycle: 'ACTIVE', blinding: 'Unblinded', updated: 'Oct 31, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
       { id: 'STU-002', name: 'Breast Cancer Phase II Trial', ta: 'Oncology', phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE', blinding: 'Blinded', updated: 'Oct 26, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' },
-      { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', admin: 'Wang Fang', lifecycle: 'ARCHIVED', blinding: 'Revealed', updated: 'Sep 18, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Mar 5, 2026' },
+      { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', admin: 'Wang Fang', lifecycle: 'ARCHIVED', blinding: 'Unblinded', updated: 'Sep 18, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Mar 5, 2026' },
     ] as Study[]).concat(Array.from({ length: 45 }, (_, i): Study => ({ id: 'TMP-' + String(i + 1).padStart(3, '0'), name: 'Temp pagination study ' + (i + 1), ta: ['Oncology', 'Hematology', 'Cardiology'][i % 3], phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE' as const, blinding: 'Unblinded' as const, updated: 'Oct 20, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' }))), // TEMP-PAGINATION 预览用，看完删除
     assets: [
       { id: 'A1', studyId: 'STU-001', name: 'STU-001 Protocol', code: 'PROTOCOL', tl: 'Protocol', icon: 'doc', source: 'Uploaded', versions: [AV(2, 'Amendment 1', 'Li Wei', 'Oct 12', 'Approved'), AV(1, 'v1.0', 'Li Wei', 'Oct 3')] },
@@ -46,6 +46,7 @@ export function createSeed(): Database {
       { id: 'B4', studyId: 'STU-002', label: 'v1.0', slots: { PROTOCOL: { assetId: 'A10', n: 1 }, SAP: { assetId: 'A11', n: 1 } }, by: 'Zhao Min', date: 'Oct 24', note: '' },
     ] satisfies Baseline[],
     datasets: [],
+    protections: [],
     events: [],
   };
 
@@ -68,6 +69,8 @@ export function createSeed(): Database {
   d('D10', 'synthetic', 'ADaM', 'ADSL', 'Subject-level', [dv(1, 'Chen Yu', 'Oct 25', 'Generated from ADaM Spec v1')]);
   d('D11', 'prod', 'SDTM', 'DM', 'Demographics', [dv(1, 'Wang Fang', 'Oct 27', 'Source batch B-0412')]);
   d('D12', 'prod', 'ADaM', 'ADSL', 'Subject-level', [dv(1, 'Wang Fang', 'Oct 28', 'Source batch B-0412')]);
+  db.datasets.push({ id: 'D13', studyId: 'STU-002', space: 'prod', cat: 'SDTM', name: 'DM', label: 'Demographics', versions: [V(1, 'Zhao Min', 'Oct 25', 'Interim analysis data')] });
+  db.protections.push({ studyId: 'STU-002', datasetId: 'D13', versions: [1], future: true });
   d('D13', 'dummy', 'RawData', 'DEMOG_RAW', 'Demographics', [dv(2, 'Li Wei', 'Oct 18', 'Data intake'), dv(1, 'Li Wei', 'Oct 8', 'Data intake')]);
   d('D14', 'dummy', 'RawData', 'LAB_RAW', 'Laboratory', [dv(1, 'Li Wei', 'Oct 8', 'Data intake')]);
   d('D15', 'prod', 'RawData', 'DEMOG_RAW', 'Demographics', [dv(1, 'Wang Fang', 'Oct 26', 'Source batch B-0412')]);
