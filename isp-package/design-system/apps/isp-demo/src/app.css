@@ -213,7 +213,7 @@ button { font-family: inherit; }
 .blinding-content-scroll { overflow-x: auto; border-radius: inherit; }
 .blinding-content-grid { min-inline-size: calc(34 * var(--wiz-spacing-lg)); }
 .blinding-section__subhead { margin: 0; padding: var(--wiz-spacing-md) var(--wiz-spacing-lg) var(--wiz-spacing-xs); font-size: var(--wiz-text-body-1-size); font-weight: var(--wiz-font-weight-semibold); }
-.blinding-section__empty { margin: 0; padding: var(--wiz-spacing-lg); color: var(--wiz-color-text-secondary); }
+.blinding-section__empty { margin: 0; padding: var(--wiz-spacing-lg); color: var(--wiz-color-text-secondary); text-align: center; }
 .blinding-table { --wiz-table-row-hover-bg: transparent; }
 .blinding-table--last tbody tr:last-child > td { border-bottom: 0; }
 
