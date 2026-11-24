@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Dropdown, EmptyState, Search, Table, type TableColumn } from '@wiz/react';
-import { LifecycleMark, Owner, PageToolbar } from './study/common';
+import { Owner, PageToolbar } from './study/common';
 import { go } from '../router';
 import { hrefStudy } from '../store/actions';
 import { can, session } from '../store/role';
@@ -12,7 +12,13 @@ import { openModal } from '../store/ui';
 
 const open = (id: string) => go(hrefStudy(id, 'events'));
 
-const LIFE = { ACTIVE: 'Active', ARCHIVED: 'Archived', DELETED: 'Deleted' } as const;
+const STATUS_OPTIONS = [
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'ARCHIVED', label: 'Archived' },
+] as const;
+type StudyStatusFilter = typeof STATUS_OPTIONS[number]['value'];
+
+const updatedTime = (study: Study) => Date.parse(study.updated) || 0;
 
 /** #/studies：Studies 列表（TA 筛选、搜索、仅列表视图、生命周期只读、盲态、New Study 在页头） */
 /** Studies 随租户增长，超过最小页长才出分页条 */
@@ -26,13 +32,14 @@ const toggleFilter = (sel: string[], v: string) => (sel.includes(v) ? sel.filter
 export function StudiesPage() {
   const db = useDb();
   const duty = session.duty;
-  const [st, setSt] = useState<string[]>([]);
+  const [status, setStatus] = useState<StudyStatusFilter>('ACTIVE');
   const [ta, setTa] = useState<string[]>([]);
   const [q, setQ] = useState('');
-  const sts: string[] = ['Active', 'Archived', 'Deleted'];
   const tas: string[] = Array.from(new Set(db.studies.map((s) => s.ta).filter(Boolean)));
   const needle = q.trim().toLowerCase();
-  const rows = db.studies.filter((s) => (!st.length || st.includes(LIFE[s.lifecycle])) && (!ta.length || ta.includes(s.ta)) && (!needle || [s.id, s.name, s.ta].join(' ').toLowerCase().includes(needle)));
+  const rows = db.studies
+    .filter((s) => s.lifecycle === status && (!ta.length || ta.includes(s.ta)) && (!needle || [s.id, s.name, s.ta].join(' ').toLowerCase().includes(needle)))
+    .sort((a, b) => updatedTime(b) - updatedTime(a) || a.id.localeCompare(b.id));
 
   const columns: TableColumn[] = [
     { key: 'id', header: 'Study', render: (_v, s: Study) => (
@@ -41,10 +48,7 @@ export function StudiesPage() {
           ? <i className="ri-archive-line" role="img" aria-label="Archived" />
           : <i className={ICON.study} aria-hidden="true" />}
         <span className="studies-study__txt">
-          <span className="studies-id">
-            {s.id}
-            {s.lifecycle === 'DELETED' && <span className="studies-life-end"><LifecycleMark v={s.lifecycle} /></span>}
-          </span>
+          <span className="studies-id">{s.id}</span>
           <span className="studies-name">{s.name}</span>
         </span>
       </span>
@@ -69,7 +73,13 @@ export function StudiesPage() {
     <div className="studies">
       {db.studies.length > 0 && <PageToolbar
         filters={<>
-          <Dropdown multiple size="medium" shadow="none" filterName="Status" icon="ri-filter-3-line" label={filterLabel(st)} width={180} items={filterItems(sts, st)} onSelect={(v) => setSt((p) => toggleFilter(p, v))} />
+          <Dropdown size="medium" shadow="none" filterName="Status" icon="ri-filter-3-line"
+            label={STATUS_OPTIONS.find((option) => option.value === status)?.label}
+            width={180}
+            items={STATUS_OPTIONS.map((option) => ({ ...option, selected: option.value === status }))}
+            onSelect={(value) => {
+              if (value === 'ACTIVE' || value === 'ARCHIVED') setStatus(value);
+            }} />
           <Dropdown multiple size="medium" shadow="none" filterName="Therapeutic area" icon="ri-filter-3-line" label={filterLabel(ta)} width={220} items={filterItems(tas, ta)} onSelect={(v) => setTa((p) => toggleFilter(p, v))} />
         </>}
         search={<Search size="compact" width={220} placeholder="Search studies" aria-label="Search studies" value={q} onChange={(e) => setQ(e.target.value)} />}
@@ -79,9 +89,9 @@ export function StudiesPage() {
           <EmptyState title="No studies yet" description={can('study.create') ? 'Create a Study to get started.' : 'Ask an authorized administrator to create a Study.'}
             action={can('study.create') ? <Button variant="primary" leftIcon="ri-add-line" onClick={() => go('#/studies/new')}>New Study</Button> : undefined} />
         ) : rows.length === 0 ? (
-          <div className="app-empty" role="status"><b>No studies match</b><span>Clear the search or the filters.</span></div>
+          <div className="app-empty" role="status"><b>No studies match</b><span>Try another status or clear the search and therapeutic area filters.</span></div>
         ) : (
-          <Table key={st + '|' + ta + '|' + needle} className="studies-table" variant="plain" columnLayout="fixed" rowHeight={48} paginated={rows.length > STUDY_PAGE_SIZES[0]} jumpToPage pageSize={20} pageSizeOptions={STUDY_PAGE_SIZES} columns={columns} rows={rows} aria-label="Studies" onRowClick={(r: Study) => open(r.id)} />
+          <Table key={status + '|' + ta + '|' + needle} className="studies-table" variant="plain" columnLayout="fixed" rowHeight={48} paginated={rows.length > STUDY_PAGE_SIZES[0]} jumpToPage pageSize={20} pageSizeOptions={STUDY_PAGE_SIZES} columns={columns} rows={rows} aria-label="Studies" onRowClick={(r: Study) => open(r.id)} />
         )}
       </div>
     </div>
