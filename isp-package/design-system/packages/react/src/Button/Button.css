@@ -32,7 +32,7 @@
 .wiz-button--primary.is-loading { cursor: progress; }
 
 /* Secondary */
-.wiz-button--secondary { background: var(--wiz-main-white); color: var(--wiz-main-grey); }
+.wiz-button--secondary { box-shadow: none; background: var(--wiz-main-white); color: var(--wiz-main-grey); }
 .wiz-button--secondary:hover:not(:disabled), .wiz-button--secondary.is-hover { border-color: var(--wiz-brand-blue-70); color: var(--wiz-brand-blue-70); }
 .wiz-button--secondary.is-disabled, .wiz-button--secondary:disabled { color: var(--wiz-grey-60); }
 

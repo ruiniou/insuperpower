@@ -27,6 +27,10 @@ button { font-family: inherit; }
 /* Studies */
 .studies .page-scroll { display: flex; flex-direction: column; }
 .studies-table { flex: 1 0 auto; }
+.studies-table .wiz-table__grid { min-width: 56rem; }
+.studies-table .wiz-table__th:last-child,
+.studies-table .wiz-table__td:last-child { position: sticky; inset-inline-end: 0; }
+.studies-table .wiz-table__th:last-child { z-index: 1; }
 .studies-table .wiz-table__pager { position: sticky; bottom: 0; z-index: 1; }
 .studies { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .studies-id { white-space: nowrap; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: var(--wiz-spacing-sm); }
@@ -196,6 +200,24 @@ button { font-family: inherit; }
 .audit-time { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .audit-changes { display: flex; flex-direction: column; gap: 2px; padding: var(--wiz-spacing-sm) 0; overflow-wrap: anywhere; }
 .audit-reason { font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
+
+/* Archive banner（Study 非 ACTIVE 时出现在 tabs 下方） */
+.app-archived-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--wiz-spacing-sm);
+  padding: 10px var(--wiz-spacing-lg);
+  background: var(--wiz-color-warning-subtle, #fff9e6);
+  border-bottom: 1px solid var(--wiz-color-warning-border, #ffe58f);
+  font-size: var(--wiz-text-caption-size);
+  color: var(--wiz-color-text-primary);
+}
+.app-archived-banner i { flex: none; color: var(--wiz-color-warning, #d48806); font-size: 16px; }
+
+.study-lifecycle-modal__description { margin: 0; color: var(--wiz-color-text-secondary); }
+.study-lifecycle-modal .wiz-message {
+  border-radius: calc(var(--wiz-radius-xs) / 2);
+}
 
 /* Blinding management */
 .blinding-page__body { --blinding-page-inset: var(--wiz-spacing-lg); gap: var(--wiz-spacing-2xl); padding: var(--blinding-page-inset); scrollbar-gutter: stable; }

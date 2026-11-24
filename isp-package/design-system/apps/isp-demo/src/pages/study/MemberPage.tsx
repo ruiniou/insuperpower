@@ -3,7 +3,7 @@ import { Avatar, Button, Dropdown, Search, Status, Table, type TableColumn } fro
 import { formatRange, systemTimeZone } from '@wiz/isp';
 import { attrLabel, canAddMembers, canChangeBlinding, canTransferAdmin, membersOf, roleLabel, sortMembers } from '../../store/members';
 import { ROLES } from '../../store/people';
-import { can, session } from '../../store/role';
+import { can, isWritable, session } from '../../store/role';
 import { S } from '../../store/selectors';
 import { useDb } from '../../store/store';
 import { openModal } from '../../store/ui';
@@ -15,12 +15,15 @@ type StatusFilter = (typeof STATUS_OPTS)[number];
 const PAGE_SIZES = [10, 20, 50];
 const filterLabel = (sel: string[]) => (sel.length === 0 ? '' : sel.length === 1 ? ROLES.find((r) => r.value === sel[0])?.label ?? sel[0] : String(sel.length));
 
-/** #/study/:sid/member：Study 成员列表。默认只显示 Active；Study Admin 置顶。Add members、行 More 需要 study.member.manage */
+/** #/study/:sid/member：Study 成员列表。归档后不渲染 Add members 和行 More。 */
 export function MemberPage({ sid, initialUnspecified = false }: { sid: string; initialUnspecified?: boolean }) {
   useDb();
+  const writable = isWritable(sid);
   const study = S.study(sid);
-  const manage = can('study.member.manage', { study });
-  const blindingPerm = canChangeBlinding(sid), transferPerm = canTransferAdmin(sid), addAllowed = canAddMembers(sid);
+  const manage = writable && can('study.member.manage', { study });
+  const blindingPerm = writable && canChangeBlinding(sid);
+  const transferPerm = writable && canTransferAdmin(sid);
+  const addAllowed = writable && canAddMembers(sid);
   const duty = session.duty;
   const [q, setQ] = useState('');
   const [roles, setRoles] = useState<string[]>([]);
@@ -48,16 +51,17 @@ export function MemberPage({ sid, initialUnspecified = false }: { sid: string; i
       { key: 'validity', header: 'Validity (' + tz + ')', width: 340, render: (_v, m: StudyMember) => dim(m, formatRange(m.validFrom, m.validUntil)) },
       { key: 'status', header: 'Status', width: 120, render: (_v, m: StudyMember) => dim(m, m.status === 'ACTIVE' ? 'Active' : 'Removed') },
     ];
-    const itemsOf = (m: StudyMember) => {
-      if (m.status === 'REMOVED') return addAllowed ? [{ label: 'Re-add', value: 're-add' }] : [];
-      return [
-        ...(manage ? [{ label: 'Edit role and validity', value: 'edit' }] : []),
-        ...(blindingPerm ? [{ label: 'Change blinding status', value: 'blinding' }] : []),
-        ...(m.isAdmin && transferPerm ? [{ label: 'Transfer Study Admin', value: 'transfer', danger: true }] : []),
-        ...(manage && !m.isAdmin ? [{ label: 'Remove member', value: 'remove', danger: true }] : []),
-      ];
-    };
-    if (manage || blindingPerm || transferPerm) {
+    // 归档只读：整列 More 不渲染
+    if (writable && (manage || blindingPerm || transferPerm)) {
+      const itemsOf = (m: StudyMember) => {
+        if (m.status === 'REMOVED') return addAllowed ? [{ label: 'Re-add', value: 're-add' }] : [];
+        return [
+          ...(manage ? [{ label: 'Edit role and validity', value: 'edit' }] : []),
+          ...(blindingPerm ? [{ label: 'Change blinding status', value: 'blinding' }] : []),
+          ...(m.isAdmin && transferPerm ? [{ label: 'Transfer Study Admin', value: 'transfer', danger: true }] : []),
+          ...(manage && !m.isAdmin ? [{ label: 'Remove member', value: 'remove', danger: true }] : []),
+        ];
+      };
       cols.push({ key: 'more', header: '', width: 56, align: 'right', render: (_v, m: StudyMember) => {
         const items = itemsOf(m);
         return items.length === 0 ? null : (
@@ -72,7 +76,7 @@ export function MemberPage({ sid, initialUnspecified = false }: { sid: string; i
       } });
     }
     return cols;
-  }, [duty, sid, manage, blindingPerm, transferPerm, addAllowed, tz]);
+  }, [duty, sid, writable, manage, blindingPerm, transferPerm, addAllowed, tz]);
 
   return (
     <div className="studies">

@@ -3,7 +3,7 @@ import { DS_FILE_OK } from './actions';
 import { dLong, dShort } from './dates';
 import { SPACES } from './config';
 import { S } from './selectors';
-import { can } from './role';
+import { can, isWritable } from './role';
 import { newFlow, V } from './seed';
 import { baselineAsset, baselinesOf, baselineUsers, BL_NAME, currentBaseline, isBlCode } from './baseline';
 import { emit, getDb, toast } from './store';
@@ -19,6 +19,8 @@ const noCtl = (s: string) => /[\u0000-\u001f\u007f]/.test(s);
 const plural = (n: number, w: string) => n + ' ' + w + (n === 1 ? '' : 's');
 export type Errors = Record<string, string>;
 
+const studyReadOnly = 'This study is read-only. Restore it before making changes.';
+
 /** Create Event 默认引用：该 Study 下 SAP、CRF 各取一个（有版本者）的最新版 */
 export function defaultEventRefs(sid: string): Record<string, number> {
   const refs: Record<string, number> = {}, seen: Record<string, boolean> = {};
@@ -29,6 +31,7 @@ export function defaultEventRefs(sid: string): Record<string, number> {
 export interface CreateEventForm { sid: string; name: string; goal: string; scope: string; reason: string; refs: Record<string, number> }
 /** 创建 Event：校验（名称必填 ≤200 无控制字符；原因必填 ≤1000），写入 DB 头部，返回新 id 或错误 */
 export function createEvent(f: CreateEventForm): { errors: Errors } | { id: string; nAssets: number } {
+  if (!isWritable(f.sid)) return { errors: { form: studyReadOnly } };
   const db = getDb(), er: Errors = {}, name = f.name.trim(), reason = f.reason.trim();
   if (!name) er.name = 'Event name is required.'; else if (name.length > 200) er.name = 'Use 200 characters or fewer.'; else if (noCtl(name)) er.name = 'Remove control characters.';
   if (!reason) er.reason = 'Reason for change is required (1–1000 characters).'; else if (reason.length > 1000) er.reason = 'Use 1000 characters or fewer.';
@@ -53,9 +56,11 @@ const sameLabel = (a: string, b: string) => a.trim().toLowerCase() === b.trim().
 /** 上传文件 / 新版本：新文件会顶替同类型的「Required · Not uploaded」占位。
  *  Protocol 与 SAP：Study 内各只有一个 Asset，已有则追加版本；同时新建 Baseline（未改的槽位沿用 Current）或替换 Current 的同类槽位（Current 被引用时不可替换） */
 export function uploadAsset(f: UploadAssetForm): { errors: Errors } | { asset: Asset } {
+  if (!isWritable(f.sid)) return { errors: { form: studyReadOnly } };
   const db = getDb(), er: Errors = {}, t = TYPE(f.code);
   const bl = !!t && isBlCode(t.code) ? t.code : null;
   const a = (f.assetId ? S.asset(f.assetId) ?? null : null) ?? (bl ? baselineAsset(f.sid, bl) ?? null : null);
+  if (a && a.studyId !== f.sid) return { errors: { form: 'Choose an asset in this study.' } };
   if (!t) er.code = 'Select a file type.';
   const name = f.name.trim(); if (!name) er.name = 'Enter a name or choose a file.';
   const version = f.version.trim();
@@ -117,7 +122,9 @@ export function specOptionsFor(sid: string, cat: string): string[] {
 export interface UploadDatasetForm { sid: string; dsId: string | null; name: string; cat: string; mode: string; version: string; cut: string; spec: string; fileName: string; reason: string }
 /** 上传数据集 / 新版本：模式必须显式选择，不从文件名推断；版本号由上传者填写，同一数据集内不区分大小写唯一；同空间同类别同名则追加版本 */
 export function uploadDataset(f: UploadDatasetForm): { errors: Errors } | { ds: Dataset; space: string } {
+  if (!isWritable(f.sid)) return { errors: { form: studyReadOnly } };
   const db = getDb(), er: Errors = {}, d0 = f.dsId ? S.ds(f.dsId) ?? null : null;
+  if (d0 && d0.studyId !== f.sid) return { errors: { form: 'Choose a dataset in this study.' } };
   if (!f.mode) er.mode = 'Select an explicit mode (Dummy, Synthetic or PROD).';
   const space = MODE_SPACE[f.mode], stem = f.fileName.replace(/\.[^.]+$/, '');
   const nm = (d0 ? d0.name : ((f.name || stem).trim() || stem)).toUpperCase().replace(/\s+/g, '_');
@@ -170,6 +177,7 @@ export interface StudyDetailsForm { name: string; desc: string; ta: string; phas
 export function updateStudyDetails(sid: string, f: StudyDetailsForm): { errors: Errors } | { ok: true } {
   const s = S.study(sid), er: Errors = {};
   if (!s) return { errors: { name: 'Study not found.' } };
+  if (!isWritable(s)) return { errors: { form: studyReadOnly } };
   const name = f.name.trim(), reason = f.reason.trim();
   if (!name) er.name = 'Study name is required.'; else if (name.length > 200) er.name = 'Use 200 characters or fewer.'; else if (noCtl(name)) er.name = 'Remove control characters.';
   if (f.desc.length > 2000) er.desc = 'Use 2000 characters or fewer.';
@@ -229,8 +237,104 @@ export function createStudy(f: CreateStudyForm): { errors: Errors } | { id: stri
 
 /** 交接 Event Owner（event.owner.transfer，仅 Study Admin） */
 export function transferEventOwner(eid: string, name: string) {
-  const e = S.event(eid); if (!e || e.owner === name) return;
+  const e = S.event(eid); if (!e || !isWritable(e.studyId) || e.owner === name) return;
   logAudit({ studyId: e.studyId, action: 'Event Owner changed', changes: diff(e.name, e.owner, name) });
   e.owner = name; e.updated = dLong();
   toast('Event Owner changed to ' + name); emit();
+}
+
+export interface ArchiveCheckItem {
+  key: 'runs' | 'reviews' | 'operations';
+  label: string;
+  count: number;
+  sources: { eventId: string; eventName: string; count: number }[];
+}
+
+export interface ArchiveCheckResult {
+  status: 'PASS' | 'BLOCK';
+  items: ArchiveCheckItem[];
+}
+
+/** 归档前置依赖检查：仅计入未归档 Event 的运行和待审节点。 */
+export function archiveCheck(sid: string): ArchiveCheckResult {
+  const events = S.eventsOf(sid).filter((e) => e.status !== 'Archived');
+  const runs: ArchiveCheckItem = { key: 'runs', label: 'Active runs', count: 0, sources: [] };
+  const reviews: ArchiveCheckItem = { key: 'reviews', label: 'Unlocked pending reviews', count: 0, sources: [] };
+  const operations: ArchiveCheckItem = { key: 'operations', label: 'Active operations', count: 0, sources: [] };
+  for (const event of events) {
+    const statuses = Object.values(event.flow.st);
+    for (const [item, status] of [[runs, 'running'], [reviews, 'review']] as const) {
+      const count = statuses.filter((value) => value === status).length;
+      if (count === 0) continue;
+      item.count += count;
+      item.sources.push({ eventId: event.id, eventName: event.name, count });
+    }
+  }
+  const items = [runs, reviews, operations];
+  return { status: items.some((item) => item.count > 0) ? 'BLOCK' : 'PASS', items };
+}
+
+/** 归档 Study：仅 ACTIVE 状态且依赖检查 PASS 时可归档，需提供 Reason (1–1000 字符) */
+export function archiveStudy(sid: string, reasonRaw: string): { errors: Errors; check?: ArchiveCheckResult } | { ok: true } {
+  const s = S.study(sid);
+  const er: Errors = {};
+  if (!s) return { errors: { form: 'Study not found.' } };
+  if (s.lifecycle !== 'ACTIVE') {
+    return { errors: { form: 'Only active studies can be archived.' } };
+  }
+  if (!can('study.archive', { study: s })) {
+    return { errors: { form: 'You do not have permission to archive this study.' } };
+  }
+  const reason = reasonRaw.trim();
+  if (!reason) {
+    er.reason = 'Reason for change is required (1–1000 characters).';
+  } else if (reason.length > 1000) {
+    er.reason = 'Use 1000 characters or fewer.';
+  }
+  const check = archiveCheck(sid);
+  if (check.status === 'BLOCK' || Object.keys(er).length) return { errors: er, ...(check.status === 'BLOCK' && { check }) };
+
+  s.lifecycle = 'ARCHIVED';
+  s.updated = dLong();
+  logAudit({
+    studyId: sid,
+    action: 'Study archived',
+    changes: 'Active → Archived',
+    reason,
+  });
+  toast('Study archived');
+  emit();
+  return { ok: true };
+}
+
+/** 恢复 Study：仅 ARCHIVED 状态可恢复，需提供 Reason (1–1000 字符)；不改变 blinding 与 Event 状态 */
+export function restoreStudy(sid: string, reasonRaw: string): { errors: Errors } | { ok: true } {
+  const s = S.study(sid);
+  const er: Errors = {};
+  if (!s) return { errors: { form: 'Study not found.' } };
+  if (s.lifecycle !== 'ARCHIVED') {
+    return { errors: { form: 'Only archived studies can be restored.' } };
+  }
+  if (!can('study.restore', { study: s })) {
+    return { errors: { form: 'You do not have permission to restore this study.' } };
+  }
+  const reason = reasonRaw.trim();
+  if (!reason) {
+    er.reason = 'Reason for change is required (1–1000 characters).';
+  } else if (reason.length > 1000) {
+    er.reason = 'Use 1000 characters or fewer.';
+  }
+  if (Object.keys(er).length) return { errors: er };
+
+  s.lifecycle = 'ACTIVE';
+  s.updated = dLong();
+  logAudit({
+    studyId: sid,
+    action: 'Study restored',
+    changes: 'Archived → Active',
+    reason,
+  });
+  toast('Study restored');
+  emit();
+  return { ok: true };
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Avatar, Button, Checkbox, Field, FileBox, Input, Message, Modal, PickList, Radio, Select, Textarea } from '@wiz/react';
 import { go } from '../../router';
 import { AddMembersModal, ChangeBlindingModal, EditMemberModal, RemoveMemberModal, TransferAdminModal } from './MemberModals';
+import { ArchiveStudyModal, RestoreStudyModal } from './ArchiveModals';
 import { EnableBlindingModal, UnblindStudyModal } from './BlindingModals';
 import { CAT_ORDER, FILE_OK, TYPE, TYPES, SCOPES } from '../../store/assets';
 import { hrefEvent, hrefStudy } from '../../store/actions';
@@ -42,6 +43,7 @@ function CreateEventModal({ sid }: { sid: string }) {
   return (
     <Modal title="New Event" width={600} onClose={closeModal} footer={<Footer confirm="Create Event" onConfirm={submit} />}>
       <div className="app-form">
+        {er.form && <Message tone="error">{er.form}</Message>}
         <Input label="Event Name" required placeholder="e.g. Primary Analysis" maxLength={200} autoFocus value={f.name} error={er.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <Textarea label="Analysis Objective" rows={2} maxLength={1000} placeholder="What this Event should answer" value={f.goal} onChange={(e) => setF({ ...f, goal: e.target.value })} />
         <div className="app-form__row2">
@@ -89,6 +91,7 @@ function UploadAssetModal({ sid, assetId, code: code0 }: { sid: string; assetId:
       footer={<Footer confirm={a ? 'Upload version' : 'Upload'} onConfirm={submit} />}>
       <div className="app-form">
         {a && <Message tone="info">Adding a new version of <b>{a.name}</b> (currently {S.latest(a).label}). Type is locked to the existing asset.</Message>}
+        {er.form && <Message tone="error">{er.form}</Message>}
         <Select label="File type" required searchable placeholder="Select a type…" disabled={!!a} options={typeOptions} value={f.code} error={er.code}
           hint={a ? 'Locked when adding a version.' : 'From the 31 asset types. Write permission per role is checked by type.'}
           onChange={setType} />
@@ -140,6 +143,7 @@ function UploadDatasetModal({ sid, dsId, mode: mode0 }: { sid: string; dsId: str
     <Modal title={d ? 'Upload new version' : 'Upload Dataset'} width={600} onClose={closeModal}
       footer={<Footer confirm={d ? 'Upload version' : 'Upload Dataset'} onConfirm={submit} />}>
       <div className="app-form">
+        {er.form && <Message tone="error">{er.form}</Message>}
         <Input label="Dataset name" placeholder="Uses the file name if empty" readOnly={!!d} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <div className="app-form__row2">
           <Select label="Data type" required disabled={!!d} options={['RawData', 'SDTM', 'ADaM']} value={f.cat} onChange={(v) => setF({ ...f, cat: v, spec: '' })} />
@@ -210,5 +214,7 @@ export function StudyModals() {
   if (m.kind === 'changeBlinding') return <ChangeBlindingModal key={key} sid={m.sid} memberId={m.memberId} />;
   if (m.kind === 'transferAdmin') return <TransferAdminModal key={key} sid={m.sid} />;
   if (m.kind === 'removeMember') return <RemoveMemberModal key={key} sid={m.sid} memberId={m.memberId} />;
+  if (m.kind === 'archiveStudy') return <ArchiveStudyModal key={key} sid={m.sid} />;
+  if (m.kind === 'restoreStudy') return <RestoreStudyModal key={key} sid={m.sid} />;
   return <UploadDatasetModal key={key} sid={m.sid} dsId={m.dsId} mode={m.mode} />;
 }

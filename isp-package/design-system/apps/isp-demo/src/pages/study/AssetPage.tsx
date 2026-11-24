@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button, Dropdown, Status, Table, type TableColumn } from '@wiz/react';
 import { baselinesOf, baselineAsset, BL_CODES, BL_NAME, slotCarriedFrom } from '../../store/baseline';
 import { S } from '../../store/selectors';
+import { isWritable } from '../../store/role';
 import { useDb } from '../../store/store';
 import { openDrawer, openModal, ui } from '../../store/ui';
 import type { Asset, BaselineCode } from '../../store/types';
@@ -26,6 +27,7 @@ const nameCell = (r: Row, indent = false) => {
 /** #/study/:sid/asset：Study Baseline（Protocol 与 SAP 的版本组合）+ Other assets 表；点资产行开版本抽屉 */
 export function AssetPage({ sid }: { sid: string }) {
   useDb();
+  const writable = isWritable(sid);
   const [tp, setTp] = useState('All');
   const [q, setQ] = useState('');
   const [earlierOpen, setEarlierOpen] = useState(false);
@@ -88,6 +90,14 @@ export function AssetPage({ sid }: { sid: string }) {
       return '';
     } },
     { key: 'more', header: '', width: 96, align: 'right', render: (_v, r: Row) => {
+      // 归档只读：上传入口不渲染
+      if (!writable) {
+        if (r.kind === 'slot') return <RowMenu label={r.a!.name} items={[{ label: 'Open Versions', value: 'open' }]}
+          onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'assetV', id: r.a!.id, n: r.n }); }} />;
+        if (r.kind === 'asset') return <RowMenu label={r.a!.name} items={[{ label: 'Open Versions', value: 'open' }]}
+          onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'assetV', id: r.a!.id }); }} />;
+        return null;
+      }
       if (r.kind === 'slotph' || r.kind === 'assetph') return <Button variant="link" size="small" leftIcon="ri-upload-2-line" onClick={() => upload(r.code!)}>Upload</Button>;
       if (r.kind === 'slot') return <RowMenu label={r.a!.name} items={[{ label: 'Open Versions', value: 'open' }, { label: 'Upload New Version', value: 'up' }]}
         onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'assetV', id: r.a!.id, n: r.n }); if (v === 'up') upload(r.a!.code, r.a!.id); }} />;
@@ -95,7 +105,7 @@ export function AssetPage({ sid }: { sid: string }) {
         onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'assetV', id: r.a!.id }); if (v === 'up') upload(r.a!.code, r.a!.id); }} />;
       return null;
     } },
-  ], [sid]);
+  ], [sid, writable]);
 
   const clickable = (r: Row) => r.kind === 'slot' || r.kind === 'asset';
   const isActive = (r: Row) => clickable(r) && ui.drawer?.kind === 'assetV' && ui.drawer.id === r.a!.id && (r.kind === 'asset' || ui.drawer.n == null || ui.drawer.n === r.n);
@@ -104,7 +114,7 @@ export function AssetPage({ sid }: { sid: string }) {
       <PageToolbar
         filters={<Dropdown size="medium" shadow="none" filterName="Type" label={tp} width={180} items={types.map((t) => ({ label: t, value: t, selected: t === tp }))} onSelect={(v) => setTp(String(v))} />}
         search={<SearchBox value={q} onChange={setQ} placeholder="Search assets" />}
-        actions={<Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => upload('')}>Upload File</Button>} />
+        actions={writable && <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => upload('')}>Upload File</Button>} />
       <div className="page-scroll">
         <Table variant="plain" columnLayout="fixed" rowHeight={48} columns={columns} rows={rows} aria-label="Assets" groupBy={(r: Row) => r.grp} renderGroup={(g) => g}
           onRowClick={(r: Row) => openDrawer({ kind: 'assetV', id: r.a!.id, n: r.kind === 'slot' ? r.n : undefined })} rowClickable={clickable} activeRow={isActive} />

@@ -22,7 +22,7 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   rightIcon?: string;
   /** 撑满父容器宽度（卡片内整行按钮） */
   block?: boolean;
-  /** 阴影：default = 主库 Button 阴影；none = 无阴影（置于描边卡片 / 筛选条内） */
+  /** 阴影：Primary 和 Danger 可用 none 关闭默认阴影；Secondary 和 Link 无阴影 */
   shadow?: 'default' | 'none';
   children: ReactNode;
 }

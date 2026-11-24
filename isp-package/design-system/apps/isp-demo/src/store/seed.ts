@@ -116,7 +116,11 @@ export function createSeed(): Database {
       adopted: '—', updated: 'Oct 26, 2026', members: 2, wfs: [],
       refs: { assets: {}, datasets: {} },
       produced: [],
-      flow: newFlow({ ui: { sel: 'toc', edge: null, inputsOpen: false, confirm: null } }),
+      flow: newFlow({
+        ui: { sel: 'toc', edge: null, inputsOpen: false, confirm: null },
+        st: { toc: 'review', shell: 'empty', prodCode: 'empty', qcCode: 'empty', prodResult: 'empty', qcResult: 'empty', pkg: 'empty' },
+        prog: { toc: 24, shell: 0, prodCode: 0, qcCode: 0, prodResult: 0, qcResult: 0, pkg: 0 },
+      }),
     },
     {
       id: 'EVT-004', studyId: 'STU-001', name: 'Exploratory Analysis', status: 'In progress', owner: 'User Name', goal: '', scope: 'EXPLORATORY', reason: '',
@@ -126,8 +130,8 @@ export function createSeed(): Database {
       produced: [],
       flow: newFlow({
         ui: { sel: 'toc', edge: null, inputsOpen: false, confirm: null },
-        st: { toc: 'review', shell: 'empty', prodCode: 'empty', qcCode: 'empty', prodResult: 'empty', qcResult: 'empty', pkg: 'empty' },
-        prog: { toc: 24, shell: 0, prodCode: 0, qcCode: 0, prodResult: 0, qcResult: 0, pkg: 0 }, wf: { A: 'WF-01', B: null },
+        st: { toc: 'empty', shell: 'empty', prodCode: 'empty', qcCode: 'empty', prodResult: 'empty', qcResult: 'empty', pkg: 'empty' },
+        prog: { toc: 0, shell: 0, prodCode: 0, qcCode: 0, prodResult: 0, qcResult: 0, pkg: 0 }, wf: { A: 'WF-01', B: null },
       }),
     },
   ];

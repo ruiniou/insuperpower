@@ -99,6 +99,7 @@ describe('Update / Keep / Run / Lock', () => {
   });
   it('ovStartOrFix：ready 且无 Workflow → New Workflow；stale 上游未 locked → 提示且不运行；review 的 Package 无 Review', () => {
     const e3 = evt('EVT-003');
+    e3.flow.st.toc = 'empty';
     expect(ovStartOrFix(e3, 'toc')).toBe('#/event/EVT-003/workflow/new');
     const e = evt();
     e.flow.st.shell = 'stale';
@@ -129,7 +130,9 @@ describe('Needs your attention（节点状态的投影）', () => {
     expect(rows[2].sub).toBe('SAP v3.0, ADSL v1.2. This Event stays on v2.0 and v1.1');
   });
   it('全部处理完显示为空（EVT-003 无引用更新、全 empty → 只有 Ready TOC）', () => {
-    const rows = attentionRows(evt('EVT-003'), ovCtx(evt('EVT-003')));
+    const e3 = evt('EVT-003');
+    e3.flow.st.toc = 'empty';
+    const rows = attentionRows(e3, ovCtx(e3));
     expect(rows.map((r) => r.tag)).toEqual(['Ready']);
   });
   it('Keep 后 Update 行消失', () => {
@@ -617,6 +620,160 @@ describe('Study 审计', () => {
     expect(getDb().audit.slice(1)).toEqual(before);
   });
 });
+
+describe('Study Archive、Restore 与归档只读规则（交接单 13）', () => {
+  beforeEach(() => {
+    resetDb();
+    setDuty('Study Admin');
+  });
+
+  it('archiveCheck 依赖检查口径：非 Archived 的 Event 中 running/review 节点判定', async () => {
+    const { archiveCheck } = await import('./study');
+    // STU-001: 调整后 EVT-001/002/004 均无 running / review 节点 -> PASS
+    const chk1 = archiveCheck('STU-001');
+    expect(chk1.status).toBe('PASS');
+    expect(chk1.items.find((i) => i.key === 'runs')?.count).toBe(0);
+    expect(chk1.items.find((i) => i.key === 'reviews')?.count).toBe(0);
+    expect(chk1.items.find((i) => i.key === 'operations')?.count).toBe(0);
+
+    // STU-002: EVT-003 有 review 节点 -> BLOCK
+    const chk2 = archiveCheck('STU-002');
+    expect(chk2.status).toBe('BLOCK');
+    const revItem = chk2.items.find((i) => i.key === 'reviews');
+    expect(revItem?.count).toBe(1);
+    expect(revItem?.sources).toMatchObject([{ eventId: 'EVT-003', count: 1 }]);
+
+    // 动态增加 running 节点
+    const e = S.event('EVT-001')!;
+    e.flow.st.prodResult = 'running';
+    const chk1Blocked = archiveCheck('STU-001');
+    expect(chk1Blocked.status).toBe('BLOCK');
+    expect(chk1Blocked.items.find((i) => i.key === 'runs')?.count).toBe(1);
+    expect(chk1Blocked.items.find((i) => i.key === 'runs')?.sources).toMatchObject([{ eventId: 'EVT-001', count: 1 }]);
+
+    // 如果 Event 已被 Archived，则不计入
+    e.status = 'Archived';
+    expect(archiveCheck('STU-001').status).toBe('PASS');
+  });
+
+  it('提交时返回新增阻断项及各 Event 的计数，不变更 Study 或审计', async () => {
+    const { archiveCheck, archiveStudy } = await import('./study');
+    const sid = 'STU-001';
+    const before = structuredClone(getDb().audit);
+    expect(archiveCheck(sid).status).toBe('PASS');
+    evt('EVT-001').flow.st.prodResult = 'running';
+    evt('EVT-002').flow.st.toc = 'running';
+
+    expect(archiveStudy(sid, 'Study closeout')).toMatchObject({
+      check: { status: 'BLOCK', items: [
+        { key: 'runs', count: 2, sources: [{ eventId: 'EVT-001', count: 1 }, { eventId: 'EVT-002', count: 1 }] },
+        { key: 'reviews', count: 0 },
+        { key: 'operations', count: 0 },
+      ] },
+    });
+    expect(S.study(sid)?.lifecycle).toBe('ACTIVE');
+    expect(getDb().audit).toEqual(before);
+  });
+
+  it('拒绝归档前打开的 Study 层写表单，不修改数据、审计或成功提示', async () => {
+    const { archiveStudy, createEvent, transferEventOwner, updateStudyDetails } = await import('./study');
+    const sid = 'STU-001';
+    const reason = 'Old form submission';
+    const details = { name: 'Edited study', desc: '', ta: 'Oncology', phase: 'Phase III', reason };
+    const event = { sid, name: 'New event', goal: '', scope: '', reason, refs: {} };
+    const asset = { sid, assetId: null, code: 'SAP', name: 'SAP', meta: {}, fileName: 'sap.pdf', reason, version: 'v99', baselineMode: 'new' as const, baselineLabel: 'v99' };
+    const dataset = { sid, dsId: null, name: 'ADSL', cat: 'ADaM', mode: 'Dummy', version: 'v99', cut: '', spec: '', fileName: 'adsl.csv', reason };
+
+    expect(archiveStudy(sid, 'Study closeout')).toEqual({ ok: true });
+    const before = structuredClone(getDb());
+    const beforeToasts = [...toasts];
+    for (const result of [updateStudyDetails(sid, details), createEvent(event), uploadAsset(asset), uploadDataset(dataset)]) {
+      expect(result).toMatchObject({ errors: { form: expect.stringContaining('read-only') } });
+    }
+    transferEventOwner('EVT-001', 'Chen Yu');
+    expect(getDb()).toEqual(before);
+    expect(toasts).toEqual(beforeToasts);
+  });
+
+  it('状态守卫与权限：ACTIVE 才能 Archive，ARCHIVED 才能 Restore；非 ACTIVE 时 Study 级点位一律为 false', async () => {
+    const { can, isWritable, setDuty } = await import('./role');
+    const s1 = S.study('STU-001')!;
+    const s3 = S.study('STU-003')!; // 种子中 STU-003 为 ARCHIVED
+
+    expect(isWritable('STU-001')).toBe(true);
+    expect(isWritable('STU-003')).toBe(false);
+
+    // Study Admin 在 STU-001 上生效
+    setDuty('Study Admin');
+    expect(can('study.archive', { study: s1 })).toBe(true);
+    expect(can('study.restore', { study: s1 })).toBe(false);
+    expect(can('study.metadata.update', { study: s1 })).toBe(true);
+    expect(can('study.member.manage', { study: s1 })).toBe(true);
+
+    // STU-003 为 ARCHIVED：Study 点位一律 false，只有 restore 为 true（需有权限）
+    // 演示 Restore STU-003 用 System Owner（因为 STU-003 admin 不是 User Name）
+    setDuty('System Owner');
+    expect(can('study.archive', { study: s3 })).toBe(false);
+    expect(can('study.restore', { study: s3 })).toBe(true);
+    expect(can('study.metadata.update', { study: s3 })).toBe(false);
+    expect(can('study.member.manage', { study: s3 })).toBe(false);
+    expect(can('event.create', { study: s3 })).toBe(false);
+
+    // 租户级点位不受 study 状态影响
+    expect(can('study.create')).toBe(true);
+
+    // Member 角色两者均不可
+    setDuty('Member');
+    expect(can('study.archive', { study: s1 })).toBe(false);
+    expect(can('study.restore', { study: s3 })).toBe(false);
+  });
+
+  it('archiveStudy 与 restoreStudy 完整流及审计：校验 reason、状态守卫、不改 blinding', async () => {
+    const { archiveStudy, restoreStudy } = await import('./study');
+    const { setDuty } = await import('./role');
+
+    setDuty('Study Admin');
+    const s1 = S.study('STU-001')!;
+    const prevBlinding = s1.blinding;
+
+    // Reason 必填 1-1000 字符
+    expect(archiveStudy('STU-001', '')).toEqual({ errors: { reason: 'Reason for change is required (1–1000 characters).' } });
+    expect(archiveStudy('STU-001', 'a'.repeat(1001))).toEqual({ errors: { reason: 'Use 1000 characters or fewer.' } });
+
+    // 归档成功
+    const res = archiveStudy('STU-001', 'End of study trial analysis');
+    expect(res).toEqual({ ok: true });
+    expect(s1.lifecycle).toBe('ARCHIVED');
+    const audit1 = getDb().audit[0];
+    expect(audit1).toMatchObject({
+      studyId: 'STU-001',
+      action: 'Study archived',
+      changes: 'Active → Archived',
+      reason: 'End of study trial analysis',
+    });
+
+    // 再次归档报错（非 ACTIVE）
+    expect(archiveStudy('STU-001', 'Again')).toEqual({ errors: { form: 'Only active studies can be archived.' } });
+
+    // Restore STU-001
+    expect(restoreStudy('STU-001', '')).toEqual({ errors: { reason: 'Reason for change is required (1–1000 characters).' } });
+    const res2 = restoreStudy('STU-001', 'Reopening for supplemental review');
+    expect(res2).toEqual({ ok: true });
+    expect(s1.lifecycle).toBe('ACTIVE');
+    expect(s1.blinding).toBe(prevBlinding); // blinding 不变
+    const audit2 = getDb().audit[0];
+    expect(audit2).toMatchObject({
+      studyId: 'STU-001',
+      action: 'Study restored',
+      changes: 'Archived → Active',
+      reason: 'Reopening for supplemental review',
+    });
+
+    // 再次恢复报错（非 ARCHIVED）
+    expect(restoreStudy('STU-001', 'Again')).toEqual({ errors: { form: 'Only archived studies can be restored.' } });
+  });
+});
+
 
 describe('Study Blinding management (handoff 14)', () => {
   beforeEach(() => { resetDb(); setDuty('Study Admin'); });

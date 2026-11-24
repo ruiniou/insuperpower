@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Button, Dropdown, EmptyState, Search, Table, type TableColumn } from '@wiz/react';
-import { PageToolbar, Owner } from './study/common';
+import { LifecycleMark, Owner, PageToolbar } from './study/common';
 import { go } from '../router';
 import { hrefStudy } from '../store/actions';
-import { can } from '../store/role';
+import { can, session } from '../store/role';
 import { S } from '../store/selectors';
 import { useDb } from '../store/store';
 import { ICON } from '../icons';
 import type { Study } from '../store/types';
-import { LifecycleMark } from './study/common';
+import { openModal } from '../store/ui';
+
+const open = (id: string) => go(hrefStudy(id, 'events'));
 
 const LIFE = { ACTIVE: 'Active', ARCHIVED: 'Archived', DELETED: 'Deleted' } as const;
 
@@ -23,6 +25,7 @@ const toggleFilter = (sel: string[], v: string) => (sel.includes(v) ? sel.filter
 
 export function StudiesPage() {
   const db = useDb();
+  const duty = session.duty;
   const [st, setSt] = useState<string[]>([]);
   const [ta, setTa] = useState<string[]>([]);
   const [q, setQ] = useState('');
@@ -31,14 +34,17 @@ export function StudiesPage() {
   const needle = q.trim().toLowerCase();
   const rows = db.studies.filter((s) => (!st.length || st.includes(LIFE[s.lifecycle])) && (!ta.length || ta.includes(s.ta)) && (!needle || [s.id, s.name, s.ta].join(' ').toLowerCase().includes(needle)));
 
-  const open = (id: string) => go(hrefStudy(id, 'events'));
-
-  const columns = useMemo<TableColumn[]>(() => [
+  const columns: TableColumn[] = [
     { key: 'id', header: 'Study', render: (_v, s: Study) => (
       <span className="studies-study">
-        <i className={ICON.study} aria-hidden="true" />
+        {s.lifecycle === 'ARCHIVED'
+          ? <i className="ri-archive-line" role="img" aria-label="Archived" />
+          : <i className={ICON.study} aria-hidden="true" />}
         <span className="studies-study__txt">
-          <span className="studies-id">{s.id}{s.lifecycle !== 'ACTIVE' && <span className="studies-life-end"><LifecycleMark v={s.lifecycle} /></span>}</span>
+          <span className="studies-id">
+            {s.id}
+            {s.lifecycle === 'DELETED' && <span className="studies-life-end"><LifecycleMark v={s.lifecycle} /></span>}
+          </span>
           <span className="studies-name">{s.name}</span>
         </span>
       </span>
@@ -48,7 +54,16 @@ export function StudiesPage() {
     { key: 'events', header: 'Events', width: 80, render: (_v, s: Study) => S.eventsOf(s.id).length },
     { key: 'blinding', header: 'Blinding', width: 120, render: (_v, s: Study) => <span className="studies-blind">{s.blinding}</span> },
     { key: 'updated', header: 'Updated', width: 130 },
-  ], []);
+    { key: 'actions', header: '', width: 112, align: 'right', render: (_v, s: Study) => {
+      if (can('study.restore', { study: s }, duty)) {
+        return <Button size="small" variant="secondary" aria-label={`Restore ${s.id}`} onClick={(e) => {
+          e.stopPropagation();
+          openModal({ kind: 'restoreStudy', sid: s.id });
+        }}>Restore</Button>;
+      }
+      return null;
+    } },
+  ];
 
   return (
     <div className="studies">
@@ -66,7 +81,7 @@ export function StudiesPage() {
         ) : rows.length === 0 ? (
           <div className="app-empty" role="status"><b>No studies match</b><span>Clear the search or the filters.</span></div>
         ) : (
-          <Table key={st + '|' + ta + '|' + needle} className="studies-table" variant="plain" rowHeight={48} paginated={rows.length > STUDY_PAGE_SIZES[0]} jumpToPage pageSize={20} pageSizeOptions={STUDY_PAGE_SIZES} columns={columns} rows={rows} aria-label="Studies" onRowClick={(r: Study) => open(r.id)} />
+          <Table key={st + '|' + ta + '|' + needle} className="studies-table" variant="plain" columnLayout="fixed" rowHeight={48} paginated={rows.length > STUDY_PAGE_SIZES[0]} jumpToPage pageSize={20} pageSizeOptions={STUDY_PAGE_SIZES} columns={columns} rows={rows} aria-label="Studies" onRowClick={(r: Study) => open(r.id)} />
         )}
       </div>
     </div>

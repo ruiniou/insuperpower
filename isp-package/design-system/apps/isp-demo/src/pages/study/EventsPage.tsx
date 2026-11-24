@@ -4,7 +4,7 @@ import { ICON } from '../../icons';
 import { go } from '../../router';
 import { hrefEvent } from '../../store/actions';
 import { S } from '../../store/selectors';
-import { can, session } from '../../store/role';
+import { can, isWritable, session } from '../../store/role';
 import { useDb } from '../../store/store';
 import { peopleOf, transferEventOwner } from '../../store/study';
 import { openModal } from '../../store/ui';
@@ -14,7 +14,8 @@ import { initials, Owner, PageToolbar, RowMenu, SearchBox, soon } from './common
 /** #/study/:sid/events：Events 列表（Status 筛选、搜索、列表视图；卡片视图原型标注未设计） */
 export function EventsPage({ sid }: { sid: string }) {
   useDb();
-  const canCreate = can('event.create', { study: S.study(sid) });
+  const writable = isWritable(sid);
+  const canCreate = writable && can('event.create', { study: S.study(sid) });
   const duty = session.duty;
   const [st, setSt] = useState('All');
   const [q, setQ] = useState('');
@@ -27,20 +28,28 @@ export function EventsPage({ sid }: { sid: string }) {
   const columns = useMemo<TableColumn[]>(() => [
     { key: 'name', header: 'Event', render: (_v, e: EventRec) => <span className="app-nm"><i className={ICON.event} aria-hidden="true" /><span className="app-ell">{e.name}</span></span> },
     { key: 'status', header: 'Status', width: 120, render: (v) => <Status variant="style1" tone="grey" textCase="normal">{v}</Status> },
-    { key: 'owner', header: 'Event Owner', width: 170, render: (_v, e: EventRec) => (can('event.owner.transfer', { event: e })
+    { key: 'owner', header: 'Event Owner', width: 170, render: (_v, e: EventRec) => (writable && can('event.owner.transfer', { event: e })
       ? <MemberSelect variant="inline" size="small" aria-label={`Event Owner of ${e.name}`} value={e.owner} options={peopleOf(sid).map((n) => ({ value: n, name: n, initials: initials(n) }))} onChange={(v) => transferEventOwner(e.id, v)} />
       : <Owner name={e.owner} />) },
     { key: 'wfs', header: 'Workflows', width: 170, render: (_v, e: EventRec) => <span className="app-inline">{S.nWf(e)}{S.nStale(e) > 0 && <Status variant="style1" tone="yellow" textCase="normal">{S.nStale(e)} Outdated</Status>}</span> },
     { key: 'adopted', header: 'Adopted', width: 190, render: (v) => (v === '—' ? <span className="app-muted">—</span> : v) },
     { key: 'updated', header: 'Updated', width: 130, render: (v) => <span className="app-muted">{v}</span> },
     { key: 'more', header: '', width: 56, align: 'right', render: (_v, e: EventRec) => {
-      const extra = ([['event.member.manage', 'Manage Members'], ['event.duplicate', 'Duplicate'], ['event.archive', 'Archive Event']] as const).filter(([p]) => can(p, { event: e }));
+      const writeExtra = writable
+        ? ([
+            ['event.member.manage', 'Manage Members'],
+            ['event.duplicate', 'Duplicate'],
+            ['event.archive', 'Archive Event'],
+          ] as const)
+            .filter(([p]) => can(p, { event: e }))
+            .map(([, label]) => ({ label, value: label }))
+        : [];
       return (
         <RowMenu label={e.name} onSelect={(v) => { if (v === 'open') open(e.id); else soon(v)(); }}
-          items={[{ label: 'Open Event', value: 'open' }, ...extra.map(([, l]) => ({ label: l, value: l }))]} />
+          items={[{ label: 'Open Event', value: 'open' }, ...writeExtra]} />
       );
     } },
-  ], [duty, sid]);
+  ], [duty, sid, writable]);
 
   return (
     <div className="studies">

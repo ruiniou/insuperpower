@@ -4,6 +4,7 @@ import { go } from '../../router';
 import { hrefStudy } from '../../store/actions';
 import { DS_CATS } from '../../store/assets';
 import { cutOf, SPACES, S } from '../../store/selectors';
+import { isWritable } from '../../store/role';
 import { useDb } from '../../store/store';
 import { openDrawer, openModal, ui } from '../../store/ui';
 import type { Dataset } from '../../store/types';
@@ -16,6 +17,7 @@ const match = (d: Dataset, q: string) => { const n = q.trim().toLowerCase(); ret
 /** #/study/:sid/dataset[/:space]：一张列表页，Mode 是工具栏分段切换（路由里的 space 决定当前值，默认 Dummy），Type 作分组 */
 export function DatasetPage({ sid, space }: { sid: string; space: string | null }) {
   useDb();
+  const writable = isWritable(sid);
   const [q, setQ] = useState('');
   const sp = SPACES.find((s) => s.key === space) ?? SPACES[0];
   const total = S.datasetsOf(sid).length;
@@ -29,24 +31,24 @@ export function DatasetPage({ sid, space }: { sid: string; space: string | null 
     { key: 'cut', header: 'Cut', width: 140, render: (_v, d: Dataset) => cutOf(S.latest(d)) || '—' },
     { key: 'used', header: 'Used by', width: 190, render: (_v, d: Dataset) => <span className="app-sm">{usedTxt(d)}</span> },
     { key: 'upd', header: 'Updated', width: 110, render: (_v, d: Dataset) => <span className="app-sm">{S.latest(d).date}</span> },
-    { key: 'more', header: '', width: 56, align: 'right', render: (_v, d: Dataset) => (
-      <RowMenu label={d.name} items={[{ label: 'Open versions', value: 'open' }, { label: 'Upload new version', value: 'up' }]}
-        onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'dsV', id: d.id }); if (v === 'up') upload(d.id); }} />
-    ) },
-  ], [sid, sp.mode]);
-  const uploadBtn = <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => upload(null)}>Upload Dataset</Button>;
+    { key: 'more', header: '', width: 56, align: 'right', render: (_v, d: Dataset) => writable
+      ? <RowMenu label={d.name} items={[{ label: 'Open versions', value: 'open' }, { label: 'Upload new version', value: 'up' }]}
+          onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'dsV', id: d.id }); if (v === 'up') upload(d.id); }} />
+      : <RowMenu label={d.name} items={[{ label: 'Open versions', value: 'open' }]}
+          onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'dsV', id: d.id }); }} /> },
+  ], [sid, sp.mode, writable]);
   const here = S.datasetsOf(sid, sp.key).length;
   return (
     <div className="studies">
       {total > 0 && <PageToolbar
         filters={<SegmentedControl aria-label="Dataset mode" items={SPACES.map((s) => ({ value: s.key, label: s.name }))} value={sp.key} onChange={(v) => go(hrefStudy(sid, 'dataset', v))} />}
         search={<SearchBox value={q} onChange={setQ} placeholder="Search datasets" />}
-        actions={uploadBtn} />}
+        actions={writable && <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => upload(null)}>Upload Dataset</Button>} />}
       <div className="page-scroll">
         {rows.length === 0
           ? <EmptyState title={total === 0 ? 'No datasets yet' : here ? 'No datasets match' : `No ${sp.name} datasets yet`}
               description={total === 0 ? 'Upload a dataset and pick its mode explicitly.' : here ? 'Clear the search.' : 'Upload a dataset in this mode.'}
-              action={here && total ? undefined : <Button leftIcon="ri-upload-2-line" onClick={() => upload(null)}>Upload Dataset</Button>} />
+              action={!writable || (here && total) ? undefined : <Button leftIcon="ri-upload-2-line" onClick={() => upload(null)}>Upload Dataset</Button>} />
           : <Table variant="plain" columnLayout="fixed" rowHeight={48} columns={columns} rows={rows} aria-label={sp.name + ' datasets'} groupBy={(d: Dataset) => d.cat}
               onRowClick={(d: Dataset) => openDrawer({ kind: 'dsV', id: d.id })} activeRow={(d: Dataset) => ui.drawer?.kind === 'dsV' && ui.drawer.id === d.id} />}
       </div>

@@ -20,6 +20,8 @@ export type ModalState =
   | { kind: 'removeMember'; sid: string; memberId: string }
   | { kind: 'changeBlinding'; sid: string; memberId: string }
   | { kind: 'transferAdmin'; sid: string }
+  | { kind: 'archiveStudy'; sid: string }
+  | { kind: 'restoreStudy'; sid: string }
   | { kind: 'enableBlinding'; sid: string }
   | { kind: 'unblindStudy'; sid: string }
   | null;

@@ -3,7 +3,6 @@ import { Breadcrumb, Button, IconButton, Pane, PopoverMenu, Select, SideBar, Sid
 import { ICON } from './icons';
 import { ReviewNavContext } from './pages/review/nav';
 import { CopilotPanel } from './CopilotPanel';
-import { BlindTag } from './pages/study/common';
 import { StudyDetailsDrawer } from './pages/study/StudyDetailsDrawer';
 import { go, useRoute, type Route } from './router';
 import { hrefEvent, hrefStudy } from './store/actions';
@@ -95,6 +94,43 @@ export function AppShell({ children }: { children: ReactNode }) {
     { icon: 'ri-book-2-line', label: 'Knowledge Base', value: 'kb', onClick: soon('Knowledge Base') },
   ];
   const active = 'studies';
+
+  /** More 菜单：Study details / [Archive|Restore] / Audit trail。无权限或状态不符不渲染，同组内全不渲染时分隔线也不渲染 */
+  const studyMoreItems = (() => {
+    if (R.name !== 'study' || !study) return null;
+    type Item = { label: string; value: string } | { divider: true };
+    const result: Item[] = [];
+    const addDivider = () => { if (result.length > 0) result.push({ divider: true }); };
+
+    // Study details（always visible in study context）
+    result.push({ label: 'Study details', value: 'details' });
+    result.push({ label: 'Blinding management', value: 'blinding' });
+
+    // Archive / Restore（状态互斥，无权限不渲染）
+    const hasArchive = can('study.archive', { study });
+    const hasRestore = can('study.restore', { study });
+    if (hasArchive || hasRestore) {
+      addDivider();
+      if (hasArchive) result.push({ label: 'Archive study', value: 'archive' });
+      if (hasRestore) result.push({ label: 'Restore study', value: 'restore' });
+    }
+
+    // Audit trail
+    addDivider();
+    result.push({ label: 'Audit trail', value: 'audit' });
+
+    return result;
+  })();
+
+  const handleMoreSelect = (v: string) => {
+    if (!study) return;
+    if (v === 'blinding') go(hrefStudy((R as { sid: string }).sid, 'blinding'));
+    else if (v === 'audit') go(hrefStudy(R.name === 'study' ? (R as { sid: string }).sid : '', 'audit'));
+    else if (v === 'details') openDrawer({ kind: 'studyDetails', id: (R as { sid: string }).sid });
+    else if (v === 'archive') openModal({ kind: 'archiveStudy', sid: (R as { sid: string }).sid });
+    else if (v === 'restore') openModal({ kind: 'restoreStudy', sid: (R as { sid: string }).sid });
+  };
+
   /** Review 工作台：Nav 默认收起（页头左侧有展开按钮），用自己的页头，不带 Event 页签 */
   if (isTocWorkbench(R, R.name === 'event' ? S.event(R.eid) : undefined)) {
     return (
@@ -123,13 +159,23 @@ export function AppShell({ children }: { children: ReactNode }) {
       {!mainNavCollapsed && navSplitter}
       <section className="app-main" aria-label="Main" ref={mainRef}>
         <header className="app-hdr">
-          <div className="app-crumb">{mainNavCollapsed && <SideBarToggle onClick={() => setMainNavCollapsed(false)} />}<Breadcrumb size="sm" items={crumbs} aria-label="Breadcrumb" />{study && study.blinding === 'Blinded' && !(R.name === 'study' && R.tab === 'blinding') && <BlindTag v={study.blinding} />}</div>
+          <div className="app-crumb">
+            {mainNavCollapsed && <SideBarToggle onClick={() => setMainNavCollapsed(false)} />}
+            {study && <IconButton size="small" color="grey" icon="ri-arrow-left-s-line" aria-label="Back to Studies" onClick={() => go('#/studies')} />}
+            <Breadcrumb size="sm" items={crumbs} aria-label="Breadcrumb" />
+          </div>
           <div className="app-acts">
-            {R.name === 'study' && <PopoverMenu align="right" width={160} trigger={<IconButton size="compact" icon="ri-more-2-fill" aria-label="More" />} items={[{ label: 'Study details', value: 'details' }, { label: 'Blinding management', value: 'blinding' }, { divider: true }, { label: 'Audit trail', value: 'audit' }]} onSelect={(v) => (v === 'blinding' ? go(hrefStudy(R.sid, 'blinding')) : v === 'audit' ? go(hrefStudy(R.sid, 'audit')) : openDrawer({ kind: 'studyDetails', id: R.sid }))} />}
+            {R.name === 'study' && studyMoreItems && <PopoverMenu align="right" width={180} trigger={<IconButton size="compact" icon="ri-more-2-fill" aria-label="More" />} items={studyMoreItems} onSelect={handleMoreSelect} />}
             {!copilot && R.name !== 'studyNew' && <><span className="app-acts__sep" aria-hidden="true" /><IconButton size="compact" className="app-copilot-btn" icon="wiz-logo-icon" aria-label="Open Copilot" title="Copilot" onClick={() => setCopilot(true)} /></>}
           </div>
         </header>
         {tabs && <div className="app-tabs">{tabs}</div>}
+        {study && study.lifecycle !== 'ACTIVE' && R.name === 'study' && (
+          <div className="app-archived-banner" role="status">
+            <i className="ri-archive-line" aria-hidden="true" />
+            <span>This study is archived and read-only. {can('study.restore', { study }) ? 'Use More → Restore study to reactivate it.' : 'Contact a Study Admin or System Owner to restore it.'}</span>
+          </div>
+        )}
         <div className="app-panel">{children}</div>
         {R.name === 'study' && ui.drawer?.kind === 'studyDetails' && <StudyDetailsDrawer id={ui.drawer.id} />}
       </section>
