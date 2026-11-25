@@ -35,9 +35,10 @@ export function StudiesPage() {
   const [status, setStatus] = useState<StudyStatusFilter>('ACTIVE');
   const [ta, setTa] = useState<string[]>([]);
   const [q, setQ] = useState('');
-  const tas: string[] = Array.from(new Set(db.studies.map((s) => s.ta).filter(Boolean)));
+  const visibleStudies = db.studies.filter((s) => s.lifecycle !== 'DELETED');
+  const tas: string[] = Array.from(new Set(visibleStudies.map((s) => s.ta).filter(Boolean)));
   const needle = q.trim().toLowerCase();
-  const rows = db.studies
+  const rows = visibleStudies
     .filter((s) => s.lifecycle === status && (!ta.length || ta.includes(s.ta)) && (!needle || [s.id, s.name, s.ta].join(' ').toLowerCase().includes(needle)))
     .sort((a, b) => updatedTime(b) - updatedTime(a) || a.id.localeCompare(b.id));
 
@@ -71,7 +72,7 @@ export function StudiesPage() {
 
   return (
     <div className="studies">
-      {db.studies.length > 0 && <PageToolbar
+      {visibleStudies.length > 0 && <PageToolbar
         filters={<>
           <Dropdown size="medium" shadow="none" filterName="Status" icon="ri-filter-3-line"
             label={STATUS_OPTIONS.find((option) => option.value === status)?.label}
@@ -85,7 +86,7 @@ export function StudiesPage() {
         search={<Search size="compact" width={220} placeholder="Search studies" aria-label="Search studies" value={q} onChange={(e) => setQ(e.target.value)} />}
         actions={can('study.create') && <Button variant="primary" leftIcon="ri-add-line" onClick={() => go('#/studies/new')}>New Study</Button>} />}
       <div className="page-scroll">
-        {db.studies.length === 0 ? (
+        {visibleStudies.length === 0 ? (
           <EmptyState title="No studies yet" description={can('study.create') ? 'Create a Study to get started.' : 'Ask an authorized administrator to create a Study.'}
             action={can('study.create') ? <Button variant="primary" leftIcon="ri-add-line" onClick={() => go('#/studies/new')}>New Study</Button> : undefined} />
         ) : rows.length === 0 ? (

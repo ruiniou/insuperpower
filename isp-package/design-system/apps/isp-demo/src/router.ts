@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { S } from './store/selectors';
 import { emit } from './store/store';
-import { applyPendingDrawer, ui, type DrawerState } from './store/ui';
+import { applyPendingDrawer, modalUi, ui, type DrawerState } from './store/ui';
 
 /** hash 路由，格式与原型 README 的路由表一致（只实现 #/studies 与 #/event/:eid/overview，其余走占位页） */
 export type Route =
@@ -28,6 +28,8 @@ function onRoute() {
   applyPendingDrawer();
   routeKey = location.hash;
   current = parseRoute(location.hash);
+  const modal = modalUi.modal;
+  if (modal?.kind === 'deleteStudy' && (current.name !== 'study' || current.sid !== modal.sid)) modalUi.modal = null;
   subs.forEach((f) => f());
   emit();
 }

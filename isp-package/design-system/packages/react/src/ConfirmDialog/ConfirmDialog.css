@@ -1,3 +1,10 @@
 .wiz-confirm__text { margin: 0; color: var(--wiz-color-text-secondary); font-size: var(--wiz-text-body-2-size); line-height: 1.5; }
 .wiz-confirm__icon { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 32px; height: 32px; border-radius: var(--wiz-radius-xs); background: var(--wiz-red-10); color: var(--wiz-red-60); }
 .wiz-confirm__icon > i { font-size: 18px; line-height: 1; }
+
+
+.wiz-button.wiz-confirm__safe--neutral { color: var(--wiz-main-grey); }
+.wiz-button.wiz-confirm__safe--neutral:hover:not(:disabled) {
+  background: var(--wiz-alpha-black-8);
+  text-decoration: none;
+}

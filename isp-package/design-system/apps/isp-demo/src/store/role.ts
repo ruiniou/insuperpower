@@ -1,3 +1,5 @@
+import { nowIso } from '@wiz/isp';
+import { DEMO_TENANT, ME_USER } from './people';
 import { S } from './selectors';
 import { emit, getDb } from './store';
 import type { EventRec, Study } from './types';
@@ -9,6 +11,7 @@ export const DUTIES: Duty[] = ['System Owner', 'Study Admin', 'Event Owner', 'Me
 /** 权限点位默认值，顺序：System Owner / Study Admin / Event Owner / Member */
 const POINTS = {
   'study.create': [1, 0, 0, 0],
+  'study.delete': [1, 1, 0, 0],
   'study.archive': [1, 1, 0, 0],
   'study.restore': [1, 1, 0, 0],
   'study.metadata.update': [1, 1, 0, 0],
@@ -45,6 +48,18 @@ export function isWritable(studyIdOrStudy?: string | Study | null): boolean {
   return study?.lifecycle === 'ACTIVE';
 }
 
+/** Eligibility to see the delete action, independent of the Study lifecycle. */
+export function hasStudyDeletionAccess(study: Study | undefined, duty = session.duty): boolean {
+  const eff = effectiveDuty({ study }, duty);
+  if (!POINTS['study.delete'][DUTIES.indexOf(eff)]) return false;
+  const db = getDb();
+  if (db.me.name !== ME_USER.name || study?.tenant !== DEMO_TENANT) return false;
+  if (eff === 'System Owner') return true;
+  const now = nowIso();
+  return db.members.some((m) => m.studyId === study.id && m.userId === ME_USER.id && m.isAdmin
+    && m.status === 'ACTIVE' && m.validFrom <= now && (!m.validUntil || now < m.validUntil));
+}
+
 /** 点位判定。租户级点位（study.create）不传范围；Study 级传 study；Event 级传 event。
  *  归档只读规则：带 Study 范围的点位，Study 不是 ACTIVE 时一律返回 false。
  *  例外：study.create（租户级）、study.archive（仅 ACTIVE）、study.restore（仅 ARCHIVED）。
@@ -56,6 +71,9 @@ export const can = (p: Point, scope: Scope = {}, d: Duty = session.duty): boolea
   const study = scope.study ?? (scope.event ? S.study(scope.event.studyId) : undefined);
 
   if (p === 'study.create') return true;
+  if (p === 'study.delete') {
+    return study?.lifecycle === 'ACTIVE' && hasStudyDeletionAccess(study, d);
+  }
   if (p === 'study.archive') return study?.lifecycle === 'ACTIVE';
   if (p === 'study.restore') return study?.lifecycle === 'ARCHIVED';
 

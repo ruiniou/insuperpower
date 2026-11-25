@@ -215,6 +215,15 @@ button { font-family: inherit; }
 .app-archived-banner i { flex: none; color: var(--wiz-color-warning, #d48806); font-size: 16px; }
 
 .study-lifecycle-modal__description { margin: 0; color: var(--wiz-color-text-secondary); }
+.delete-study-form { display: grid; gap: var(--wiz-spacing-md); margin-top: var(--wiz-spacing-md); }
+.delete-study-signature { display: grid; gap: var(--wiz-spacing-xs); padding-top: var(--wiz-spacing-md); border-top: 1px solid var(--wiz-grey-30); }
+.delete-study-signature > .study-lifecycle-modal__description { font-size: var(--wiz-text-body-2-size); line-height: 1.5; }
+.delete-study-blockers { list-style: none; margin: var(--wiz-spacing-sm) 0 0; padding: 0; color: var(--wiz-color-text-secondary); font-size: var(--wiz-text-body-2-size); line-height: 1.5; }
+.delete-study-blocker-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; align-items: center; gap: var(--wiz-spacing-sm); padding: var(--wiz-spacing-sm); border-radius: var(--wiz-radius-xs); color: var(--wiz-color-text-primary); text-decoration: none; }
+a.delete-study-blocker-row:hover { background: var(--wiz-alpha-black-8); }
+.delete-study-blocker-detail { color: var(--wiz-color-text-secondary); }
+.delete-study-check-meta { display: flex; align-items: center; gap: var(--wiz-spacing-sm); margin-top: var(--wiz-spacing-sm); color: var(--wiz-color-text-secondary); font-size: var(--wiz-text-body-2-size); }
+.delete-study-check-meta button { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
 .study-lifecycle-modal .wiz-message {
   border-radius: calc(var(--wiz-radius-xs) / 2);
 }

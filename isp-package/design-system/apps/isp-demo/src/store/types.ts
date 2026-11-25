@@ -62,10 +62,17 @@ export type AuditAction =
   | 'Study created' | 'Study details updated'
   | 'Member added' | 'Member updated' | 'Blinding status changed' | 'Member removed'
   | 'Study Admin transferred' | 'Event Owner changed' | 'Version registered' | 'Version content replaced'
-  | 'Study archived' | 'Study restored' | 'Blinding enabled' | 'Study unblinded';
+  | 'Study deleted' | 'Study archived' | 'Study restored' | 'Blinding enabled' | 'Study unblinded';
+export interface StudyDeletionEvidence {
+  requestId: string;
+  tenant: string;
+  checkedRevision: string;
+  result: 'Succeeded';
+  verification: 'Demo';
+}
 
 /** 审计记录：time 为本地 ISO 串 YYYY-MM-DDTHH:mm；changes 一句话；reason 可空 */
-export interface AuditEvent { id: string; studyId: string; time: string; actor: string; action: AuditAction; changes: string; reason: string | null }
+export interface AuditEvent { id: string; studyId: string; time: string; actor: string; action: AuditAction; changes: string; reason: string | null; deletion?: StudyDeletionEvidence }
 export interface Database {
   me: { name: string; ini: string };
   seq: { study: number; event: number; asset: number; ds: number; baseline: number; member: number; audit: number };
@@ -73,6 +80,7 @@ export interface Database {
   /** 只增，新的在前 */
   audit: AuditEvent[];
   /** Simulated inputs for sources without a Demo service. */
+  studyDeletionSignals?: Record<string, { activeOperations?: number; retentionHold?: boolean; unavailable?: boolean }>;
 }
 
 export interface NodeDef {

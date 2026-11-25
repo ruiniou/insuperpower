@@ -1,14 +1,14 @@
 import { nowIso } from '@wiz/isp';
 import { getDb } from './store';
-import type { AuditAction, AuditEvent } from './types';
+import type { AuditEvent } from './types';
 
 /**
  * Study 审计：记录只增，不改、不删；只在操作成功的路径里写，校验或权限失败不写。
- * time 为本地 ISO 串 `YYYY-MM-DDTHH:mm`（字典序即时间序），DB.audit 新的在前。结果不存，页面恒显示 Completed
+ * time 为本地 ISO 串 `YYYY-MM-DDTHH:mm`（字典序即时间序），DB.audit 新的在前。Study 删除另存模拟复核与结果证据
  */
-export function logAudit(e: { studyId: string; action: AuditAction; changes: string; reason?: string | null }): AuditEvent {
+export function logAudit(e: Pick<AuditEvent, 'studyId' | 'action' | 'changes' | 'deletion'> & { reason?: string | null }): AuditEvent {
   const db = getDb();
-  const rec: AuditEvent = { id: 'AU-' + String(++db.seq.audit).padStart(4, '0'), studyId: e.studyId, time: nowIso(), actor: db.me.name, action: e.action, changes: e.changes, reason: e.reason?.trim() || null };
+  const rec: AuditEvent = { id: 'AU-' + String(++db.seq.audit).padStart(4, '0'), studyId: e.studyId, time: nowIso(), actor: db.me.name, action: e.action, changes: e.changes, reason: e.reason?.trim() || null, ...(e.deletion && { deletion: e.deletion }) };
   db.audit.unshift(rec);
   return rec;
 }

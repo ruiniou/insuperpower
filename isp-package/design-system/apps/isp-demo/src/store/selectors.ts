@@ -11,6 +11,14 @@ type Pinned<T> = { ref: { v: number; use: string } } & T;
 export const S = {
   study: (id: string): Study | undefined => getDb().studies.find((s) => s.id === id),
   event: (id: string): EventRec | undefined => getDb().events.find((e) => e.id === id),
+  workspaceStudy(id: string): Study | undefined {
+    const study = S.study(id);
+    return study?.lifecycle === 'DELETED' ? undefined : study;
+  },
+  workspaceEvent(id: string): EventRec | undefined {
+    const event = S.event(id);
+    return event && S.workspaceStudy(event.studyId) ? event : undefined;
+  },
   asset: (id: string): Asset | undefined => getDb().assets.find((a) => a.id === id),
   ds: (id: string): Dataset | undefined => getDb().datasets.find((d) => d.id === id),
   eventsOf: (sid: string) => getDb().events.filter((e) => e.studyId === sid),

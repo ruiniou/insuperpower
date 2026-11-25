@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { Breadcrumb, Button, IconButton, Pane, PopoverMenu, Select, SideBar, SideBarToggle, Splitter, Tabs, type BreadcrumbItem } from '@wiz/react';
+import { Breadcrumb, Button, IconButton, Pane, PopoverMenu, Select, SideBar, SideBarToggle, Splitter, Tabs, type BreadcrumbItem, type PopoverMenuItem } from '@wiz/react';
 import { ICON } from './icons';
 import { ReviewNavContext } from './pages/review/nav';
 import { CopilotPanel } from './CopilotPanel';
@@ -9,7 +9,7 @@ import { hrefEvent, hrefStudy } from './store/actions';
 import { eventCounts } from './store/selectors';
 import { memberCount } from './store/members';
 import { S, SPACES } from './store/selectors';
-import { can, DUTIES, session, setDuty, type Duty } from './store/role';
+import { can, DUTIES, session, setDuty, type Duty, hasStudyDeletionAccess } from './store/role';
 import { toast, useDb } from './store/store';
 import { openDrawer, openModal, ui } from './store/ui';
 import { isTocWorkbench } from './pages/review/route';
@@ -19,19 +19,19 @@ function useHeader(R: Route): { crumbs: BreadcrumbItem[]; tabs: ReactNode } {
   const db = useDb();
   const studyCrumb = (sid: string, current: boolean): BreadcrumbItem => ({
     label: sid, icon: ICON.study, ...(current ? {} : { href: hrefStudy(sid, 'events'), onClick: () => go(hrefStudy(sid, 'events')) }),
-    options: db.studies.map((s) => ({ value: s.id, label: s.id, icon: ICON.study })), currentValue: sid,
+    options: db.studies.filter((s) => s.lifecycle !== 'DELETED').map((s) => ({ value: s.id, label: s.id, icon: ICON.study })), currentValue: sid,
     onSwitch: (v) => go(hrefStudy(v, 'events')), searchPlaceholder: 'Search Study',
   });
   if (R.name === 'studies') return { crumbs: [{ label: 'Studies' }], tabs: null };
   if (R.name === 'studyNew') return { crumbs: [{ label: 'New Study' }], tabs: null };
   if (R.name === 'study') {
-    const s = S.study(R.sid);
+    if (!S.workspaceStudy(R.sid)) return { crumbs: [{ label: 'Study not found' }], tabs: null };
     const items = [{ value: 'events', label: <>Events <i className="app-count">{S.eventsOf(R.sid).length}</i></> }, { value: 'asset', label: <>Asset <i className="app-count">{S.assetsOf(R.sid).length}</i></> }, { value: 'dataset', label: <>Dataset <i className="app-count">{S.datasetsOf(R.sid).length}</i></> }, { value: 'member', label: <>Member <i className="app-count">{memberCount(R.sid)}</i></> }];
     /** Audit trail 是 Study 内的二级页：页签栏保留但不高亮，面包屑多一级 */
     const crumbs = R.tab === 'audit' ? [studyCrumb(R.sid, false), { label: 'Audit trail' }] : R.tab === 'blinding' ? [studyCrumb(R.sid, false), { label: 'Blinding management' }] : [studyCrumb(R.sid, true)];
     return { crumbs, tabs: <Tabs variant="underline" aria-label="Study sections" items={items} value={R.tab} onChange={(v) => go(hrefStudy(R.sid, v))} /> };
   }
-  const e = S.event(R.eid);
+  const e = S.workspaceEvent(R.eid);
   if (!e) return { crumbs: [{ label: 'Event not found' }], tabs: null };
   const c = eventCounts(e);
   const items = [
@@ -71,8 +71,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const db = useDb();
   const { crumbs, tabs } = useHeader(R);
   const [copilotOpen, setCopilot] = useState(false);
-  /** 新建 Study 页不提供 Copilot：入口隐藏，已打开的面板同时收起 */
-  const copilot = copilotOpen && R.name !== 'studyNew';
+  /** Copilot 仅在 Studies 列表和可访问的 Study / Event 工作区显示。 */
+  const hasWorkspace = R.name === 'study' ? !!S.workspaceStudy(R.sid)
+    : R.name === 'event' ? !!S.workspaceEvent(R.eid) : R.name === 'studies';
+  const copilot = copilotOpen && hasWorkspace;
   const [navCollapsed, setNavCollapsed] = useState(true);
   /** 普通页面的 Nav：默认展开，可收起；收起后展开入口在页头最左 */
   const [mainNavCollapsed, setMainNavCollapsed] = useState(false);
@@ -86,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Pane open={copilot} width={cp.w + 8} gapStart dragging={cp.dragging}><CopilotPanel route={R} onClose={() => setCopilot(false)} /></Pane>
     </>
   );
-  const study = R.name === 'study' ? S.study(R.sid) : undefined;
+  const study = R.name === 'study' ? S.workspaceStudy(R.sid) : undefined;
   const soon = (name: string) => () => toast(name + ' is not in this prototype');
   const items = [
     { icon: 'ri-home-5-line', label: 'Home', value: 'home', onClick: soon('Home') },
@@ -95,11 +97,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   ];
   const active = 'studies';
 
-  /** More 菜单：Study details / [Archive|Restore] / Audit trail。无权限或状态不符不渲染，同组内全不渲染时分隔线也不渲染 */
+  /** 删除项按权限显示，由 PopoverMenu 放在危险操作分组。 */
   const studyMoreItems = (() => {
     if (R.name !== 'study' || !study) return null;
-    type Item = { label: string; value: string } | { divider: true };
-    const result: Item[] = [];
+    const result: PopoverMenuItem[] = [];
     const addDivider = () => { if (result.length > 0) result.push({ divider: true }); };
 
     // Study details（always visible in study context）
@@ -118,6 +119,10 @@ export function AppShell({ children }: { children: ReactNode }) {
     // Audit trail
     addDivider();
     result.push({ label: 'Audit trail', value: 'audit' });
+    if (hasStudyDeletionAccess(study)) {
+      const disabled = !can('study.delete', { study });
+      result.push({ label: disabled ? 'Delete Study (Archived)' : 'Delete Study', value: 'delete', danger: true, disabled });
+    }
 
     return result;
   })();
@@ -127,12 +132,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (v === 'blinding') go(hrefStudy((R as { sid: string }).sid, 'blinding'));
     else if (v === 'audit') go(hrefStudy(R.name === 'study' ? (R as { sid: string }).sid : '', 'audit'));
     else if (v === 'details') openDrawer({ kind: 'studyDetails', id: (R as { sid: string }).sid });
+    else if (v === 'delete' && can('study.delete', { study })) openModal({ kind: 'deleteStudy', sid: study.id });
     else if (v === 'archive') openModal({ kind: 'archiveStudy', sid: (R as { sid: string }).sid });
     else if (v === 'restore') openModal({ kind: 'restoreStudy', sid: (R as { sid: string }).sid });
   };
 
   /** Review 工作台：Nav 默认收起（页头左侧有展开按钮），用自己的页头，不带 Event 页签 */
-  if (isTocWorkbench(R, R.name === 'event' ? S.event(R.eid) : undefined)) {
+  if (isTocWorkbench(R, R.name === 'event' ? S.workspaceEvent(R.eid) : undefined)) {
     return (
       <ReviewNavContext.Provider value={{ collapsed: navCollapsed, expand: () => setNavCollapsed(false), copilotOpen: copilot, openCopilot: () => setCopilot(true), closeCopilot: () => setCopilot(false) }}>
         <div className="app app--review">
@@ -165,8 +171,8 @@ export function AppShell({ children }: { children: ReactNode }) {
             <Breadcrumb size="sm" items={crumbs} aria-label="Breadcrumb" />
           </div>
           <div className="app-acts">
-            {R.name === 'study' && studyMoreItems && <PopoverMenu align="right" width={180} trigger={<IconButton size="compact" icon="ri-more-2-fill" aria-label="More" />} items={studyMoreItems} onSelect={handleMoreSelect} />}
-            {!copilot && R.name !== 'studyNew' && <><span className="app-acts__sep" aria-hidden="true" /><IconButton size="compact" className="app-copilot-btn" icon="wiz-logo-icon" aria-label="Open Copilot" title="Copilot" onClick={() => setCopilot(true)} /></>}
+            {R.name === 'study' && studyMoreItems && <PopoverMenu align="right" width={hasStudyDeletionAccess(study) ? 248 : 180} trigger={<IconButton size="compact" icon="ri-more-2-fill" aria-label="More" />} items={studyMoreItems} onSelect={handleMoreSelect} />}
+            {!copilot && hasWorkspace && <><span className="app-acts__sep" aria-hidden="true" /><IconButton size="compact" className="app-copilot-btn" icon="wiz-logo-icon" aria-label="Open Copilot" title="Copilot" onClick={() => setCopilot(true)} /></>}
           </div>
         </header>
         {tabs && <div className="app-tabs">{tabs}</div>}

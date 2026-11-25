@@ -1,3 +1,4 @@
+import { DeleteStudyModal } from './DeleteStudyModal';
 import './code-package-upload.css';
 import { useRef, useState } from 'react';
 import { Avatar, Button, Checkbox, Field, FileBox, Input, Message, Modal, PickList, Select, Textarea, Upload } from '@wiz/react';
@@ -284,6 +285,7 @@ export function StudyModals() {
   if (m.kind === 'changeBlinding') return <ChangeBlindingModal key={key} sid={m.sid} memberId={m.memberId} />;
   if (m.kind === 'transferAdmin') return <TransferAdminModal key={key} sid={m.sid} />;
   if (m.kind === 'removeMember') return <RemoveMemberModal key={key} sid={m.sid} memberId={m.memberId} />;
+  if (m.kind === 'deleteStudy') return <DeleteStudyModal key={key} sid={m.sid} />;
   if (m.kind === 'archiveStudy') return <ArchiveStudyModal key={key} sid={m.sid} />;
   if (m.kind === 'restoreStudy') return <RestoreStudyModal key={key} sid={m.sid} />;
   return <UploadDatasetModal key={key} sid={m.sid} dsId={m.dsId} mode={m.mode} />;
