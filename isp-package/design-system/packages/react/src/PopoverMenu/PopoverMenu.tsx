@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type HTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { cx } from '../cx';
 import { useEdgeFit } from '../useEdgeFit';
 import { useUid } from '../useControllable';
@@ -13,6 +14,8 @@ export interface PopoverMenuItem {
   shortcut?: string;
   danger?: boolean;
   disabled?: boolean;
+  /** Tooltip shown for an unavailable action. */
+  disabledReason?: string;
   selected?: boolean;
   /** 为 true 时该项渲染为分隔线 */
   divider?: boolean;
@@ -53,8 +56,9 @@ export interface MenuItemProps {
 
 /** 菜单里的一行，也可单独用于自定义菜单 */
 export function MenuItem({ item, onClick, forceHover, multiple }: MenuItemProps) {
-  return (
-    <button type="button" role={multiple ? 'menuitemcheckbox' : 'menuitem'} aria-checked={multiple ? !!item.selected : undefined} disabled={item.disabled} onClick={onClick}
+  const reason = item.disabled ? item.disabledReason : undefined;
+  const button = (
+    <button type="button" role={multiple ? 'menuitemcheckbox' : 'menuitem'} aria-checked={multiple ? !!item.selected : undefined} disabled={item.disabled && !reason} aria-disabled={reason ? true : undefined} aria-description={reason} onClick={item.disabled ? undefined : onClick}
       className={cx('wiz-menu-item', !multiple && item.selected && 'is-selected', item.danger && 'is-danger', forceHover && 'is-hover')}>
       {multiple && (
         <span className="wiz-checkbox wiz-menu-item__check" aria-hidden="true"><span className="wiz-checkbox__hit"><span className={cx('wiz-checkbox__box', item.selected && 'is-on')}>{item.selected && <i className="ri-check-line" />}</span></span></span>
@@ -64,6 +68,7 @@ export function MenuItem({ item, onClick, forceHover, multiple }: MenuItemProps)
       {item.shortcut && <span className="wiz-menu-item__shortcut">{item.shortcut}</span>}
     </button>
   );
+  return reason ? <Tooltip className="wiz-menu-item-tooltip" content={reason}>{button}</Tooltip> : button;
 }
 
 export interface PopoverMenuProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'onSelect'> {

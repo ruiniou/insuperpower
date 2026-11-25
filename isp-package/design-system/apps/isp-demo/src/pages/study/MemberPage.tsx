@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Avatar, Button, Dropdown, Search, Status, Table, type TableColumn } from '@wiz/react';
+import { Avatar, Button, Dropdown, EmptyState, Search, Status, Table, type TableColumn } from '@wiz/react';
 import { formatRange, systemTimeZone } from '@wiz/isp';
 import { attrLabel, canAddMembers, canChangeBlinding, canTransferAdmin, membersOf, roleLabel, sortMembers } from '../../store/members';
 import { ROLES } from '../../store/people';
@@ -38,14 +38,18 @@ export function MemberPage({ sid, initialUnspecified = false }: { sid: string; i
   const columns = useMemo<TableColumn[]>(() => {
     const dim = (m: StudyMember, node: React.ReactNode) => (m.status === 'REMOVED' ? <span className="mem-dim">{node}</span> : node);
     const cols: TableColumn[] = [
-      { key: 'name', header: 'Name', render: (_v, m: StudyMember) => (
-        <span className="mem-who">
-          <Avatar size={20} color="brand-blue" initials={initials(m.name)} />
-          <span className="mem-who__txt">
-            <span className="mem-who__name"><span className={m.status === 'REMOVED' ? 'app-ell mem-dim' : 'app-ell'}>{m.name}</span>{m.isAdmin && <Status variant="style1" tone="blue" textCase="normal">Admin</Status>}</span>
+      { key: 'name', header: 'Name', render: (_v, m: StudyMember) => {
+        const email = m.email?.trim();
+        return (
+          <span className="mem-who">
+            <Avatar size={20} color="brand-blue" initials={initials(m.name)} />
+            <span className="mem-who__txt">
+              <span className="mem-who__name"><span className={m.status === 'REMOVED' ? 'app-ell mem-dim' : 'app-ell'}>{m.name}</span>{m.isAdmin && <Status variant="style1" tone="blue" textCase="normal">Admin</Status>}</span>
+              {email && <span className={m.status === 'REMOVED' ? 'mem-email mem-dim' : 'mem-email'}>{email}</span>}
+            </span>
           </span>
-        </span>
-      ) },
+        );
+      } },
       { key: 'role', header: 'Role', width: 180, render: (_v, m: StudyMember) => dim(m, roleLabel(m.role)) },
       { key: 'attr', header: 'Blinding', width: 160, render: (_v, m: StudyMember) => (m.status === 'REMOVED' || m.attr === 'UNSET' ? <span className={m.status === 'REMOVED' ? 'mem-dim' : 'app-muted'}>{attrLabel(m.attr)}</span> : attrLabel(m.attr)) },
       { key: 'validity', header: 'Validity (' + tz + ')', width: 340, render: (_v, m: StudyMember) => dim(m, formatRange(m.validFrom, m.validUntil)) },
@@ -78,9 +82,11 @@ export function MemberPage({ sid, initialUnspecified = false }: { sid: string; i
     return cols;
   }, [duty, sid, writable, manage, blindingPerm, transferPerm, addAllowed, tz]);
 
+  const addMembers = addAllowed && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'addMembers', sid, userId: null })}>Add members</Button>;
+
   return (
     <div className="studies">
-      <PageToolbar
+      {all.length > 0 && <PageToolbar
         filters={<>
           <Dropdown multiple size="medium" shadow="none" filterName="Role" icon="ri-filter-3-line" label={filterLabel(roles)} width={160}
             items={ROLES.map((r) => ({ label: r.label, value: r.value, selected: roles.includes(r.value) }))}
@@ -89,10 +95,12 @@ export function MemberPage({ sid, initialUnspecified = false }: { sid: string; i
           <Dropdown size="medium" shadow="none" filterName="Blinding" label={unspecified ? 'Unspecified' : ''} items={[{ label: 'All', value: 'all', selected: !unspecified }, { label: 'Unspecified', value: 'unspecified', selected: unspecified }]} onSelect={(v) => setUnspecified(v === 'unspecified')} />
         </>}
         search={<Search size="compact" width={220} placeholder="Search members" aria-label="Search members" value={q} onChange={(e) => setQ(e.target.value)} />}
-        actions={addAllowed && <Button variant="primary" leftIcon="ri-add-line" onClick={() => openModal({ kind: 'addMembers', sid, userId: null })}>Add members</Button>} />
+        actions={addMembers} />}
       <div className="page-scroll">
-        {rows.length === 0
-          ? <div className="app-empty" role="status"><b>No members match</b><span>Clear the search or the filters.</span></div>
+        {all.length === 0
+          ? <EmptyState title="No members yet" description={addAllowed ? "Add members to give them access to this study." : undefined} action={addMembers || undefined} />
+          : rows.length === 0
+          ? <EmptyState title="No members match" description="Clear the search or the filters." />
           : <Table key={status + '|' + roles + '|' + needle} variant="plain" columnLayout="fixed" rowHeight={48} paginated={rows.length > PAGE_SIZES[0]} jumpToPage pageSize={20} pageSizeOptions={PAGE_SIZES} columns={columns} rows={rows} aria-label="Members" />}
       </div>
     </div>

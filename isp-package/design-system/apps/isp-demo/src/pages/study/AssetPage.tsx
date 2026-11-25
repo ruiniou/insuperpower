@@ -1,3 +1,4 @@
+import { assetVersionDependency } from '../../store/study';
 import { useState } from 'react';
 import { Button, Dropdown, EmptyState, Table, type TableColumn } from '@wiz/react';
 import { assetDirectoryType, CODE_TYPES, FILE_UPLOAD_GROUPS, TYPE } from '../../store/assets';
@@ -7,7 +8,7 @@ import { useDb } from '../../store/store';
 import type { Asset, Version } from '../../store/types';
 import { openDrawer, openModal, ui } from '../../store/ui';
 import { PageToolbar, RowMenu, SearchBox } from './common';
-import { AssetVersionDrawer } from './VersionDrawer';
+import { AssetVersionDrawer, AssetVersionLabel } from './VersionDrawer';
 
 const ICON: Record<string, string> = { doc: 'ri-file-text-line', list: 'ri-list-check', shell: 'ri-table-line', code: 'ri-code-line' };
 
@@ -17,6 +18,18 @@ interface AssetRow {
   asset: Asset;
   version: Version;
   type: string;
+}
+
+function versionActions({ asset, version }: AssetRow) {
+  const upload = { label: 'Upload new version', value: 'upload' };
+  if (version.archived) return [upload];
+  return [upload, ...([
+    { label: 'Replace content', value: 'replace' },
+    { label: 'Archive version', value: 'archive' },
+  ] as const).map(({ label, value }) => {
+    const disabledReason = assetVersionDependency(asset, version.n, value);
+    return { label, value, disabled: Boolean(disabledReason), disabledReason };
+  })];
 }
 
 const uploadTypes = [
@@ -34,6 +47,7 @@ export function AssetPage({ sid }: { sid: string }) {
   const [type, setType] = useState('');
   const [query, setQuery] = useState('');
   const assets = S.assetsOf(sid);
+  const hasVersions = assets.some((asset) => asset.versions.length > 0);
   const categories = assets.map((asset) => ({ asset, ...assetDirectoryType(asset) }));
   const types = [...new Map(categories.map(({ name, group }) => [name, { name, group }])).values()]
     .sort((a, b) => TYPE_GROUPS.indexOf(a.group) - TYPE_GROUPS.indexOf(b.group) || a.name.localeCompare(b.name));
@@ -65,16 +79,18 @@ export function AssetPage({ sid }: { sid: string }) {
       </span>
     ) },
     { key: 'type', header: 'Type', width: 180, render: (_value, row: AssetRow) => row.type },
-    { key: 'version', header: 'Version', width: 112, render: (_value, { version }: AssetRow) => version.label },
+    { key: 'version', header: 'Version', width: 160, render: (_value, { version }: AssetRow) => (
+      <AssetVersionLabel version={version} />
+    ) },
     { key: 'uploaded', header: 'Uploaded', width: 120, render: (_value, { version }: AssetRow) => version.date },
     { key: 'more', header: '', width: 56, align: 'right', render: (_value, row: AssetRow) => canMaintainAsset(sid, row.asset.code) ? (
       <RowMenu
         label={`${row.asset.name} ${row.version.label}`}
-        items={[
-          { label: 'Upload new version', value: 'upload' },
-          { label: 'Replace content', value: 'replace', disabled: S.assetUsers(row.asset, row.version.n).length > 0 },
-        ]}
-        onSelect={(value) => upload(row.asset.code, row.asset.id, value === 'replace' ? row.version.n : undefined)}
+        items={versionActions(row)}
+        onSelect={(value) => {
+          if (value === 'archive') openModal({ kind: 'archiveAssetVersion', sid, assetId: row.asset.id, n: row.version.n });
+          else upload(row.asset.code, row.asset.id, value === 'replace' ? row.version.n : undefined);
+        }}
       />
     ) : null },
   ];
@@ -84,7 +100,7 @@ export function AssetPage({ sid }: { sid: string }) {
 
   return (
     <div className="studies">
-      {assets.length > 0 && <PageToolbar
+      {hasVersions && <PageToolbar
         filters={<Dropdown size="medium" shadow="none" filterName="Type" label={type || 'All'} width={200}
           items={[
             { label: 'All', value: '', selected: !type },
@@ -98,8 +114,8 @@ export function AssetPage({ sid }: { sid: string }) {
         {rows.length > 0 ? (
           <Table variant="plain" columnLayout="fixed" rowHeight={48} columns={columns} rows={rows}
             aria-label="Assets" onRowClick={openVersion} activeRow={activeRow} />
-        ) : assets.length === 0 ? (
-          <EmptyState title="No assets yet" action={uploadButton || undefined} />
+        ) : !hasVersions ? (
+          <EmptyState title="No assets yet" description={uploadButton ? "Upload a file to add the first asset." : undefined} action={uploadButton || undefined} />
         ) : (
           <EmptyState title={selectedCategories.length ? "No matching assets" : "No assets in this type"}
             description={selectedCategories.length ? "Try a different search or type." : undefined} />

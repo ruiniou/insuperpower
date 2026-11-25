@@ -11,7 +11,6 @@
 .wiz-search__btn > i { line-height: 1; }
 /* compact：高 32、14px，与同排 Button / Dropdown 对齐（内边距 0 8，描边计入高度） */
 .wiz-search--compact { height: 32px; padding-top: 0; padding-bottom: 0; }
-.wiz-search--compact .wiz-search__input { font-size: var(--wiz-text-body-1-size); }
 /* 展开形态的收起态：图标按钮，与原型 .ibtn 同为 32×32、圆角 8 */
 .wiz-search-toggle { display: inline-flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: 40px; height: 40px; padding: 0; border: 0; border-radius: var(--wiz-radius-sm); background: transparent; color: var(--wiz-grey-80); font-size: 16px; cursor: pointer; }
 .wiz-search-toggle--compact { width: 32px; height: 32px; }

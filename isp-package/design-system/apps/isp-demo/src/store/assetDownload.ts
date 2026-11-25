@@ -7,6 +7,7 @@ export function assetDownloadFile(assetId: string, versionNumber: number): { err
   const asset = S.asset(assetId);
   if (!asset || !canDownloadAsset(asset)) return { error: 'You do not have permission to download this file.' };
   const version = S.vOf(asset, versionNumber);
+  if (version?.archived) return { error: 'This version is archived.' };
   if (!version?.file || !version.fileContent) return { error: 'The original file is unavailable for this version.' };
   const content = typeof version.fileContent === 'string'
     ? new Blob([version.fileContent], { type: 'text/plain' })
@@ -20,6 +21,7 @@ export async function assetDownloadPackage(assetId: string, versionNumber: numbe
   const asset = S.asset(assetId);
   if (!asset || !canDownloadAsset(asset)) return { error: 'You do not have permission to download this package.' };
   const version = S.vOf(asset, versionNumber);
+  if (version?.archived) return { error: 'This version is archived.' };
   if (!Object.hasOwn(CODE_TYPES, asset.code) || !version?.packageMembers?.length) {
     return { error: 'The original files are unavailable for this version.' };
   }

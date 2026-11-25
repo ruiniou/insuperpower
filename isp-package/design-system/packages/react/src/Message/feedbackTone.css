@@ -1,0 +1,4 @@
+.wiz-feedback--warning { --wiz-feedback-bg: var(--wiz-yellow-10); --wiz-feedback-border: var(--wiz-yellow-20); --wiz-feedback-text: var(--wiz-orange-70); --wiz-feedback-icon: var(--wiz-main-warning); }
+.wiz-feedback--error { --wiz-feedback-bg: var(--wiz-red-10); --wiz-feedback-border: var(--wiz-red-20); --wiz-feedback-text: var(--wiz-red-70); --wiz-feedback-icon: var(--wiz-main-error); }
+.wiz-feedback--success { --wiz-feedback-bg: var(--wiz-green-10); --wiz-feedback-border: var(--wiz-green-20); --wiz-feedback-text: var(--wiz-green-70); --wiz-feedback-icon: var(--wiz-main-success); }
+.wiz-feedback--info { --wiz-feedback-bg: var(--wiz-blue-10); --wiz-feedback-border: var(--wiz-blue-20); --wiz-feedback-text: var(--wiz-blue-70); --wiz-feedback-icon: var(--wiz-blue-50); }

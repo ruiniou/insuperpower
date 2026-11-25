@@ -3,20 +3,21 @@
 .wiz-snackbar--info { background: var(--wiz-blue-50); }
 .wiz-snackbar--warning { background: var(--wiz-main-warning); color: var(--wiz-grey-90); }
 .wiz-snackbar--error { background: var(--wiz-main-error); }
-.wiz-snackbar--single { align-items: center; gap: var(--wiz-spacing-xs); padding: var(--wiz-spacing-sm); min-height: 64px; }
+.wiz-snackbar--single { align-items: center; gap: var(--wiz-spacing-sm); padding: 0 var(--wiz-spacing-xs) 0 var(--wiz-spacing-md); height: 48px; border: 1px solid var(--wiz-feedback-border, var(--wiz-color-border-subtle)); background: var(--wiz-feedback-bg, var(--wiz-color-surface)); color: var(--wiz-feedback-text, var(--wiz-color-text-primary)); box-shadow: var(--wiz-shadow-popover); font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); }
 .wiz-snackbar--detailed { flex-direction: column; gap: var(--wiz-spacing-sm); padding: var(--wiz-spacing-lg); }
 .wiz-snackbar__head { display: flex; gap: var(--wiz-spacing-xs); padding: var(--wiz-spacing-xs) 0; padding-right: 36px; }
 .wiz-snackbar__icon { display: inline-flex; align-items: flex-start; justify-content: center; flex: none; padding: var(--wiz-spacing-xs); font-size: 22px; line-height: 1; }
 .wiz-snackbar__icon > i { line-height: 1; }
 .wiz-snackbar__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--wiz-spacing-xs); padding: var(--wiz-spacing-xs) 0; }
-.wiz-snackbar--single .wiz-snackbar__icon { align-self: stretch; align-items: center; }
+.wiz-snackbar--single .wiz-snackbar__icon { align-items: center; padding: 0; font-size: 16px; color: var(--wiz-feedback-icon, currentColor); }
+.wiz-snackbar--single .wiz-snackbar__text { gap: 0; padding: 0; }
 .wiz-snackbar__title { font-family: var(--wiz-text-h5-family); font-size: var(--wiz-text-h5-size); font-weight: var(--wiz-text-h5-weight); line-height: 1.2; }
 .wiz-snackbar__desc { line-height: 1.2; overflow-wrap: anywhere; }
-.wiz-snackbar__action { flex: none; padding: var(--wiz-spacing-xs); }
-.wiz-snackbar__close { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; margin: 4px; padding: 0; border: 0; border-radius: var(--wiz-radius-sm); background: transparent; color: inherit; font-size: 20px; cursor: pointer; }
-.wiz-snackbar__close:hover { background: color-mix(in srgb, var(--wiz-fixed-black) 15%, transparent); }
-.wiz-snackbar__close:focus-visible { outline: 2px solid currentColor; }
-.wiz-snackbar__close > i { line-height: 1; }
+.wiz-snackbar--single :is(.wiz-snackbar__title, .wiz-snackbar__desc) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; line-height: 1.25; }
+.wiz-snackbar--single .wiz-snackbar__title { font-weight: var(--wiz-text-subtitle-2-weight); }
+.wiz-snackbar--single .wiz-snackbar__desc { color: var(--wiz-color-text-secondary); }
+.wiz-snackbar__action { flex: none; }
+.wiz-snackbar--detailed .wiz-snackbar__close { color: inherit; }
 .wiz-snackbar__close-slot { position: absolute; top: var(--wiz-spacing-md); right: var(--wiz-spacing-md); }
 .wiz-snackbar__close-slot .wiz-snackbar__close { margin: 0; }
 .wiz-snackbar__detail { display: flex; align-items: center; gap: var(--wiz-spacing-md); padding: 0 var(--wiz-spacing-sm); line-height: 1.2; }
@@ -26,5 +27,5 @@
 .wiz-snackbar .wiz-on-status { color: inherit; }
 .wiz-snackbar__spin { display: inline-block; animation: wiz-snackbar-spin 0.9s linear infinite; }
 @keyframes wiz-snackbar-spin { to { transform: rotate(360deg); } }
-.wiz-snackbar-region { position: fixed; z-index: 1100; left: 50%; bottom: var(--wiz-spacing-2xl); transform: translateX(-50%); display: flex; flex-direction: column; gap: var(--wiz-spacing-sm); width: max-content; max-width: calc(100vw - 32px); }
+.wiz-snackbar-region { position: fixed; z-index: 1100; left: 50%; top: var(--wiz-spacing-md); transform: translateX(-50%); display: flex; flex-direction: column; gap: var(--wiz-spacing-sm); width: max-content; max-width: calc(100vw - 2 * var(--wiz-spacing-md)); }
 @media (prefers-reduced-motion: reduce) { .wiz-snackbar__spin { animation: none; } }

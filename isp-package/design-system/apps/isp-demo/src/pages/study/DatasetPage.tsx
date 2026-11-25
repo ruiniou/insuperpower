@@ -38,17 +38,18 @@ export function DatasetPage({ sid, space }: { sid: string; space: string | null 
           onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'dsV', id: d.id }); }} /> },
   ], [sid, sp.mode, writable]);
   const here = S.datasetsOf(sid, sp.key).length;
+  const uploadDatasetButton = writable && <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => upload(null)}>Upload Dataset</Button>;
   return (
     <div className="studies">
       {total > 0 && <PageToolbar
         filters={<SegmentedControl aria-label="Dataset mode" items={SPACES.map((s) => ({ value: s.key, label: s.name }))} value={sp.key} onChange={(v) => go(hrefStudy(sid, 'dataset', v))} />}
-        search={<SearchBox value={q} onChange={setQ} placeholder="Search datasets" />}
-        actions={writable && <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => upload(null)}>Upload Dataset</Button>} />}
+        search={here > 0 && <SearchBox value={q} onChange={setQ} placeholder="Search datasets" />}
+        actions={here > 0 && uploadDatasetButton} />}
       <div className="page-scroll">
         {rows.length === 0
           ? <EmptyState title={total === 0 ? 'No datasets yet' : here ? 'No datasets match' : `No ${sp.name} datasets yet`}
               description={total === 0 ? 'Upload a dataset and pick its mode explicitly.' : here ? 'Clear the search.' : 'Upload a dataset in this mode.'}
-              action={!writable || (here && total) ? undefined : <Button leftIcon="ri-upload-2-line" onClick={() => upload(null)}>Upload Dataset</Button>} />
+              action={here === 0 ? uploadDatasetButton || undefined : undefined} />
           : <Table variant="plain" columnLayout="fixed" rowHeight={48} columns={columns} rows={rows} aria-label={sp.name + ' datasets'} groupBy={(d: Dataset) => d.cat}
               onRowClick={(d: Dataset) => openDrawer({ kind: 'dsV', id: d.id })} activeRow={(d: Dataset) => ui.drawer?.kind === 'dsV' && ui.drawer.id === d.id} />}
       </div>

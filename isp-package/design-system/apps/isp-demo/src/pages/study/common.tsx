@@ -49,9 +49,12 @@ function LifecycleGlyph({ v }: { v: Lifecycle }) {
 }
 /** 带文字的生命周期（Study details 抽屉） */
 export const LifecycleTag = ({ v }: { v: Lifecycle }) => <span className="studies-life-tag"><LifecycleGlyph v={v} />{LIFE_LABEL[v]}</span>;
-/** 列表里跟在 Study ID 后的纯图标标记，悬停显示文字 */
-export const LifecycleMark = ({ v }: { v: Lifecycle }) => (
-  <Tooltip content={LIFE_LABEL[v]} direction="top">
-    <span role="img" aria-label={LIFE_LABEL[v]}><LifecycleGlyph v={v} /></span>
-  </Tooltip>
-);
+export const LifecycleMark = ({ v, focusable, tooltip = true }: { v: Lifecycle; focusable?: boolean; tooltip?: boolean }) => {
+  const glyph = <span role="img" aria-label={LIFE_LABEL[v]} tabIndex={focusable ? 0 : undefined}><LifecycleGlyph v={v} /></span>;
+  if (!tooltip) return glyph;
+  return (
+    <Tooltip content={LIFE_LABEL[v]} direction="top">
+      {glyph}
+    </Tooltip>
+  );
+};

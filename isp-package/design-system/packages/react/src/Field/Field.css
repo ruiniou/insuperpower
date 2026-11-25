@@ -28,8 +28,10 @@
 
 .wiz-field__box:has(> .wiz-field__native[readonly]:not(:disabled)) {
   background: var(--wiz-grey-10);
-  border-color: var(--wiz-grey-40);
   box-shadow: none;
+}
+.wiz-field__box:not(.is-error):has(> .wiz-field__native[readonly]:not(:disabled)) {
+  border-color: var(--wiz-grey-40);
 }
 .wiz-field__box:has(> .wiz-field__native[readonly]:focus-visible:not(:disabled)) {
   outline: 1px solid var(--wiz-grey-70);

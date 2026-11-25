@@ -23,6 +23,8 @@
 /* 整表 */
 .wiz-table { background: var(--wiz-main-white); }
 .wiz-table__grid { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: auto; }
+.wiz-table__grid > thead { position: sticky; inset-block-start: 0; z-index: 3; }
+.wiz-table__grid > tbody :is(tr, button, input, a, [tabindex]) { scroll-margin-block-start: var(--wiz-table-head-height, 32px); }
 .wiz-table__grid.is-fixed { table-layout: fixed; }
 .wiz-table__col-sel { width: 32px; }
 .wiz-table__th, .wiz-table__td { box-sizing: border-box; height: var(--wiz-table-head-height, 32px); padding: 0 var(--wiz-spacing-sm); border-bottom: 1px solid var(--wiz-grey-30); text-align: left; vertical-align: middle; }
@@ -67,7 +69,7 @@
 .wiz-table__pager-btns .wiz-col-iconbtn { color: var(--wiz-grey-80); }
 
 /* plain：页面级列表。均为可被外部覆盖的 CSS 变量钩子：--wiz-table-head-height / -head-bg / -row-height / -row-hover-bg / -edge-padding */
-.wiz-table--plain { --wiz-table-head-height: 36px; --wiz-table-head-bg: transparent; --wiz-table-row-hover-bg: var(--wiz-color-surface-hover); --wiz-table-edge-padding: var(--wiz-spacing-lg); }
+.wiz-table--plain { --wiz-table-head-height: 36px; --wiz-table-head-bg: var(--wiz-color-surface); --wiz-table-row-hover-bg: var(--wiz-color-surface-hover); --wiz-table-edge-padding: var(--wiz-spacing-lg); }
 .wiz-table--plain .wiz-table__th { font-size: var(--wiz-text-caption-size); font-weight: var(--wiz-font-weight-regular); color: var(--wiz-color-text-secondary); border-bottom-color: var(--wiz-color-border-subtle); }
 .wiz-table--plain .wiz-table__th::after, .wiz-table--plain .wiz-table__th:not(:last-child)::after, .wiz-table--plain .wiz-table__resize { display: none; }
 .wiz-table--plain .wiz-table__th:first-child, .wiz-table--plain .wiz-table__td:first-child { padding-left: var(--wiz-table-edge-padding); }

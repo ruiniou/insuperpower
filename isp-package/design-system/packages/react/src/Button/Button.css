@@ -45,6 +45,7 @@
 
 /* Link */
 .wiz-button--link {
+  text-decoration: none;
   padding: var(--wiz-spacing-xs-sm);
   border: 0;
   border-radius: var(--wiz-radius-xs);
@@ -55,7 +56,7 @@
   font-size: var(--wiz-text-body-2-size);
   letter-spacing: var(--wiz-text-body-2-letter-spacing);
 }
-.wiz-button--link:hover:not(:disabled), .wiz-button--link.is-hover { background: var(--wiz-brand-blue-20); text-decoration: underline; }
+.wiz-button--link:hover:not(:disabled), .wiz-button--link.is-hover { background: var(--wiz-brand-blue-20); }
 .wiz-button--link:disabled > * { opacity: 0.3; }
 
 .wiz-button__spin { animation: wiz-button-spin 1s linear infinite; }

@@ -45,40 +45,48 @@
 
 | 组件 | 用途 | 状态 |
 |---|---|---|
-| Field / FieldBox | 表单控件的外壳（标签、必填、错误、hint）。Input / Textarea 的 `readOnly` 使用只读外观，内容可选择和复制 | 稳定 |
+| Field / FieldBox | 表单控件的外壳（标签、必填、错误、hint）。Input / Textarea 的 `readOnly` 使用只读外观，内容可选中和复制，错误态保留红色边框 | 稳定 |
 | Input | 单行输入 | 稳定 |
 | Textarea | 多行输入 | 稳定 |
 | Select | 单选下拉 | 稳定 |
 | MultiSelect | 多选下拉 | 稳定 |
 | MemberSelect | 可搜索的单选成员选择器：触发器为头像加姓名，面板顶部搜索，选项带头像；`variant="inline"` 无边框无箭头，悬停才显底色，并向单元格内边距悬挂使内容与列头左对齐，用于表格单元格（Event Owner 交接）。面板挂到 body，不被表格裁切（移植自 Atlas MemberSingleSelect） | 无 Wiz 稿 |
-| Search | 搜索框；`collapsible` 可收成图标按钮，点击展开（新增能力无 Wiz 稿） | 稳定 |
+| Search | 搜索框用 Body 2（13 px）；默认高 40 px，`size="compact"` 高 32 px；`collapsible` 可收成图标按钮，点击展开（新增能力无 Wiz 稿） | 稳定 |
 | Checkbox | 复选框 | 稳定 |
 | Radio | 单选框 | 稳定 |
 | Switch | 开关 | 稳定 |
 | Chip | 标签、筛选芯片 | 稳定 |
 | Upload / FileChip | 拖放或点击选文件，显示与移除已选文件。`browseActions` 可在上传区内提供选择入口，`onFilesDrop` 可接管拖放并自行校验文件或文件夹。`selectedInZone` 在选中后以 FileChip 替换上传区内容 | 稳定 |
-| FileBox | 紧凑的单文件选择框，显示文件名，回传原始 `File`，`onRemove` 可显示移除操作 | 无 Wiz 稿 |
-| PickList | 多选列表选择器（带列头，选中行浅蓝底） | 无 Wiz 稿 |
+| FileBox | 紧凑的单文件选择框，显示文件名，回传原始 `File` | 无 Wiz 稿 |
+| PickList | 多选列表选择器（列头固定，选中行浅蓝底） | 无 Wiz 稿 |
 | CheckPill | 整块可点的勾选胶囊（多选） | 无 Wiz 稿 |
 | Divider | 分隔线 | 稳定 |
 | Message | 内联提示条（warning 等语义） | 稳定 |
-| Snackbar | 轻提示；SnackbarProvider / useSnackbar 管理队列 | 稳定 |
+| Snackbar | 顶部 Toast 由 SnackbarProvider / useSnackbar 管理，高 48，状态为 Info / Success / Warning / Error，均有关闭按钮。与 Message 共用状态色、描边和图标，浮层阴影使用 `--wiz-shadow-popover`，标题下可显示 `description`。可用 `actionable` 控制操作按钮，操作需提供 `actionLabel` 与 `onAction`。带操作默认常驻，普通提示默认 4 秒。独立 Snackbar 支持详细版 | 稳定 |
 | Modal | 弹窗，框架布局取自 Atlas（默认宽 480，圆角 8，头部 / 内容 / 页脚上边线，遮罩轻微模糊），可传 `width` | 稳定 |
 | ConfirmDialog | 二次确认 / 拦截弹窗（Atlas 框架，默认宽 440，可用 `width` 调整，破坏性确认带红色警示图标块）。破坏性确认时安全选项为主按钮并初始聚焦；可用 `children` 添加表单或阻断详情，`showConfirm` 控制确认操作是否显示；`primaryDanger` 可使用实心 Danger 和无底色返回按钮，安全按钮仍初始聚焦；文案按 ui_content_writer skill 写 | 提案中 |
 | Tooltip | 悬停提示 | 稳定 |
 | Popover | 气泡：panel（面板）、confirm（确认气泡），可带箭头（新增能力无 Wiz 稿） | 无 Wiz 稿 |
 | EmptyState | 空状态：标题、说明、操作 | 无 Wiz 稿 |
 
+### 上传入口怎么选
+
+| 场景 | 组件与能力边界 | 业务示例 |
+|---|---|---|
+| Asset、替换文件、Dataset 上传 | `Field` + `Upload` 大卡片，`multiple={false}`。`onFilesPick` 提供点击选择或拖放的原始 `File`，`onFilesChange` 提供选中文件名和移除结果。错误用 `invalid` 和 `Field.error` 就地显示 | [Study 上传弹窗](apps/isp-demo/src/pages/study/StudyModals.tsx) |
+| Folder / ZIP 双入口 | 在 `Upload` 用 `browseActions` 提供两个选择按钮，`onFilesDrop` 接管拖放。应用负责文件读取、校验和状态。可用 `selectedInZone` 在原区域展示已选文件 | [Code Package 上传](apps/isp-demo/src/pages/study/StudyModals.tsx) |
+| 空间有限的紧凑单文件选择字段 | `Field` + `FileBox`。点击选择单文件，`onChange` 提供文件名和原始 `File`，按需提供 `onRemove` | [FileBox 组件](packages/react/src/FileBox/FileBox.tsx) |
+
 ## 按钮
 
 | 组件 | 用途 | 状态 |
 |---|---|---|
-| Button | 按钮：Primary / Secondary / Danger / Link；Secondary 和 Link 无阴影，Primary 和 Danger 可通过 `shadow="none"` 去阴影；`block` 撑满 | 稳定 |
+| Button | 按钮：Primary / Secondary / Danger / Link；Secondary 和 Link 无阴影。Link 用于蓝色文字动作，默认及 Hover 无下划线，Hover 有浅色底，键盘聚焦有焦点环。Primary 和 Danger 可通过 `shadow="none"` 去阴影；`block` 撑满 | 稳定 |
 | IconButton | 图标按钮 | 稳定 |
 | CloseButton | 关闭按钮 | 稳定 |
 | OnStatusButton | 用在深色或彩色状态条上的半透明按钮 | 稳定 |
 | ButtonGroup | 按钮组 | 稳定 |
-| SegmentedControl | 分段切换：text（图标加文字）、boxed（仅图标） | 无 Wiz 稿 |
+| SegmentedControl | 分段切换，高 32 px；text（图标加文字，Body 2，13 px）、boxed（仅图标） | 无 Wiz 稿 |
 
 ## 导航与布局
 
@@ -86,11 +94,11 @@
 |---|---|---|
 | Tabs / TabItem | 页签：style-a、style-b、underline；CSS 钩子 `--wiz-tabs-padding` 控制容器内边距，默认等于各变体当前值 | 稳定 |
 | Steps / StepItem | 数字步进器（横向、纵向） | 稳定 |
-| SideBar / SideBarTabs / SideBarToggle | 左导航：默认宽 160，可收起；`selectedTone` 选中态 solid / soft（新增能力无 Wiz 稿） | 稳定 |
+| SideBar / SideBarTabs / SideBarToggle | 左导航：默认宽 160，可收起；导航项 Body 2 字号（13 px）、顶栏高 48 px；`selectedTone` 选中态 solid / soft（新增能力无 Wiz 稿） | 稳定 |
 | TopNav | 顶栏（Mac / Win 项目选择器） | 稳定 |
 | Logo | ISP 标志 | 稳定 |
 | Breadcrumb | 面包屑，悬停层级名称展开同级切换（无 ▾） | 无 Wiz 稿 |
-| Dropdown | 下拉菜单按钮；菜单本体是 PopoverMenu / MenuItem（目录 `PopoverMenu/`）。`multiple` 为多选筛选：行前带复选框，点选不关菜单，选中状态由 `items[].selected` 给；`filterName` 下 `label` 为空时只显示图标加名称（借鉴 Atlas FilterChip 的多选行为）。菜单项规则：破坏性项设 `danger: true`，自动沉底并与前面分隔；超过 6 项用 `group` 分组，组间自动加分隔线（`normalizeMenuItems`） | 无 Wiz 稿 |
+| Dropdown | 下拉菜单按钮；菜单本体是 PopoverMenu / MenuItem（目录 `PopoverMenu/`）。`multiple` 为多选筛选：行前带复选框，点选不关菜单，选中状态由 `items[].selected` 给；`filterName` 下 `label` 为空时只显示图标加名称（借鉴 Atlas FilterChip 的多选行为）。`filterName` 用 Body 2 字号（13 px），工具栏通常用 medium（32 px）。菜单项可用 `disabledReason` 给禁用项提供 Tooltip 和读屏说明。Danger 只定义选项样式；操作是否需要确认由业务流程决定。菜单项规则：破坏性项设 `danger: true`，自动沉底并与前面分隔；超过 6 项用 `group` 分组，组间自动加分隔线（`normalizeMenuItems`） | 无 Wiz 稿 |
 | TitleBar | 标题栏（标题、描述、右侧操作） | 稳定 |
 | Splitter | 可拖拽分隔条 | 稳定 |
 | Card | 卡片容器；`--wiz-card-padding` 钩子 | 无 Wiz 稿 |
@@ -107,7 +115,7 @@
 | List / ListGroup / ListDivider / ListItem | 列表项：图标、计数、展开、缩进、复选、开关 | 稳定 |
 | TreeList | 树列表（目录 `List/`） | 无 Wiz 稿 |
 | OutlineRow / OutlineGroup / OutlineFilter | Outline 条目行（高 28，类型图标，单一状态位 `outlineMark` 按优先级取一个）、分组行（已完成/总数，全部完成换对勾）、带计数的 Filter（目录 `Outline/`） | 无 Wiz 稿 |
-| Table | 数据表：分页（含 `jumpToPage` 跳页）、选择、排序、`onRowClick` 整行可点、`rowHeight`、`groupBy`、`activeRow`、`columnLayout`；Column / ColumnHeader / ColumnBody 为单元格样式（新增能力无 Wiz 稿） | 无 Wiz 稿 |
+| Table | 数据表：纵向滚动时列头吸顶、分页（含 `jumpToPage` 跳页）、选择、排序、`onRowClick` 整行可点、`rowHeight`、`groupBy`、`activeRow`、`columnLayout`；Column / ColumnHeader / ColumnBody 为单元格样式（新增能力无 Wiz 稿） | 无 Wiz 稿 |
 | Avatar / AvatarGroup | 头像（6 色，字号随尺寸缩放）与头像组 | 稳定 |
 | CodeEditor | SAS 代码编辑器（行号、当前行、语法高亮） | 无 Wiz 稿 |
 
@@ -128,7 +136,7 @@
 | RefLink | 资产或 Dataset 引用链接 | 无 Wiz 稿 |
 | VersionRow | 版本行（版本号、Latest / Official、人加日期、Used by） | 无 Wiz 稿 |
 | DatasetCard | Dataset 空间卡；DatasetCardMore 为「+N more」占位 | 无 Wiz 稿 |
-| ValidityPicker | 有效期选择：开始必填、结束可选（End time 开关），精确到分钟，欧美格式，时区由系统判定；`formatRange` 生成显示文案；`clearable` 有值时浮层底部出现 Clear，清空为 `{ start: '', end: null }`，用作时间范围筛选（Audit trail） | 提案中 |
+| ValidityPicker | 有效期选择：开始必填、结束可选（End time 开关），开始和结束同日时再次点击该日期可切换编辑端点，精确到分钟，欧美格式，时区由系统判定；`formatRange` 生成显示文案；`clearable` 有值时浮层底部出现 Clear，清空为 `{ start: '', end: null }`，用作时间范围筛选（Audit trail） | 提案中 |
 
 ## 提案中（未实现）
 

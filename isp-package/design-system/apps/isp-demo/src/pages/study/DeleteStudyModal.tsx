@@ -61,7 +61,7 @@ export function DeleteStudyModal({ sid }: { sid: string }) {
     }
     closeModal();
     go('#/studies');
-    toast(`Study ${sid} deleted`);
+    toast(`Study ${sid} deleted`, { type: 'success', description: 'This Study can’t be restored.' });
   };
 
   if (!study) return null;

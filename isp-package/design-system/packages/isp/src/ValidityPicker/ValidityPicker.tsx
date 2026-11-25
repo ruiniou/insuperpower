@@ -170,7 +170,16 @@ export function ValidityPicker({ value, onChange, endable = false, defaultEnd = 
   const shift = (n: number) => { const t = new Date(view.y, view.mo - 1 + n, 1); setView({ y: t.getFullYear(), mo: t.getMonth() + 1 }); };
   const dayDisabled = (p: DateParts) => active === 'end' && !!startDate && dateKey(p) < dateKey(startDate);
   const inRange = (p: DateParts) => !!startDate && !!endDate && dateKey(p) > dateKey(startDate) && dateKey(p) < dateKey(endDate);
-  const pickDay = (p: DateParts) => { if (dayDisabled(p)) return; apply(active, p); setView({ y: p.y, mo: p.mo }); };
+  const pickDay = (p: DateParts) => {
+    if (dayDisabled(p)) return;
+    const day = dateKey(p);
+    if (startDate && endDate && day === dateKey(startDate) && day === dateKey(endDate)) {
+      setActive((row) => row === 'start' ? 'end' : 'start');
+      return;
+    }
+    apply(active, p);
+    setView({ y: p.y, mo: p.mo });
+  };
   const onGridKey = (e: KeyboardEvent) => {
     const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key as 'ArrowLeft']; if (!step) return;
     e.preventDefault();

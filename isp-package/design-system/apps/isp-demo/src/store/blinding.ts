@@ -39,7 +39,7 @@ export function enableBlinding(sid: string, reasonRaw: string): { errors: Blindi
   study.blinding = 'Blinded';
   study.updated = dLong();
   logAudit({ studyId: sid, action: 'Blinding enabled', changes: 'Unblinded → Blinded', reason: result.reason });
-  toast('Blinding enabled');
+  toast('Blinding enabled', { type: 'success' });
   emit();
   return { ok: true };
 }
@@ -52,7 +52,7 @@ export function unblindStudy(sid: string, reasonRaw: string): { errors: Blinding
   study.blinding = 'Unblinded';
   study.updated = dLong();
   logAudit({ studyId: sid, action: 'Study unblinded', changes: 'Blinded → Unblinded', reason: result.reason });
-  toast('Study unblinded');
+  toast('Study unblinded', { type: 'success' });
   emit();
   return { ok: true };
 }

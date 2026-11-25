@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Drawer, DrawerSectionHead } from '@wiz/react';
+import { Button, Drawer, DrawerSectionHead, Tooltip } from '@wiz/react';
 import { VersionRow } from '@wiz/isp';
 import { go } from '../../router';
 import { hrefEvent } from '../../store/actions';
@@ -8,10 +8,21 @@ import { canDownloadAsset } from '../../store/assetPermissions';
 import { toast } from '../../store/store';
 import { assetDirectoryType } from '../../store/assets';
 import { cutOf, specOf, SPACE, S } from '../../store/selectors';
+import type { Version } from '../../store/types';
 import { openModal, setDrawerWidth, ui, openDrawer } from '../../store/ui';
+import { LifecycleMark } from './common';
 import './asset-version-drawer.css';
 
 const HEADER_H = 48;
+
+export function AssetVersionLabel({ version, inButton = false }: { version: Version; inButton?: boolean }) {
+  return (
+    <span className="app-inline">
+      {version.label}
+      {version.archived && <LifecycleMark v="ARCHIVED" focusable={!inButton} tooltip={!inButton} />}
+    </span>
+  );
+}
 
 export function AssetVersionDrawer({ id, n }: { id: string; n?: number }) {
   const [preparingZip, setPreparingZip] = useState(false);
@@ -35,7 +46,7 @@ export function AssetVersionDrawer({ id, n }: { id: string; n?: number }) {
     } else {
       file = assetDownloadFile(id, version.n);
     }
-    if ('error' in file) { toast(file.error); return; }
+    if ('error' in file) { toast(file.error, { type: 'error' }); return; }
     const url = URL.createObjectURL(file.content);
     const link = document.createElement('a');
     link.href = url;
@@ -53,12 +64,12 @@ export function AssetVersionDrawer({ id, n }: { id: string; n?: number }) {
       <div className="asset-drawer__details">
         <dl className="asset-drawer__metadata">
           <dt>Type</dt><dd>{assetDirectoryType(asset).name}</dd>
-          <dt>Version</dt><dd>{version.label}</dd>
+          <dt>Version</dt><dd><AssetVersionLabel version={version} /></dd>
           {version.file && <>
             <dt>File</dt>
             <dd className="asset-drawer__file">
               <span>{version.file}</span>
-              {version.fileContent && canDownloadAsset(asset) && (
+              {!version.archived && version.fileContent && canDownloadAsset(asset) && (
                 <Button size="small" leftIcon="ri-download-2-line" onClick={download}>Download</Button>
               )}
             </dd>
@@ -67,7 +78,7 @@ export function AssetVersionDrawer({ id, n }: { id: string; n?: number }) {
             <dt>Files</dt>
             <dd className="asset-drawer__file">
               <span>{version.packageMembers.length}</span>
-              {canDownloadAsset(asset) && <Button size="small" leftIcon="ri-download-2-line"
+              {!version.archived && canDownloadAsset(asset) && <Button size="small" leftIcon="ri-download-2-line"
                 disabled={preparingZip} onClick={download}>
                 {preparingZip ? 'Preparing ZIP…' : 'Download ZIP'}
               </Button>}
@@ -102,18 +113,25 @@ export function AssetVersionDrawer({ id, n }: { id: string; n?: number }) {
             <ul className="asset-drawer__items">
               {asset.versions.map((entry) => {
                 const description = <span className="asset-drawer__muted">{entry.date} by {entry.by}</span>;
+                const isViewing = entry.n === version.n;
+                const selectButton = (
+                  <button type="button" className="asset-drawer__item" onClick={() => selectVersion(entry.n)}>
+                    <AssetVersionLabel version={entry} inButton />
+                    {description}
+                  </button>
+                );
                 return (
                   <li key={entry.n}>
-                    {entry.n === version.n ? (
+                    {isViewing ? (
                       <div className="asset-drawer__item" aria-current="true">
-                        <span>{entry.label} <span className="asset-drawer__muted">(Viewing)</span></span>
+                        <span><AssetVersionLabel version={entry} /> <span className="asset-drawer__muted">(Viewing)</span></span>
                         {description}
                       </div>
-                    ) : (
-                      <button type="button" className="asset-drawer__item" onClick={() => selectVersion(entry.n)}>
-                        <span>{entry.label}</span>{description}
-                      </button>
-                    )}
+                    ) : entry.archived ? (
+                      <Tooltip content="Archived" direction="top" className="asset-drawer__version-tooltip">
+                        {selectButton}
+                      </Tooltip>
+                    ) : selectButton}
                   </li>
                 );
               })}

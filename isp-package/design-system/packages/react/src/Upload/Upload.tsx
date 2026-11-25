@@ -11,6 +11,7 @@ export interface UploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onCha
   /** 默认 true */
   multiple?: boolean;
   disabled?: boolean;
+  invalid?: boolean;
   /** 是否在下方渲染已选文件条，默认 true */
   showFiles?: boolean;
   /** Replace the picker with the selected file list inside the same zone. */
@@ -19,6 +20,8 @@ export interface UploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onCha
   files?: string[];
   defaultFiles?: string[];
   onFilesChange?: (files: string[]) => void;
+  /** Actual files from the native picker or standard drop zone. */
+  onFilesPick?: (files: File[]) => void;
   /** 覆盖点击行为（不弹原生选择器） */
   onBrowse?: () => void;
   /** Alternate file pickers rendered inside a non-interactive upload zone. */
@@ -30,21 +33,27 @@ export interface UploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onCha
 }
 
 export function Upload({
-  title = 'Drag and Drop or Browse File', hint = 'Supports .docx, .xlsx ; Max 50 MB', accept, multiple = true, disabled, showFiles = true,
-  selectedInZone = false, files, defaultFiles = [], onFilesChange, onBrowse, browseActions, onFilesDrop, forceHover, className, ...rest
+  title = 'Drag and Drop or Browse File', hint = 'Supports .docx, .xlsx ; Max 50 MB', accept, multiple = true, disabled, invalid, showFiles = true,
+  selectedInZone = false, files, defaultFiles = [], onFilesChange, onFilesPick, onBrowse, browseActions, onFilesDrop, forceHover, className, ...rest
 }: UploadProps) {
   const [list, setList] = useControllable<string[]>(files, defaultFiles, onFilesChange);
   const [drag, setDrag] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
-  const addNames = (names: string[]) => { if (names.length) setList(multiple ? [...list, ...names] : names.slice(0, 1)); };
+  const pickFiles = (files: File[]) => {
+    const picked = multiple ? files : files.slice(0, 1);
+    if (!picked.length) return;
+    const names = picked.map((file) => file.name);
+    setList(multiple ? [...list, ...names] : names);
+    onFilesPick?.(picked);
+  };
   const browse = () => { if (disabled) return; if (onBrowse) onBrowse(); else input.current?.click(); };
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
     setDrag(false);
     if (disabled) return;
     if (onFilesDrop) onFilesDrop(e.dataTransfer);
-    else addNames(Array.from(e.dataTransfer.files).map((f) => f.name));
+    else pickFiles(Array.from(e.dataTransfer.files));
   };
 
   const customBrowse = browseActions != null;
@@ -63,7 +72,7 @@ export function Upload({
   if (selectedInZone && fileList) {
     return (
       <div {...rest} className={cx('wiz-upload', className)}>
-        <div className="wiz-upload__zone--selected"
+        <div className={cx('wiz-upload__zone--selected', invalid && 'is-invalid')}
           onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'none'; }}
           onDrop={(event) => event.preventDefault()}>
           {fileList}
@@ -78,7 +87,8 @@ export function Upload({
         role={customBrowse ? undefined : "button"}
         tabIndex={customBrowse ? undefined : disabled ? -1 : 0}
         aria-disabled={disabled || undefined}
-        className={cx('wiz-upload__zone', customBrowse && 'wiz-upload__zone--custom-browse', (drag || forceHover) && 'is-hover', disabled && 'is-disabled')}
+        aria-invalid={invalid || undefined}
+        className={cx('wiz-upload__zone', customBrowse && 'wiz-upload__zone--custom-browse', (drag || forceHover) && 'is-hover', disabled && 'is-disabled', invalid && 'is-invalid')}
         onClick={customBrowse ? undefined : browse}
         onKeyDown={customBrowse ? undefined : (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); browse(); } }}
         onDragOver={!acceptsDrop ? undefined : (e) => { e.preventDefault(); if (!disabled) setDrag(true); }}
@@ -89,7 +99,7 @@ export function Upload({
         <span className="wiz-upload__title">{title}</span>
         {hint && <span className="wiz-upload__hint">{hint}</span>}
         {customBrowse ? <div className="wiz-upload__actions">{browseActions}</div> : <input ref={input} type="file" hidden accept={accept} multiple={multiple} disabled={disabled} data-testid="wiz-upload-input"
-          onChange={(e) => { addNames(Array.from(e.target.files ?? []).map((f) => f.name)); e.target.value = ''; }} />}
+          onChange={(e) => { pickFiles(Array.from(e.target.files ?? [])); e.target.value = ''; }} />}
       </div>
       {fileList}
     </div>

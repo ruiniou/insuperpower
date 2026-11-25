@@ -26,7 +26,13 @@ const studyReadOnly = 'This study is read-only. Restore it before making changes
 /** Create Event 默认引用：该 Study 下 SAP、CRF 各取一个（有版本者）的最新版 */
 export function defaultEventRefs(sid: string): Record<string, number> {
   const refs: Record<string, number> = {}, seen: Record<string, boolean> = {};
-  S.assetsOf(sid).forEach((a) => { if ((a.code === 'SAP' || a.code === 'CRF') && a.versions.length && !seen[a.code]) { seen[a.code] = true; refs[a.id] = S.latest(a).n; } });
+  for (const asset of S.assetsOf(sid)) {
+    if (seen[asset.code] || (asset.code !== 'SAP' && asset.code !== 'CRF')) continue;
+    const version = asset.versions.find((entry) => !entry.archived);
+    if (!version) continue;
+    seen[asset.code] = true;
+    refs[asset.id] = version.n;
+  }
   return refs;
 }
 
@@ -37,6 +43,10 @@ export function createEvent(f: CreateEventForm): { errors: Errors } | { id: stri
   const db = getDb(), er: Errors = {}, name = f.name.trim(), reason = f.reason.trim();
   if (!name) er.name = 'Event name is required.'; else if (name.length > 200) er.name = 'Use 200 characters or fewer.'; else if (noCtl(name)) er.name = 'Remove control characters.';
   if (!reason) er.reason = 'Reason for change is required (1–1000 characters).'; else if (reason.length > 1000) er.reason = 'Use 1000 characters or fewer.';
+  if (Object.entries(f.refs).some(([assetId, n]) => {
+    const asset = S.asset(assetId);
+    return !asset || asset.studyId !== f.sid || !asset.versions.some((version) => version.n === n && !version.archived);
+  })) er.form = 'A selected asset version is unavailable. Choose another version.';
   if (Object.keys(er).length) return { errors: er };
   const id = 'EVT-' + String(++db.seq.event).padStart(3, '0');
   const refs: EventRec['refs'] = { assets: {}, datasets: {} };
@@ -45,7 +55,7 @@ export function createEvent(f: CreateEventForm): { errors: Errors } | { id: stri
   db.events.unshift(e);
   const st = S.study(f.sid); if (st) st.updated = dLong();
   const n = Object.keys(refs.assets).length;
-  toast('Event created' + (n ? ', ' + plural(n, 'asset') + ' referenced' : ''));
+  toast('Event created' + (n ? ', ' + plural(n, 'asset') + ' referenced' : ''), { type: 'success' });
   emit();
   return { id, nAssets: n };
 }
@@ -118,9 +128,15 @@ export function uploadAsset(f: UploadAssetForm): { errors: Errors } | { asset: A
   }
   const st = S.study(f.sid); if (st) st.updated = dLong();
   logAudit({ studyId: f.sid, action: 'Version registered', changes: target!.name + ' ' + version, reason: f.reason });
-  toast('Uploaded ' + target!.name + ' ' + version + '.');
+  toast('Uploaded ' + target!.name + ' ' + version + '.', { type: 'success' });
   emit();
   return { asset: target!, versionNumber: nextN };
+}
+
+export function assetVersionDependency(asset: Asset, n: number, action: 'replace' | 'archive') {
+  const references = S.assetUsers(asset, n);
+  if (action === 'replace' && references.length) return 'Referenced by an Event.';
+  if (action === 'archive' && references.some((event) => event.status !== 'Archived')) return 'Referenced by an active Event.';
 }
 
 export function replaceAssetContent(
@@ -136,7 +152,8 @@ export function replaceAssetContent(
   if (index < 0 || asset.versions[index] !== original) {
     return { errors: { form: 'This version has changed. Close the form and open it again.' } };
   }
-  if (S.assetUsers(asset, original.n).length > 0) {
+  if (original.archived) return { errors: { form: 'This version is archived.' } };
+  if (assetVersionDependency(asset, original.n, 'replace')) {
     return { errors: { form: 'An Event references this version. Upload a new version instead.' } };
   }
   const isPackage = Object.hasOwn(CODE_TYPES, asset.code);
@@ -150,9 +167,29 @@ export function replaceAssetContent(
   const study = S.study(sid);
   if (study) study.updated = dLong();
   logAudit({ studyId: sid, action: 'Version content replaced', changes: asset.name + ' ' + original.label });
-  toast('Replaced content for ' + asset.name + ' ' + original.label + '.');
+  toast('Replaced content for ' + asset.name + ' ' + original.label + '.', { type: 'success' });
   emit();
   return { asset, versionNumber: original.n };
+}
+
+export function archiveAssetVersion(sid: string, assetId: string, n: number): { error: string } | { ok: true } {
+  const asset = S.asset(assetId);
+  if (!asset || asset.studyId !== sid || !canMaintainAsset(sid, asset.code)) {
+    return { error: 'You do not have permission to archive this version.' };
+  }
+  const index = asset.versions.findIndex((version) => version.n === n);
+  const version = asset.versions[index];
+  if (!version || version.archived) return { error: 'This version is no longer available to archive.' };
+  const dependency = assetVersionDependency(asset, n, 'archive');
+  if (dependency) return { error: dependency };
+
+  asset.versions[index] = { ...version, archived: true };
+  const study = S.study(sid);
+  if (study) study.updated = dLong();
+  logAudit({ studyId: sid, action: 'Version archived', changes: asset.name + ' ' + version.label });
+  toast('Archived ' + asset.name + ' ' + version.label + '.', { type: 'success' });
+  emit();
+  return { ok: true };
 }
 
 /** 每种 Data type 对应唯一一类 Spec（Asset 类型）；候选只取该类已有的版本。该类 Asset 还没有时候选为空，字段不渲染，有了自然出现 */
@@ -165,7 +202,7 @@ export const SPEC_OF: Record<string, { code: string; label: string }> = {
 export function specOptionsFor(sid: string, cat: string): string[] {
   const code = SPEC_OF[cat]?.code;
   if (!code) return [];
-  return getDb().assets.filter((a) => a.studyId === sid && a.code === code).flatMap((a) => a.versions.map((v) => a.name + ' ' + v.label));
+  return getDb().assets.filter((a) => a.studyId === sid && a.code === code).flatMap((a) => a.versions.filter((v) => !v.archived).map((v) => a.name + ' ' + v.label));
 }
 
 export interface UploadDatasetForm { sid: string; dsId: string | null; name: string; cat: string; mode: string; version: string; cut: string; spec: string; fileName: string; reason: string }
@@ -198,7 +235,7 @@ export function uploadDataset(f: UploadDatasetForm): { errors: Errors } | { ds: 
     else if (!protection) db.protections.push({ studyId: f.sid, datasetId: d.id, versions: [n], future: true });
   }
   logAudit({ studyId: f.sid, action: 'Version registered', changes: d.name + ' ' + version, reason: f.reason });
-  toast('Uploaded ' + d.name + ' ' + version + '.');
+  toast('Uploaded ' + d.name + ' ' + version + '.', { type: 'success' });
   emit();
   return { ds: d, space };
 }
@@ -214,7 +251,7 @@ export function savePinnedDatasets(eventId: string, space: string, picks: Record
   e.updated = dLong();
   const st = S.study(e.studyId); if (st) st.updated = dLong();
   const n = Object.keys(picks).length;
-  toast(n ? 'Pinned ' + plural(n, 'dataset') : 'Cleared pinned datasets');
+  toast(n ? 'Pinned ' + plural(n, 'dataset') : 'Cleared pinned datasets', { type: 'success' });
   emit();
   return n;
 }
@@ -243,7 +280,7 @@ export function updateStudyDetails(sid: string, f: StudyDetailsForm): { errors: 
   ].filter(Boolean).join('; ');
   Object.assign(s, next, { updated: dLong() });
   logAudit({ studyId: sid, action: 'Study details updated', changes: changed || 'No fields changed', reason });
-  toast('Study details updated'); emit();
+  toast('Study details updated', { type: 'success' }); emit();
   return { ok: true };
 }
 
@@ -281,7 +318,7 @@ export function createStudy(f: CreateStudyForm): { errors: Errors } | { id: stri
   mk(ME_USER.id, f.role, f.attr, todayIso(), null, true);
   f.members.forEach((m) => mk(m.userId, m.role, m.attr, m.validFrom.trim(), m.validUntil.trim() || null, false));
   logAudit({ studyId: id, action: 'Study created', changes: id });
-  toast(id + ' created'); emit();
+  toast(id + ' created', { type: 'success', description: 'You can now add Events and Assets.' }); emit();
   return { id };
 }
 
@@ -290,7 +327,7 @@ export function transferEventOwner(eid: string, name: string) {
   const e = S.event(eid); if (!e || !isWritable(e.studyId) || e.owner === name) return;
   logAudit({ studyId: e.studyId, action: 'Event Owner changed', changes: diff(e.name, e.owner, name) });
   e.owner = name; e.updated = dLong();
-  toast('Event Owner changed to ' + name); emit();
+  toast('Event Owner changed to ' + name, { type: 'success' }); emit();
 }
 
 export interface ArchiveCheckItem {
@@ -352,7 +389,7 @@ export function archiveStudy(sid: string, reasonRaw: string): { errors: Errors; 
     changes: 'Active → Archived',
     reason,
   });
-  toast('Study archived');
+  toast('Study archived', { type: 'success', description: 'Study data is now read-only.' });
   emit();
   return { ok: true };
 }
@@ -384,7 +421,7 @@ export function restoreStudy(sid: string, reasonRaw: string): { errors: Errors }
     changes: 'Archived → Active',
     reason,
   });
-  toast('Study restored');
+  toast('Study restored', { type: 'success' });
   emit();
   return { ok: true };
 }

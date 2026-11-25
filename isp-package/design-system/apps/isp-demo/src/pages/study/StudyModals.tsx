@@ -1,7 +1,7 @@
-import { DeleteStudyModal } from './DeleteStudyModal';
 import './code-package-upload.css';
+import { DeleteStudyModal } from './DeleteStudyModal';
 import { useRef, useState } from 'react';
-import { Avatar, Button, Checkbox, Field, FileBox, Input, Message, Modal, PickList, Select, Textarea, Upload } from '@wiz/react';
+import { Avatar, Button, Checkbox, ConfirmDialog, Field, Input, Message, Modal, PickList, Select, Textarea, Upload } from '@wiz/react';
 import { go } from '../../router';
 import { AddMembersModal, ChangeBlindingModal, EditMemberModal, RemoveMemberModal, TransferAdminModal } from './MemberModals';
 import { ArchiveStudyModal, RestoreStudyModal } from './ArchiveModals';
@@ -12,13 +12,13 @@ import { hrefEvent, hrefStudy } from '../../store/actions';
 import { baselineTag } from '../../store/baseline';
 import { cutOf, SPACE, S } from '../../store/selectors';
 import { DS_FILE_OK } from '../../store/actions';
-import { createEvent, defaultEventRefs, replaceAssetContent, savePinnedDatasets, SPEC_OF, specOptionsFor, uploadAsset, uploadDataset, type Errors } from '../../store/study';
+import { archiveAssetVersion, createEvent, defaultEventRefs, replaceAssetContent, savePinnedDatasets, SPEC_OF, specOptionsFor, uploadAsset, uploadDataset, type Errors } from '../../store/study';
 import { closeModal, modalUi } from '../../store/ui';
 import { readCodeFolder, readCodeZip, readDroppedCodePackage } from '../../store/codePackage';
 import { useDb } from '../../store/store';
 import type { Asset, CodePackageMember } from '../../store/types';
 
-const verOptions = (a: Asset) => a.versions.map((v, i) => ({ value: String(v.n), label: [v.label, baselineTag(a, v.n), i === 0 ? 'Latest' : ''].filter(Boolean).join(', ') }));
+const verOptions = (a: Asset) => a.versions.filter((v) => !v.archived).map((v, i) => ({ value: String(v.n), label: [v.label, baselineTag(a, v.n), i === 0 ? 'Latest' : ''].filter(Boolean).join(', ') }));
 const initials = (n: string) => n.split(' ').map((x) => x[0]).join('').toUpperCase();
 
 function Footer({ note, confirm, onConfirm, disabled }: { note?: string; confirm: string; onConfirm: () => void; disabled?: boolean }) {
@@ -36,9 +36,9 @@ function CreateEventModal({ sid }: { sid: string }) {
   const db = useDb();
   const [f, setF] = useState(() => ({ name: '', goal: '', scope: 'EXPLORATORY', reason: '', refs: defaultEventRefs(sid) }));
   const [er, setEr] = useState<Errors>({});
-  const assets = S.assetsOf(sid);
+  const assets = S.assetsOf(sid).filter((asset) => asset.versions.some((version) => !version.archived));
   const nSel = Object.keys(f.refs).length;
-  const toggle = (id: string, on: boolean) => setF((p) => { const refs = { ...p.refs }; if (on) refs[id] = S.latest(S.asset(id)!).n; else delete refs[id]; return { ...p, refs }; });
+  const toggle = (id: string, on: boolean) => setF((p) => { const refs = { ...p.refs }; const version = on ? S.asset(id)?.versions.find((entry) => !entry.archived) : undefined; if (version) refs[id] = version.n; else delete refs[id]; return { ...p, refs }; });
   const submit = () => {
     const r = createEvent({ sid, ...f });
     if ('errors' in r) { setEr(r.errors); return; }
@@ -142,7 +142,7 @@ function UploadAssetModal({ sid, assetId, code: code0, replaceVersion }: { sid: 
                     event.target.value = '';
                     if (file) void loadPackage(async () => ({ name: file.name, members: await readCodeZip(file) }));
                   }} />
-                <Upload className="code-package-upload__zone" multiple={false} selectedInZone disabled={reading}
+                <Upload className="study-upload__zone" multiple={false} selectedInZone disabled={reading} invalid={!!er.file}
                   title={reading ? 'Checking package…' : 'Drop one folder or ZIP file'}
                   hint="1–100 files, up to 512 KB total. ZIP files must also be 512 KB or smaller and unencrypted."
                   files={selectedPackage ? [selectedPackage.name] : []}
@@ -162,14 +162,17 @@ function UploadAssetModal({ sid, assetId, code: code0, replaceVersion }: { sid: 
         ) : (
           <>
             <Field label={replacing ? "Replacement file" : "File"} required error={er.file} hint={'Allowed: ' + FILE_OK.map((x) => '.' + x).join(' ')}>
-              <FileBox accept={FILE_OK.map((x) => '.' + x).join(',')} fileName={f.fileName} invalid={!!er.file}
-                onRemove={() => {
+              <Upload className="study-upload__zone" multiple={false} title="Drop a file or browse"
+                hint={'Allowed: ' + FILE_OK.map((ext) => '.' + ext).join(', ')}
+                accept={FILE_OK.map((ext) => '.' + ext).join(',')} files={f.fileName ? [f.fileName] : []} invalid={!!er.file}
+                onFilesChange={(files) => {
+                  if (files.length) return;
                   setF((current) => ({ ...current, fileName: '', fileContent: undefined }));
                   setEr((current) => ({ ...current, file: '' }));
                 }}
-                onChange={(name, fileContent) => {
-                  setF({ ...f, fileName: name, fileContent, name: f.name.trim() ? f.name : name.replace(/\.[^.]+$/, '') });
-                  setEr({ ...er, file: '' });
+                onFilesPick={([file]) => {
+                  setF((current) => ({ ...current, fileName: file.name, fileContent: file, name: current.name.trim() ? current.name : file.name.replace(/\.[^.]+$/, '') }));
+                  setEr((current) => ({ ...current, file: '' }));
                 }} />
             </Field>
             {!a && <Input label="Name" required placeholder="Filled from the file name if empty" maxLength={200}
@@ -228,7 +231,13 @@ function UploadDatasetModal({ sid, dsId, mode: mode0 }: { sid: string; dsId: str
         </div>
         {specs.length > 0 && <Select label={SPEC_OF[f.cat].label} placeholder="None" options={[{ value: NO_SPEC, label: 'None' }, ...specs.map((x) => ({ value: x, label: x }))]} value={f.spec || undefined} onChange={(v) => setF({ ...f, spec: v === NO_SPEC ? '' : v })} />}
         <Field label="Data file" required error={er.file} hint={'Allowed: ' + DS_FILE_OK.map((x) => '.' + x).join(' ')}>
-          <FileBox accept={DS_FILE_OK.map((x) => '.' + x).join(',')} fileName={f.fileName} invalid={!!er.file} onChange={(n) => { setF({ ...f, fileName: n }); setEr({ ...er, file: '' }); }} />
+          <Upload className="study-upload__zone" multiple={false} title="Drop a file or browse"
+            hint={'Allowed: ' + DS_FILE_OK.map((ext) => '.' + ext).join(', ')}
+            accept={DS_FILE_OK.map((ext) => '.' + ext).join(',')} files={f.fileName ? [f.fileName] : []} invalid={!!er.file}
+            onFilesChange={([fileName = '']) => {
+              setF((current) => ({ ...current, fileName }));
+              setEr((current) => ({ ...current, file: '' }));
+            }} />
         </Field>
         <Textarea label="Reason" rows={2} maxLength={1000} placeholder='Defaults to "Data intake"' value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} />
       </div>
@@ -270,6 +279,26 @@ function ChooseDatasetsModal({ eid, space }: { eid: string; space: string }) {
   );
 }
 
+function ArchiveAssetVersionModal({ sid, assetId, n }: { sid: string; assetId: string; n: number }) {
+  const [error, setError] = useState('');
+  const asset = S.asset(assetId);
+  const version = asset && S.vOf(asset, n);
+  if (!asset || !version) return null;
+  const confirm = () => {
+    const result = archiveAssetVersion(sid, assetId, n);
+    if ('error' in result) {
+      setError(result.error);
+      return;
+    }
+    closeModal();
+  };
+  return <ConfirmDialog
+    title="Archive Version?"
+    description={error || `${asset.name} ${version.label} will remain in history and be unavailable for new Event references.`}
+    confirmLabel="Archive version" cancelLabel="Cancel"
+    onConfirm={confirm} onCancel={closeModal} />;
+}
+
 export function StudyModals() {
   useDb();
   const m = modalUi.modal;
@@ -286,6 +315,7 @@ export function StudyModals() {
   if (m.kind === 'transferAdmin') return <TransferAdminModal key={key} sid={m.sid} />;
   if (m.kind === 'removeMember') return <RemoveMemberModal key={key} sid={m.sid} memberId={m.memberId} />;
   if (m.kind === 'deleteStudy') return <DeleteStudyModal key={key} sid={m.sid} />;
+  if (m.kind === 'archiveAssetVersion') return <ArchiveAssetVersionModal key={key} sid={m.sid} assetId={m.assetId} n={m.n} />;
   if (m.kind === 'archiveStudy') return <ArchiveStudyModal key={key} sid={m.sid} />;
   if (m.kind === 'restoreStudy') return <RestoreStudyModal key={key} sid={m.sid} />;
   return <UploadDatasetModal key={key} sid={m.sid} dsId={m.dsId} mode={m.mode} />;

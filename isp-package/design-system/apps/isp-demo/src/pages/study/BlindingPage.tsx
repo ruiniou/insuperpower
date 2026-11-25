@@ -40,7 +40,7 @@ export function BlindingPage({ sid }: { sid: string }) {
   const canManage = can('study.blinding.manage', { study });
 
   return <div className="studies blinding-page">
-    <div className="page-scroll blinding-page__body">
+    <div className="page-scroll blinding-page__body" tabIndex={0} role="region" aria-label="Study blinding">
       <div className="blinding-section__head">
         <div className="blinding-section__title">
           <span>Study blinding</span>
@@ -51,12 +51,12 @@ export function BlindingPage({ sid }: { sid: string }) {
       <section className="blinding-section" aria-labelledby="protected-content-title">
         <div className="blinding-section__head"><h2 id="protected-content-title">Dataset protection</h2></div>
         <Card className="blinding-content-card">
-        {study.blinding === 'Unblinded' ? <p className="blinding-section__empty">No content protection is active while this study is Unblinded.</p> : <div className="blinding-content-scroll" tabIndex={0} role="region" aria-label="Dataset protection tables"><div className="blinding-content-grid">
+        {study.blinding === 'Unblinded' ? <p className="blinding-section__empty">No content protection is active while this study is Unblinded.</p> : <div className="blinding-content-grid">
           <h3 className="blinding-section__subhead">Protected versions</h3>
           {protectedRows.length ? <Table className="blinding-table" variant="plain" columnLayout="fixed" rowHeight={48} columns={versionsColumns} rows={protectedRows} aria-label="Protected versions" /> : <p className="blinding-section__empty">No protected PROD versions.</p>}
           <h3 className="blinding-section__subhead">Future version rules</h3>
           {futureRows.length ? <Table className="blinding-table blinding-table--last" variant="plain" columnLayout="fixed" rowHeight={48} columns={rulesColumns} rows={futureRows} aria-label="Future version rules" /> : <p className="blinding-section__empty">No future PROD version rules.</p>}
-        </div></div>}
+        </div>}
         </Card>
       </section>
       <section className="blinding-section" aria-labelledby="blinding-members-title">

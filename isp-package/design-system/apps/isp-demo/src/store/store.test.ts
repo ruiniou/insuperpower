@@ -7,7 +7,7 @@ import { ovDoReplace, ovKeep, ovLock, ovRun, ovStartOrFix, quickUploadDs } from 
 import { attentionRows, inputsGroups, nodeCard, popoverFor } from './overview';
 import { baselinesOf, baselineUsers, slotCarriedFrom } from './baseline';
 import { cutOf, S, specOf, vLabelBl, wfInfo } from './selectors';
-import { replaceAssetContent, savePinnedDatasets, specOptionsFor, uploadAsset, uploadDataset } from './study';
+import { archiveAssetVersion, createEvent, defaultEventRefs, replaceAssetContent, savePinnedDatasets, specOptionsFor, uploadAsset, uploadDataset } from './study';
 import { getDb, resetDb, setToastHandler } from './store';
 import { activeMembers, addMembers, emptyMemberRow, evKey, memberCount, memberOf, membersOf, removalImpact, removeMember, sortMembers, updateMember, validateMemberRow, wfKey, peopleOf, changeBlinding, transferStudyAdmin, canAddMembers } from './members';
 import { can, DUTIES, session, setDuty } from './role';
@@ -401,6 +401,20 @@ describe('Asset upload', () => {
       fileName: '', packageMembers: replacement,
     })).toHaveProperty('versionNumber', original.n);
     expect(asset.versions).toEqual([{ ...original, packageMembers: replacement }]);
+  });
+
+  it('retains archived references and prevents new use of the exact archived version', () => {
+    const asset = S.asset('A2')!;
+    const linked = S.assetUsers(asset, 3);
+    expect(archiveAssetVersion(asset.studyId, asset.id, 3)).toHaveProperty('error');
+    for (const event of linked) event.status = 'Archived';
+    expect(archiveAssetVersion(asset.studyId, asset.id, 3)).toEqual({ ok: true });
+    expect(S.assetUsers(asset, 3)).toEqual(linked);
+    expect(defaultEventRefs(asset.studyId)[asset.id]).toBe(2);
+    expect(createEvent({ sid: asset.studyId, name: 'New event', scope: '', goal: '', reason: 'Test', refs: { [asset.id]: 3 } }))
+      .toHaveProperty('errors.form');
+    expect(assetDownloadFile(asset.id, 3)).toHaveProperty('error');
+    expect(auditOf(asset.studyId)[0].action).toBe('Version archived');
   });
 
   it('rejects duplicate labels, missing targets and mismatched asset types', () => {

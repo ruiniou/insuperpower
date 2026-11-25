@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import type { SnackbarOptions } from '@wiz/react';
 import { createSeed } from './seed';
 import type { Database } from './types';
 
@@ -25,6 +26,7 @@ export const clearTimer = (key: string) => { clearInterval(timers[key]); delete 
 /** 测试与“重置演示数据”用 */
 export function resetDb() { Object.keys(timers).forEach(clearTimer); db = createSeed(); emit(); }
 
-let toastFn: (msg: string) => void = () => {};
-export const setToastHandler = (f: (msg: string) => void) => { toastFn = f; };
-export const toast = (msg: string) => toastFn(msg);
+type ToastOptions = Pick<SnackbarOptions, 'type' | 'description' | 'actionable' | 'actionLabel' | 'onAction' | 'duration'>;
+let toastFn: (msg: string, options?: ToastOptions) => void = () => {};
+export const setToastHandler = (handler: typeof toastFn) => { toastFn = handler; };
+export const toast = (msg: string, options?: ToastOptions) => toastFn(msg, options);

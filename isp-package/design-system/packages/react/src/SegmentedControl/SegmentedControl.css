@@ -1,6 +1,6 @@
 /* 取自原型 .segs/.seg（高 32、圆角 8、选中灰底），颜色映射到 --wiz-* */
 .wiz-seg { display: inline-flex; align-items: center; box-sizing: border-box; }
-.wiz-seg__item { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; border: 0; background: transparent; color: var(--wiz-grey-80); cursor: pointer; font-family: var(--wiz-text-body-1-family); font-size: var(--wiz-text-body-1-size); line-height: normal; white-space: nowrap; transition: background-color 0.12s, color 0.12s; }
+.wiz-seg__item { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; border: 0; background: transparent; color: var(--wiz-grey-80); cursor: pointer; font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); line-height: normal; white-space: nowrap; transition: background-color 0.12s, color 0.12s; }
 .wiz-seg__item > i { font-size: 16px; line-height: 1; }
 .wiz-seg__item:focus-visible { outline: 2px solid var(--wiz-agent-brand); outline-offset: -2px; }
 .wiz-seg__item:disabled { opacity: 0.45; cursor: not-allowed; }

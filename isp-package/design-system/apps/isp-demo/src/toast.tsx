@@ -5,6 +5,9 @@ import { setToastHandler } from './store/store';
 /** 把 store 里的 toast(msg) 接到组件库的 Snackbar */
 export function ToastBridge() {
   const { show } = useSnackbar();
-  useEffect(() => { setToastHandler((msg) => show({ type: 'neutral', title: msg, duration: 3200 })); }, [show]);
+  useEffect(() => {
+    setToastHandler((msg, options) => show({ title: msg, ...options }));
+    return () => setToastHandler(() => {});
+  }, [show]);
   return null;
 }

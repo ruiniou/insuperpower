@@ -54,6 +54,25 @@ describe('ValidityPicker', () => {
     fireEvent.click(screen.getByRole('switch', { name: 'End time' }));
     expect(onDone).toHaveBeenLastCalledWith({ start: '2026-09-10T09:00', end: null });
   });
+  it('End 可选为同一天，之后反复点击该日切换编辑端点并保留值和日历焦点', () => {
+    const onDone = vi.fn();
+    render(<Host init={{ start: '2026-09-10T09:00', end: '2026-09-12T10:00' }} onDone={onDone} />);
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Validity' }));
+    const start = screen.getByLabelText('Start date');
+    const end = screen.getByLabelText('End date');
+    const day = screen.getAllByRole('gridcell').find((cell) => cell.getAttribute('data-day') === '2026-09-10')!;
+    fireEvent.focus(end);
+    day.focus();
+    fireEvent.click(day);
+    expect(onDone).toHaveBeenCalledWith({ start: '2026-09-10T09:00', end: '2026-09-10T10:00' });
+    expect(end.parentElement).toHaveClass('is-active');
+    fireEvent.click(day);
+    expect(start.parentElement).toHaveClass('is-active');
+    fireEvent.click(day);
+    expect(end.parentElement).toHaveClass('is-active');
+    expect(day).toHaveFocus();
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
   it('分段输入：← → 换段，↑ ↓ 调整当前段，数字覆盖，a / p 切换', () => {
     const onDone = vi.fn();
     render(<Host init={{ start: '2026-09-10T09:00', end: null }} endable={false} onDone={onDone} />);

@@ -15,3 +15,16 @@ describe('PopoverMenu multiple', () => {
     expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 });
+
+it('shows the reason on hover without activating a disabled action', async () => {
+  const onSelect = vi.fn();
+  render(<PopoverMenu trigger={<button type="button">Actions</button>} onSelect={onSelect}
+    items={[{ label: 'Archive version', disabled: true, disabledReason: 'Referenced by an active Event.' }]} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Actions' }));
+  const item = screen.getByRole('menuitem', { name: 'Archive version' });
+  fireEvent.mouseEnter(item);
+  expect(await screen.findByRole('tooltip')).toHaveTextContent('Referenced by an active Event.');
+  fireEvent.click(item);
+  expect(onSelect).not.toHaveBeenCalled();
+  expect(screen.getByRole('menu')).toBeVisible();
+});

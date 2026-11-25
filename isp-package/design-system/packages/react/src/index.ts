@@ -104,7 +104,7 @@ export type { DividerProps } from './Divider/Divider';
 export { Message } from './Message/Message';
 export type { MessageProps, MessageTone } from './Message/Message';
 export { Snackbar, SnackbarProvider, useSnackbar } from './Snackbar/Snackbar';
-export type { SnackbarProps, SnackbarType, SnackbarLayout, SnackbarDetail, SnackbarOptions } from './Snackbar/Snackbar';
+export type { SnackbarProps, SnackbarType, SnackbarLayout, SnackbarDetail, SnackbarOptions, ToastStatus } from './Snackbar/Snackbar';
 export { Modal } from './Modal/Modal';
 export type { ModalProps } from './Modal/Modal';
 export { Tooltip } from './Tooltip/Tooltip';

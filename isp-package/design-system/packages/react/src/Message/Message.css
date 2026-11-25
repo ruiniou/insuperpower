@@ -1,12 +1,6 @@
 .wiz-message { display: flex; align-items: center; gap: var(--wiz-spacing-sm); box-sizing: border-box; min-height: 40px; padding: var(--wiz-spacing-sm) var(--wiz-spacing-md); border: 1px solid; border-radius: var(--wiz-radius-sm); font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); font-weight: var(--wiz-text-body-2-weight); line-height: 1.25; }
-.wiz-message--warning { background: var(--wiz-yellow-10); border-color: var(--wiz-yellow-20); color: var(--wiz-orange-70); }
-.wiz-message--warning .wiz-message__icon { color: var(--wiz-main-warning); }
-.wiz-message--error { background: var(--wiz-red-10); border-color: var(--wiz-red-20); color: var(--wiz-red-70); }
-.wiz-message--error .wiz-message__icon { color: var(--wiz-main-error); }
-.wiz-message--success { background: var(--wiz-green-10); border-color: var(--wiz-green-20); color: var(--wiz-green-70); }
-.wiz-message--success .wiz-message__icon { color: var(--wiz-main-success); }
-.wiz-message--info { background: var(--wiz-blue-10); border-color: var(--wiz-blue-20); color: var(--wiz-blue-70); }
-.wiz-message--info .wiz-message__icon { color: var(--wiz-blue-50); }
+.wiz-message { background: var(--wiz-feedback-bg); border-color: var(--wiz-feedback-border); color: var(--wiz-feedback-text); }
+.wiz-message__icon { color: var(--wiz-feedback-icon); }
 .wiz-message__icon { flex: none; font-size: 16px; line-height: 1; }
 .wiz-message__content { flex: 1; min-width: 0; }
 .wiz-message__close { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--wiz-radius-sm); background: transparent; color: var(--wiz-grey-70); font-size: 16px; cursor: pointer; }

@@ -58,6 +58,9 @@ describe('Message / Snackbar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onAction).toHaveBeenCalled(); expect(onClose).toHaveBeenCalled();
+    rerender(<Snackbar type="warning" title="Check this" actionable={false} actionLabel="View" onAction={onAction} />);
+    expect(screen.queryByRole('button', { name: 'View' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
     rerender(<Snackbar type="info" title="T" details={[{ text: 'a', status: 'done' }, { text: 'b', status: 'loading' }]} />);
     expect(document.querySelector('.wiz-snackbar--detailed')).not.toBeNull();
     expect(document.querySelectorAll('.wiz-snackbar__detail')).toHaveLength(2);

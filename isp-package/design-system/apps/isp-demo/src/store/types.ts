@@ -7,7 +7,7 @@ export type Rec<T> = Record<NodeId, T>;
 
 /** n 是内部序号（不显示）；label 是上传时用户填写的版本号 */
 export interface CodePackageMember { path: string; size: number; hash: string; content: Blob }
-export interface Version { n: number; label: string; by: string; date: string; note: string; file?: string; fileContent?: Blob | string; packageMembers?: readonly CodePackageMember[]; meta?: Record<string, string> }
+export interface Version { n: number; label: string; by: string; date: string; note: string; file?: string; fileContent?: Blob | string; packageMembers?: readonly CodePackageMember[]; archived?: boolean; meta?: Record<string, string> }
 export type Lifecycle = 'ACTIVE' | 'ARCHIVED' | 'DELETED';
 export type Blinding = 'Unblinded' | 'Blinded';
 export interface Study {
@@ -61,7 +61,7 @@ export interface EventRec {
 export type AuditAction =
   | 'Study created' | 'Study details updated'
   | 'Member added' | 'Member updated' | 'Blinding status changed' | 'Member removed'
-  | 'Study Admin transferred' | 'Event Owner changed' | 'Version registered' | 'Version content replaced'
+  | 'Study Admin transferred' | 'Event Owner changed' | 'Version registered' | 'Version content replaced' | 'Version archived'
   | 'Study deleted' | 'Study archived' | 'Study restored' | 'Blinding enabled' | 'Study unblinded';
 export interface StudyDeletionEvidence {
   requestId: string;

@@ -44,6 +44,10 @@
   list-style: none;
 }
 
+.asset-drawer__items .asset-drawer__version-tooltip {
+  display: block;
+}
+
 .asset-drawer__field,
 .asset-drawer__item {
   display: flex;

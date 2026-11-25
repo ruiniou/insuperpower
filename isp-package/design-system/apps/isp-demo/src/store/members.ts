@@ -113,7 +113,7 @@ export function addMembers(f: AddMembersForm): AddMembersResult {
     const added = rows.filter((r) => done.includes(r.key)).map((r) => userById(r.userId)!.name + ' (' + roleLabel(r.role) + ')').join(', ');
     logAudit({ studyId: f.sid, action: 'Member added', changes: added, reason });
   }
-  if (done.length && !Object.keys(bad).length) toast('Added ' + plural(done.length, 'member'));
+  if (done.length && !Object.keys(bad).length) toast('Added ' + plural(done.length, 'member'), { type: 'success' });
   emit();
   return { errors: bad, done };
 }
@@ -137,7 +137,7 @@ export function updateMember(f: EditForm): { errors: MemberErrors } | { ok: true
   logAudit({ studyId: f.sid, action: 'Member updated', changes: m.name + ': ' + (changed || 'No fields changed'), reason });
   Object.assign(m, { role, validFrom, validUntil });
   const st = S.study(f.sid); if (st) st.updated = dLong();
-  toast('Updated ' + m.name); emit();
+  toast('Updated ' + m.name, { type: 'success' }); emit();
   return { ok: true };
 }
 
@@ -157,7 +157,7 @@ export function changeBlinding(f: ChangeBlindingForm): { errors: MemberErrors } 
   logAudit({ studyId: f.sid, action: 'Blinding status changed', changes: m.name + ': ' + attrLabel(m.attr) + ' → ' + attrLabel(f.attr), reason });
   m.attr = f.attr as BlindAttr;
   const st = S.study(f.sid); if (st) st.updated = dLong();
-  toast('Blinding status of ' + m.name + ' changed to ' + attrLabel(f.attr)); emit();
+  toast('Blinding status of ' + m.name + ' changed to ' + attrLabel(f.attr), { type: 'success' }); emit();
   return { ok: true };
 }
 
@@ -175,7 +175,7 @@ export function transferStudyAdmin(f: TransferForm): { errors: MemberErrors } | 
   if (Object.keys(er).length || !to) return { errors: er };
   cur.isAdmin = false; to.isAdmin = true; st.admin = to.name; st.updated = dLong();
   logAudit({ studyId: f.sid, action: 'Study Admin transferred', changes: cur.name + ' → ' + to.name, reason });
-  toast('Study Admin transferred to ' + to.name); emit();
+  toast('Study Admin transferred to ' + to.name, { type: 'success' }); emit();
   return { ok: true };
 }
 
@@ -211,6 +211,6 @@ export function removeMember(f: RemoveForm): { errors: MemberErrors } | { ok: tr
   const handed = impact.workflows.length + impact.events.length;
   logAudit({ studyId: f.sid, action: 'Member removed', changes: m.name + (handed ? ', handed over ' + plural(handed, 'item') : ''), reason });
   const st = S.study(f.sid); if (st) st.updated = dLong();
-  toast('Removed ' + m.name); emit();
+  toast('Removed ' + m.name, { type: 'success' }); emit();
   return { ok: true };
 }

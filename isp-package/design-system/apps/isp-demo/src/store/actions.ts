@@ -3,6 +3,7 @@ import { dLong, dShort } from './dates';
 import { btnFor, ovCtx } from './flow';
 import { S } from './selectors';
 import { V } from './seed';
+import { suggestNextVersion } from './versions';
 import { clearTimer, emit, getDb, setTimer, toast } from './store';
 import type { EventRec, NodeId } from './types';
 
@@ -35,13 +36,13 @@ export function ovRun(e: EventRec, id: NodeId) {
 export function ovLock(e: EventRec, id: NodeId) {
   const f = e.flow; if (f.regen[id]) { f.ver[id] += 1; f.regen[id] = false; }
   delete f.note[id]; f.st[id] = 'locked'; f.ui.edge = null;
-  e.updated = dLong(); toast(NODE[id].name + ' locked'); emit();
+  e.updated = dLong(); toast(NODE[id].name + ' locked', { type: 'success' }); emit();
 }
 
 /** Keep vN：保留当前版本，节点回到 Locked，版本号不变 */
 export function ovKeep(e: EventRec, id: NodeId) {
   const f = e.flow; delete f.note[id]; f.st[id] = 'locked'; f.ui.edge = null;
-  toast('Kept ' + NODE[id].name + ' v' + f.ver[id] + ', decision recorded'); emit();
+  toast('Kept ' + NODE[id].name + ' v' + f.ver[id] + ', decision recorded', { type: 'success' }); emit();
 }
 
 /** 替换文件：新版本 +1，只标直接下游且仅当其为 Locked 的节点为 Stale；不执行任何后续 Workflow */
@@ -50,7 +51,7 @@ export function ovDoReplace(e: EventRec, id: NodeId) {
   DOWN[id].forEach((d) => { if (f.st[d] === 'locked') { f.st[d] = 'stale'; f.note[d] = (NODE[id].file || NODE[id].name) + ' v' + f.ver[id] + ' available'; } });
   const changed = DOWN[id].filter((d) => f.st[d] === 'stale').map((d) => NODE[d].name);
   f.ui.confirm = null; e.updated = dLong();
-  toast((NODE[id].file || NODE[id].name) + ' v' + f.ver[id] + ' uploaded' + (changed.length ? ', ' + changed.join(', ') + ' update available' : ''));
+  toast((NODE[id].file || NODE[id].name) + ' v' + f.ver[id] + ' uploaded' + (changed.length ? ', ' + changed.join(', ') + ' update available' : ''), { type: 'success' });
   emit();
 }
 
@@ -66,14 +67,14 @@ export function ovStartOrFix(e: EventRec, id: NodeId): string | null {
   const C = ovCtx(e), f = e.flow, d = C.disp(id), loop = LOOP_OF[id], w = S.wf(e, loop);
   if (d === 'ready') { if (!w) return hrefEvent(e.id, 'workflow', 'new'); return hrefWf(e.id, w.id, id); }
   if (d === 'stale') {
-    if (!C.inputsLocked(id)) { toast('Update upstream steps first'); return null; }
+    if (!C.inputsLocked(id)) { toast('Update upstream steps first', { type: 'warning' }); return null; }
     ovRun(e, id); return w ? hrefWf(e.id, w.id, id) : null;
   }
   if (d === 'review') { const h = reviewHref(e, id); if (h) return h; toast('Package review is not in this prototype'); return null; }
   if (d === 'running') { if (w) return hrefWf(e.id, w.id, id); toast(NODE[id].name + ' is running, ' + f.prog[id] + '/' + TOTAL); return null; }
   if (d === 'locked') return hrefEvent(e.id, 'asset');
   const miss = NODE[id].inputs.filter((i) => f.st[i] !== 'locked').map((i) => NODE[i].name);
-  toast('Waiting for ' + miss.join(' + ')); return null;
+  toast('Waiting for ' + miss.join(' + '), { type: 'warning' }); return null;
 }
 
 /** 展开卡 UI 状态（与原型一致，存在 event.flow.ui 里，跨页面保留） */
@@ -95,14 +96,15 @@ const extOf = (n: string) => (n.split('.').pop() || '').toLowerCase();
 /** Inputs 展开区的 ADaM / SDTM 槽位：选文件直接传到当前 Event（Dummy 空间），自动 pin 最新版本 */
 export function quickUploadDs(e: EventRec, cat: string, fileName: string) {
   const db = getDb();
-  if (DS_FILE_OK.indexOf(extOf(fileName)) < 0) { toast('Unsupported format. Allowed: ' + DS_FILE_OK.map((x) => '.' + x).join(' ')); return; }
+  if (DS_FILE_OK.indexOf(extOf(fileName)) < 0) { toast('Unsupported format. Allowed: ' + DS_FILE_OK.map((x) => '.' + x).join(' '), { type: 'error' }); return; }
   const stem = fileName.replace(/\.[^.]+$/, ''), nm = stem.toUpperCase().replace(/\s+/g, '_');
   let d = db.datasets.find((x) => x.studyId === e.studyId && x.space === 'dummy' && x.cat === cat && x.name === nm);
   const note = 'Data intake, quality not evaluated';
-  if (d) d.versions.unshift(V(S.latest(d).n + 1, db.me.name, dShort(), note, { file: fileName }));
-  else { d = { id: 'D' + (++db.seq.ds), studyId: e.studyId, space: 'dummy', cat, name: nm, label: '', versions: [V(1, db.me.name, dShort(), note, { file: fileName })] }; db.datasets.push(d); }
+  const version = V(d ? S.latest(d).n + 1 : 1, db.me.name, dShort(), note, { file: fileName, label: suggestNextVersion(d?.versions ?? []) });
+  if (d) d.versions.unshift(version);
+  else { d = { id: 'D' + (++db.seq.ds), studyId: e.studyId, space: 'dummy', cat, name: nm, label: '', versions: [version] }; db.datasets.push(d); }
   e.refs.datasets[d.id] = { v: S.latest(d).n, use: 'Generate Code' }; e.updated = dLong(); const st = S.study(e.studyId); if (st) st.updated = dLong();
-  toast(d.name + ' ' + S.latest(d).label + ' uploaded'); emit();
+  toast(d.name + ' ' + S.latest(d).label + ' uploaded', { type: 'success' }); emit();
 }
 
 /** Review 工作台的 Lock + Approve 回写（4.5）：节点在 review 才锁定；TOC 锁定后 Shell 为 empty 则自动开始生成；shell 未就绪时先记 pend */
@@ -111,5 +113,5 @@ export function rvCommit(e: EventRec, id: NodeId) {
   if (id === 'shell' && (f.st[id] === 'running' || f.st[id] === 'empty')) { f.rev.pend[id] = true; return; }
   if (f.st[id] !== 'review') return;
   ovLock(e, id); if (w) w.updated = dLong();
-  if (id === 'toc' && f.st.shell === 'empty') { ovRun(e, 'shell'); toast('TOC locked, Shell generation started'); }
+  if (id === 'toc' && f.st.shell === 'empty') { ovRun(e, 'shell'); toast('TOC locked, Shell generation started', { type: 'success' }); }
 }

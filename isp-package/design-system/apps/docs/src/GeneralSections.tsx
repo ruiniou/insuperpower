@@ -49,7 +49,7 @@ function SnackbarDemo() {
   const s = useSnackbar();
   return (
     <div className="row">
-      <Button onClick={() => s.show({ type: 'success', title: 'Saved', description: 'Your changes have been updated', actionLabel: 'View' })}>show success</Button>
+      <Button onClick={() => s.show({ type: 'success', title: 'Saved', description: 'Your changes have been updated', actionable: true, actionLabel: 'Dismiss', onAction: () => {} })}>show success</Button>
       <Button onClick={() => s.show({ type: 'error', title: 'Failed', description: 'Sticky until closed', duration: 0 })}>show error（不自动消失）</Button>
     </div>
   );
@@ -79,7 +79,7 @@ const groupItems = (n: number): ButtonGroupItem[] => ICONS.slice(0, n).map((ic, 
 export function GeneralSections() {
   const [files, setFiles] = useState<string[]>(['Verification_Plan_Data.xlsx']);
   const [chk, setChk] = useState(false);
-  const types: SnackbarType[] = ['neutral', 'success', 'info', 'warning', 'error'];
+  const types: SnackbarType[] = ['info', 'success', 'warning', 'error'];
   const iconSizes: IconButtonSize[] = ['small', 'medium', 'big', 'large'];
   return (
     <>
@@ -145,15 +145,15 @@ export function GeneralSections() {
           ))}
           <Cell label="Tooltip 真实交互（悬停 / Tab 聚焦，Esc 关闭）"><Tooltip content="Delete item"><IconButton icon="ri-delete-bin-line" aria-label="Delete" variant="outline" /></Tooltip></Cell>
         </Sec>
-        <Sec id="g-snackbar" title="反馈 · Snackbar" node="889:3809" meta="layout（Single Line / Detailed）× Type（Neutral / Success / Info / Warning / Error）；末格为队列演示（自动消失，悬停暂停）" cols={420}>
+        <Sec id="g-snackbar" title="反馈 · Snackbar" node="889:3809" meta="顶部 Toast 48 px，四种状态均可带操作，且都有关闭按钮。详细版为独立展示。" cols={420}>
           {types.map((t) => (
             <Cell key={t + 's'} label={`Single Line · ${t}`}>
-              <Snackbar type={t} title="Notification" description="Your changes have been updated" actionLabel="View" />
+              <Snackbar type={t} title="Notification" description="Your changes have been updated" actionable={t === 'success'} actionLabel="View" onAction={() => {}} />
             </Cell>
           ))}
           {types.map((t) => (
             <Cell key={t + 'd'} label={`Detailed · ${t}`}>
-              <Snackbar type={t} title="Notification" description="Your changes have been updated" actionLabel="View"
+              <Snackbar type={t} title="Notification" description="Your changes have been updated" actionable={t === 'success'} actionLabel="View" onAction={() => {}}
                 details={[{ text: 'DAT_Listing_01', status: 'done' }, { text: 'DAT_Listing_02', status: 'loading' }, { text: 'DAT_Listing_03' }]} />
             </Cell>
           ))}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Field, MemberSelect, Message, Modal, Select, Textarea } from '@wiz/react';
 import { MemberRowsEditor } from '../MemberRowsEditor';
 import {
@@ -28,12 +28,22 @@ function Footer({ confirm, onConfirm, disabled, danger }: { confirm: string; onC
   );
 }
 
+const narrowMemberDialog = '(max-width: 920px)';
+
 /** Add members：MemberRowsEditor（multi）加 Reason。有行失败时弹窗保留，成功的行移出，失败行标红 */
 export function AddMembersModal({ sid, userId }: { sid: string; userId: string | null }) {
   useDb();
+  const [narrow, setNarrow] = useState(() => window.matchMedia(narrowMemberDialog).matches);
   const [rows, setRows] = useState<MemberRow[]>(() => [emptyMemberRow(1, userId ? { userId } : {})]);
   const [reason, setReason] = useState('');
   const [er, setEr] = useState<MemberErrors>({});
+  useEffect(() => {
+    const query = window.matchMedia(narrowMemberDialog);
+    const update = () => setNarrow(query.matches);
+    query.addEventListener('change', update);
+    update();
+    return () => query.removeEventListener('change', update);
+  }, []);
   const clear = (k: string) => setEr((p) => { if (!(k in p)) return p; const n = { ...p }; delete n[k]; return n; });
   const active = activeMembers(sid).map((m) => m.userId);
   const removedMembers = membersOf(sid).filter((m) => m.status === 'REMOVED');
@@ -46,10 +56,10 @@ export function AddMembersModal({ sid, userId }: { sid: string; userId: string |
     if (!Object.keys(r.errors).length) closeModal();
   };
   return (
-    <Modal title="Add members" width={520} onClose={closeModal} footer={<Footer confirm="Add" onConfirm={submit} />}>
+    <Modal className="add-members-modal" title="Add members" width={narrow ? 520 : 1000} onClose={closeModal} footer={<Footer confirm="Add" onConfirm={submit} />}>
       <div className="app-form">
         {er.form && <Message tone="error">{er.form}</Message>}
-        <MemberRowsEditor layout="stacked" mode="multi" rows={rows} onChange={setRows} excludeUserIds={active} studyBlinded={isStudyBlinded(sid)} restorableUserIds={removed} prevAttrs={prevAttrs} attrLocked={!canChangeBlinding(sid)} errors={er} onClearError={clear} aria-label="Members to add" />
+        <MemberRowsEditor layout={narrow ? 'stacked' : 'grid'} mode="multi" rows={rows} onChange={setRows} excludeUserIds={active} studyBlinded={isStudyBlinded(sid)} restorableUserIds={removed} prevAttrs={prevAttrs} attrLocked={!canChangeBlinding(sid)} errors={er} onClearError={clear} aria-label="Members to add" />
         <Textarea label="Reason" required rows={2} maxLength={1000} placeholder="Why these people are being added" value={reason} error={er.reason}
           onChange={(e) => { setReason(e.target.value); clear('reason'); }} />
       </div>

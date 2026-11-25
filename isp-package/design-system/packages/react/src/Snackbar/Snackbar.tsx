@@ -1,10 +1,21 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode } from 'react';
+import { CloseButton } from '../CloseButton/CloseButton';
+import { FEEDBACK_ICON, type FeedbackTone } from '../Message/feedbackTone';
 import { cx } from '../cx';
 import { OnStatusButton } from '../OnStatusButton/OnStatusButton';
 import './Snackbar.css';
 
 /** Figma Snackbar 889:3809：Property 1 → layout（Single Line / Detailed）× Type */
-export type SnackbarType = 'neutral' | 'success' | 'info' | 'warning' | 'error';
+export type ToastStatus = FeedbackTone;
+export type SnackbarType = 'neutral' | ToastStatus;
+
+const STATUS_ICON: Record<SnackbarType, string> = {
+  neutral: 'ri-information-line',
+  info: 'ri-information-line',
+  success: 'ri-checkbox-circle-line',
+  warning: 'ri-error-warning-line',
+  error: 'ri-close-circle-line',
+};
 export type SnackbarLayout = 'single' | 'detailed';
 export interface SnackbarDetail {
   text: ReactNode;
@@ -20,34 +31,39 @@ export interface SnackbarProps extends Omit<HTMLAttributes<HTMLDivElement>, 'tit
   /** layout="detailed" 的明细行 */
   details?: SnackbarDetail[];
   /** 右侧操作按钮文字（On Status 按钮） */
+  actionable?: boolean;
   actionLabel?: string;
   onAction?: () => void;
   closable?: boolean;
   onClose?: () => void;
-  /** 左侧图标，默认 ri-information-line */
+  /** 左侧图标，默认按状态选择 Remix 图标 */
   icon?: string;
 }
 
 export function Snackbar({
-  type = 'neutral', layout, title, description, details, actionLabel, onAction, closable = true, onClose, icon = 'ri-information-line',
+  type = 'info', layout, title, description, details, actionable = true, actionLabel, onAction, closable = true, onClose, icon,
   className, children, ...rest
 }: SnackbarProps) {
   const lay: SnackbarLayout = layout ?? (details?.length ? 'detailed' : 'single');
-  const action = actionLabel ? <OnStatusButton onClick={onAction}>{actionLabel}</OnStatusButton> : null;
+  const content = description ?? children;
+  const feedbackTone = lay === 'single' && type !== 'neutral' ? type : null;
+  const action = actionable && actionLabel && onAction ? (
+    <OnStatusButton size={lay === 'single' ? 'small' : 'medium'} onClick={onAction}>{actionLabel}</OnStatusButton>
+  ) : null;
   const close = closable && (
-    <button type="button" className="wiz-snackbar__close" aria-label="Close" onClick={onClose}><i className="ri-close-line" aria-hidden="true" /></button>
+    <CloseButton className="wiz-snackbar__close" onClick={onClose} />
   );
   const head = (
     <>
-      <span className="wiz-snackbar__icon"><i className={icon} aria-hidden="true" /></span>
+      <span className="wiz-snackbar__icon"><i className={icon ?? (feedbackTone ? FEEDBACK_ICON[feedbackTone] : STATUS_ICON[type])} aria-hidden="true" /></span>
       <div className="wiz-snackbar__text">
-        {title != null && <div className="wiz-snackbar__title">{title}</div>}
-        {(description != null || children != null) && <div className="wiz-snackbar__desc">{description ?? children}</div>}
+        {title != null && <div className="wiz-snackbar__title" title={typeof title === 'string' ? title : undefined}>{title}</div>}
+        {content != null && <div className="wiz-snackbar__desc" title={typeof content === 'string' ? content : undefined}>{content}</div>}
       </div>
     </>
   );
   return (
-    <div role={type === 'error' ? 'alert' : 'status'} {...rest} className={cx('wiz-snackbar', `wiz-snackbar--${type}`, `wiz-snackbar--${lay}`, className)}>
+    <div role={type === 'error' ? 'alert' : 'status'} {...rest} className={cx('wiz-snackbar', `wiz-snackbar--${type}`, `wiz-snackbar--${lay}`, feedbackTone && `wiz-feedback--${feedbackTone}`, className)}>
       {lay === 'single' ? (
         <>
           {head}
@@ -75,8 +91,9 @@ export function Snackbar({
 }
 
 /* ---- 队列：SnackbarProvider + useSnackbar（自动消失、悬停暂停、aria-live） ---- */
-export interface SnackbarOptions extends Omit<SnackbarProps, 'onClose'> {
-  /** 毫秒，0 = 不自动消失，默认 4000 */
+export interface SnackbarOptions extends Omit<SnackbarProps, 'onClose' | 'layout' | 'details' | 'closable' | 'type'> {
+  type?: ToastStatus;
+  /** 毫秒，0 = 手动关闭。默认普通提示 4000 ms，带操作的提示保持显示 */
   duration?: number;
 }
 interface Ctx { show: (o: SnackbarOptions) => string; dismiss: (id: string) => void }
@@ -89,14 +106,21 @@ export function useSnackbar(): Ctx {
 }
 
 function Item({ id, opts, onDismiss }: { id: string; opts: SnackbarOptions; onDismiss: (id: string) => void }) {
-  const { duration = 4000, ...props } = opts;
-  const timer = useRef<ReturnType<typeof setTimeout>>();
-  const start = useCallback(() => { if (duration > 0) timer.current = setTimeout(() => onDismiss(id), duration); }, [duration, id, onDismiss]);
-  const stop = () => clearTimeout(timer.current);
-  useEffect(() => { start(); return stop; }, [start]);
+  const { duration, onAction, ...props } = opts;
+  const actionable = props.actionable !== false && Boolean(props.actionLabel && onAction);
+  const timeout = duration ?? (actionable ? 0 : 4000);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (hovered || focused || timeout <= 0) return;
+    const timer = setTimeout(() => onDismiss(id), timeout);
+    return () => clearTimeout(timer);
+  }, [hovered, focused, timeout, id, onDismiss]);
   return (
-    <div onMouseEnter={stop} onMouseLeave={start}>
-      <Snackbar {...props} onClose={() => onDismiss(id)} onAction={() => { props.onAction?.(); onDismiss(id); }} />
+    <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      onFocus={() => setFocused(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
+      <Snackbar {...props} layout="single" closable actionable={actionable} onClose={() => onDismiss(id)}
+        onAction={onAction && (() => { onAction(); onDismiss(id); })} />
     </div>
   );
 }
@@ -110,7 +134,7 @@ export function SnackbarProvider({ children }: { children?: ReactNode }) {
   return (
     <SnackbarCtx.Provider value={ctx}>
       {children}
-      <div className="wiz-snackbar-region" aria-live="polite">
+      <div className="wiz-snackbar-region">
         {items.map((x) => <Item key={x.id} id={x.id} opts={x.opts} onDismiss={dismiss} />)}
       </div>
     </SnackbarCtx.Provider>

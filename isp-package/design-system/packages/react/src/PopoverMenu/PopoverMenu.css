@@ -4,7 +4,7 @@
 .wiz-menu.is-right { left: auto; right: 0; }
 .wiz-menu__divider { flex: none; height: 1px; margin: var(--wiz-spacing-xs) 0; background: var(--wiz-grey-30); }
 .wiz-menu-item { display: flex; align-items: center; justify-content: space-between; gap: var(--wiz-spacing-md); box-sizing: border-box; width: 100%; height: 32px; padding: 0 var(--wiz-spacing-sm); border: 0; border-radius: var(--wiz-radius-sm); background: transparent; color: var(--wiz-main-grey); font-family: var(--wiz-text-body-2-family); font-size: var(--wiz-text-body-2-size); font-weight: var(--wiz-font-weight-regular); text-align: left; white-space: nowrap; cursor: pointer; flex: none; }
-.wiz-menu-item:hover:not(:disabled), .wiz-menu-item.is-hover, .wiz-menu-item:focus-visible { background: var(--wiz-grey-20); outline: 0; }
+.wiz-menu-item:hover:not(:disabled):not([aria-disabled="true"]), .wiz-menu-item.is-hover, .wiz-menu-item:focus-visible { background: var(--wiz-grey-20); outline: 0; }
 .wiz-menu-item.is-selected { color: var(--wiz-brand-blue-70); font-weight: var(--wiz-font-weight-medium); }
 /* 多选行：复选框占 16 见方，与触发器的 16px 前置图标左右对齐；文字与触发器名称对齐 */
 .wiz-menu-item:has(.wiz-menu-item__check) { justify-content: flex-start; gap: var(--wiz-spacing-xs-sm); }
@@ -12,7 +12,9 @@
 .wiz-menu-item__check .wiz-checkbox__hit { width: 16px; height: 16px; }
 .wiz-menu-item__check + .wiz-menu-item__label { flex: 1; text-align: left; }
 .wiz-menu-item.is-danger { color: var(--wiz-main-error); }
-.wiz-menu-item:disabled { color: var(--wiz-grey-60); cursor: default; }
+.wiz-menu-item:disabled, .wiz-menu-item[aria-disabled="true"] { color: var(--wiz-grey-60); cursor: default; }
 .wiz-menu-item__icon { flex: none; font-size: 16px; line-height: 1; margin-right: calc(var(--wiz-spacing-xs) * -1); }
 .wiz-menu-item__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .wiz-menu-item__shortcut { flex: none; color: var(--wiz-grey-60); font-family: var(--wiz-font-family-mono); }
+
+.wiz-tooltip-trigger.wiz-menu-item-tooltip { display: block; width: 100%; }

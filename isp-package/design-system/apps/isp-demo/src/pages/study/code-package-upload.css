@@ -3,6 +3,6 @@
   gap: var(--wiz-spacing-sm);
 }
 
-.wiz-upload.code-package-upload__zone {
+.study-upload__zone.wiz-upload {
   width: 100%;
 }

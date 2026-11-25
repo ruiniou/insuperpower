@@ -20,9 +20,8 @@ button { font-family: inherit; }
 .page-title { margin-right: var(--wiz-spacing-sm); display: flex; align-items: center; gap: var(--wiz-spacing-sm); font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); }
 .page-title i { font-style: normal; font-weight: var(--wiz-font-weight-regular); font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
 .page-head .wiz-seg { margin-left: calc(-1 * var(--wiz-spacing-md)); } /* 光学对齐：首项文字与页面左内容线（页签、表头文字）对齐，选中底色向左悬挂 */
-.page-head .wiz-seg__item { font-size: var(--wiz-text-body-2-size); } /* 筛选类控件 13px，不高于同行主操作 */
 .page-tools { display: flex; align-items: center; gap: var(--wiz-spacing-sm); }
-.page-scroll { flex: 1; min-height: 0; overflow: auto; }
+.page-scroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
 
 /* Studies */
 .studies .page-scroll { display: flex; flex-direction: column; }
@@ -155,6 +154,10 @@ button { font-family: inherit; }
 /* MemberRowsEditor：Add members、Edit、Create Study 共用。列：User、Role、Blinding、From、Until、删除 */
 .mre { display: flex; flex-direction: column; min-width: 0; }
 .mre-row { display: grid; grid-template-columns: minmax(150px, 2fr) minmax(120px, 1.3fr) minmax(104px, 1fr) minmax(340px, 3.4fr) 32px; gap: var(--wiz-spacing-sm); align-items: start; }
+.add-members-modal .mre-row { grid-template-columns: minmax(150px, 2fr) minmax(120px, 1.3fr) minmax(132px, 1fr) minmax(340px, 3.4fr) 32px; }
+.add-members-modal .mre-list { max-height: min(240px, 40dvh); overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; }
+.add-members-modal .mre-row--head { overflow: hidden; scrollbar-gutter: stable; }
+.add-members-modal .mre--stacked .mre-list { max-height: min(280px, 45dvh); }
 .mre-row--head { font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); padding-bottom: var(--wiz-spacing-xs); }
 .mre-th { display: inline-flex; align-items: center; gap: var(--wiz-spacing-xs); }
 .mre-tz { color: var(--wiz-color-text-muted); }
@@ -184,7 +187,7 @@ button { font-family: inherit; }
 .mre-ro { display: flex; align-items: center; min-height: 32px; }
 
 /* MemberRowsEditor 弹窗版：每人一块，字段带标签 */
-.mre--stacked { gap: var(--wiz-spacing-md); }
+.mre--stacked, .mre--stacked .mre-list { display: flex; flex-direction: column; gap: var(--wiz-spacing-md); }
 .mre-block { position: relative; display: flex; flex-direction: column; gap: 14px; }
 .mre-block + .mre-block { padding-top: var(--wiz-spacing-md); border-top: 1px solid var(--wiz-grey-30); }
 .mre-block__2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--wiz-spacing-md); align-items: start; }
@@ -224,15 +227,20 @@ a.delete-study-blocker-row:hover { background: var(--wiz-alpha-black-8); }
 .delete-study-blocker-detail { color: var(--wiz-color-text-secondary); }
 .delete-study-check-meta { display: flex; align-items: center; gap: var(--wiz-spacing-sm); margin-top: var(--wiz-spacing-sm); color: var(--wiz-color-text-secondary); font-size: var(--wiz-text-body-2-size); }
 .delete-study-check-meta button { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+
 .study-lifecycle-modal .wiz-message {
   border-radius: calc(var(--wiz-radius-xs) / 2);
 }
 
+.mre-row--head,
+.ds-pick__row--head { position: sticky; inset-block-start: 0; z-index: 3; background: var(--wiz-color-surface); }
+
 /* Blinding management */
-.blinding-page__body { --blinding-page-inset: var(--wiz-spacing-lg); gap: var(--wiz-spacing-2xl); padding: var(--blinding-page-inset); scrollbar-gutter: stable; }
+.blinding-page__body { --blinding-page-inset: var(--wiz-spacing-lg); gap: var(--wiz-spacing-2xl); padding: var(--blinding-page-inset); }
 .blinding-section { display: flex; flex: 0 0 auto; min-width: 0; flex-direction: column; gap: var(--wiz-spacing-md); }
 .blinding-section__head { display: flex; align-items: center; justify-content: space-between; gap: var(--wiz-spacing-md); }
 .blinding-section__head h2 { margin: 0; font-size: var(--wiz-text-h4-size); font-weight: var(--wiz-font-weight-semibold); }
+.blinding-content-card, .blinding-members-card { --wiz-card-radius: var(--wiz-radius-xs); }
 .blinding-members-card { --wiz-card-padding: var(--wiz-spacing-md) var(--wiz-spacing-lg); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--wiz-spacing-sm) var(--wiz-spacing-md); }
 
 .blinding-content-card.wiz-card--ring {
@@ -241,8 +249,7 @@ a.delete-study-blocker-row:hover { background: var(--wiz-alpha-black-8); }
   border: 1px solid var(--wiz-grey-40);
   box-shadow: none;
 }
-.blinding-content-scroll { overflow-x: auto; border-radius: inherit; }
-.blinding-content-grid { min-inline-size: calc(34 * var(--wiz-spacing-lg)); }
+.blinding-content-card:has(.blinding-content-grid) { min-inline-size: calc(34 * var(--wiz-spacing-lg)); }
 .blinding-section__subhead { margin: 0; padding: var(--wiz-spacing-md) var(--wiz-spacing-lg) var(--wiz-spacing-xs); font-size: var(--wiz-text-body-1-size); font-weight: var(--wiz-font-weight-semibold); }
 .blinding-section__empty { margin: 0; padding: var(--wiz-spacing-lg); color: var(--wiz-color-text-secondary); text-align: center; }
 .blinding-table { --wiz-table-row-hover-bg: transparent; }

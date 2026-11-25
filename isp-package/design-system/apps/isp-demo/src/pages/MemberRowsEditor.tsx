@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { Button, Field, IconButton, MemberSelect, Select, Tooltip } from '@wiz/react';
 import { systemTimeZone, ValidityPicker } from '@wiz/isp';
 import { attrLabel, emptyMemberRow, memberKey, type MemberErrors, type MemberRow } from '../store/members';
@@ -40,6 +40,19 @@ const optionOf = (u: { id: string; name: string; email: string }) => ({ value: u
 /** 成员行表格：Add members 弹窗、Edit 单行、Create Study 的初始成员共用。列：User、Role、Blinding、Validity（开始必填，结束可选，精确到分钟）、删除 */
 export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBlinded, mode, errors = {}, onClearError, prevAttrs = {}, attrLocked, restorableUserIds = [], lead, layout = 'grid', ...rest }: MemberRowsEditorProps) {
   const single = mode === 'single';
+  const listRef = useRef<HTMLDivElement>(null);
+  const scrollToAddedRow = useRef(false);
+  useLayoutEffect(() => {
+    if (!scrollToAddedRow.current) return;
+    scrollToAddedRow.current = false;
+    const list = listRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, [rows.length]);
+
+  const addRow = () => {
+    scrollToAddedRow.current = true;
+    onChange([...rows, emptyMemberRow(nextKey(rows))]);
+  };
   const FIELD: Record<keyof Omit<MemberRow, 'key'>, 'user' | 'role' | 'attr' | 'from' | 'to'> = { userId: 'user', role: 'role', attr: 'attr', validFrom: 'from', validUntil: 'to' };
   const patch = (key: number, p: Partial<MemberRow>) => {
     onChange(rows.map((r) => (r.key === key ? { ...r, ...p } : r)));
@@ -51,31 +64,33 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
   if (layout === 'stacked') {
     return (
       <div className="mre mre--stacked" role="group" aria-label={rest['aria-label'] ?? 'Members'}>
-        {rows.map((r, i) => {
-          const u = userById(r.userId);
-          const who = u?.name ?? 'member ' + (i + 1);
-          const prev = prevAttrs[r.userId];
-          const attrOff = (v: string) => (v === 'UNSET' && !!prev && prev !== 'UNSET') || (v === 'BLINDED' && prev === 'UNBLINDED');
-          const opts = single && u ? [optionOf(u)] : candidates.filter((c) => c.id === r.userId || !chosen(r.key).has(c.id)).map(optionOf);
-          return (
-            <div className="mre-block" key={r.key}>
-              {!single && rows.length > 1 && <Button className="mre-block__rm" variant="link" size="small" onClick={() => onChange(rows.filter((x) => x.key !== r.key))}>Remove</Button>}
-              <MemberSelect label="User" required={!single} aria-label={`User ${i + 1}`} placeholder="Select a person" disabled={single} options={opts} value={r.userId || null} error={errors[memberKey(r.key, 'user')]}
-                hint={r.userId && restorableUserIds.includes(r.userId) ? 'Will be restored with the settings below.' : undefined} onChange={(v) => patch(r.key, { userId: v })} />
-              <div className="mre-block__2">
-                <Select label="Role" aria-label={`Role of ${who}`} options={ROLES} value={r.role} error={errors[memberKey(r.key, 'role')]} onChange={(v) => patch(r.key, { role: v })} />
-                {attrLocked
-                  ? <Field label="Blinding"><span className={r.attr === 'UNSET' ? 'mre-ro app-muted' : 'mre-ro'}>{attrLabel(r.attr)}</span></Field>
-                  : <Select label="Blinding" aria-label={`Blinding of ${who}`} options={ATTRS.map((a) => ({ ...a, disabled: attrOff(a.value) }))} value={r.attr} error={errors[memberKey(r.key, 'attr')]}
-                      onChange={(v) => patch(r.key, { attr: v })} />}
+        <div className="mre-list" ref={listRef}>
+          {rows.map((r, i) => {
+            const u = userById(r.userId);
+            const who = u?.name ?? 'member ' + (i + 1);
+            const prev = prevAttrs[r.userId];
+            const attrOff = (v: string) => (v === 'UNSET' && !!prev && prev !== 'UNSET') || (v === 'BLINDED' && prev === 'UNBLINDED');
+            const opts = single && u ? [optionOf(u)] : candidates.filter((c) => c.id === r.userId || !chosen(r.key).has(c.id)).map(optionOf);
+            return (
+              <div className="mre-block" key={r.key}>
+                {!single && rows.length > 1 && <Button className="mre-block__rm" variant="link" size="small" onClick={() => onChange(rows.filter((x) => x.key !== r.key))}>Remove</Button>}
+                <MemberSelect label="User" required={!single} aria-label={`User ${i + 1}`} placeholder="Select a person" disabled={single} options={opts} value={r.userId || null} error={errors[memberKey(r.key, 'user')]}
+                  hint={r.userId && restorableUserIds.includes(r.userId) ? 'Will be restored with the settings below.' : undefined} onChange={(v) => patch(r.key, { userId: v })} />
+                <div className="mre-block__2">
+                  <Select label="Role" aria-label={`Role of ${who}`} options={ROLES} value={r.role} error={errors[memberKey(r.key, 'role')]} onChange={(v) => patch(r.key, { role: v })} />
+                  {attrLocked
+                    ? <Field label="Blinding"><span className={r.attr === 'UNSET' ? 'mre-ro app-muted' : 'mre-ro'}>{attrLabel(r.attr)}</span></Field>
+                    : <Select label="Blinding" aria-label={`Blinding of ${who}`} options={ATTRS.map((a) => ({ ...a, disabled: attrOff(a.value) }))} value={r.attr} error={errors[memberKey(r.key, 'attr')]}
+                        onChange={(v) => patch(r.key, { attr: v })} />}
+                </div>
+                {!attrLocked && !studyBlinded && <p className="mre-hint mre-hint--tight">Blinding is not enforced while the study is not blinded.</p>}
+                <ValidityPicker endable label={<>Validity <span className="mre-tz">{systemTimeZone().label}</span></>} required aria-label={`Validity, ${who}`} placeholder="Select start time" value={{ start: r.validFrom, end: r.validUntil || null }}
+                  error={errors[memberKey(r.key, 'from')] ?? errors[memberKey(r.key, 'to')]} onChange={(v) => patch(r.key, { validFrom: v.start, validUntil: v.end ?? '' })} />
               </div>
-              {!attrLocked && !studyBlinded && <p className="mre-hint mre-hint--tight">Blinding is not enforced while the study is not blinded.</p>}
-              <ValidityPicker endable label={<>Validity <span className="mre-tz">{systemTimeZone().label}</span></>} required aria-label={`Validity, ${who}`} placeholder="Select start time" value={{ start: r.validFrom, end: r.validUntil || null }}
-                error={errors[memberKey(r.key, 'from')] ?? errors[memberKey(r.key, 'to')]} onChange={(v) => patch(r.key, { validFrom: v.start, validUntil: v.end ?? '' })} />
-            </div>
-          );
-        })}
-        {!single && <Button className="mre-add-link" variant="link" leftIcon="ri-add-line" onClick={() => onChange([...rows, emptyMemberRow(nextKey(rows))])}>Add another</Button>}
+            );
+          })}
+        </div>
+        {!single && <Button className="mre-add-link" variant="link" leftIcon="ri-add-line" onClick={addRow}>Add another</Button>}
       </div>
     );
   }
@@ -96,41 +111,43 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
         <span role="columnheader" className="mre-th">Validity<span className="mre-tz">{systemTimeZone().label}</span></span>
         <span role="columnheader"><span className="mre-sr">Action</span></span>
       </div>
-      {lead}
-      {rows.map((r, i) => {
-        const u = userById(r.userId);
-        const who = u?.name ?? 'member ' + (i + 1);
-        const prev = prevAttrs[r.userId];
-          const attrOff = (v: string) => (v === 'UNSET' && !!prev && prev !== 'UNSET') || (v === 'BLINDED' && prev === 'UNBLINDED');
-        const opts = single && u ? [optionOf(u)] : candidates.filter((c) => c.id === r.userId || !chosen(r.key).has(c.id)).map(optionOf);
-        return (
-          <div className="mre-item" key={r.key} role="row">
-            <div className="mre-row">
-              <span role="cell">
-                <MemberSelect aria-label={`User ${i + 1}`} placeholder="Select a person" disabled={single} options={opts} value={r.userId || null} error={errors[memberKey(r.key, 'user')]}
-                  onChange={(v) => patch(r.key, { userId: v })} />
-              </span>
-              <span role="cell"><Select aria-label={`Role of ${who}`} options={ROLES} value={r.role} error={errors[memberKey(r.key, 'role')]} onChange={(v) => patch(r.key, { role: v })} /></span>
-              <span role="cell">
-                {attrLocked
-                  ? <span className={r.attr === 'UNSET' ? 'mre-ro app-muted' : 'mre-ro'}>{attrLabel(r.attr)}</span>
-                  : <Select aria-label={`Blinding of ${who}`} options={ATTRS.map((a) => ({ ...a, disabled: attrOff(a.value) }))} value={r.attr} error={errors[memberKey(r.key, 'attr')]} onChange={(v) => patch(r.key, { attr: v })} />}
-              </span>
-              <span role="cell">
-                <ValidityPicker endable aria-label={`Validity, ${who}`} placeholder="Select start time" value={{ start: r.validFrom, end: r.validUntil || null }}
-                  error={errors[memberKey(r.key, 'from')] ?? errors[memberKey(r.key, 'to')]} onChange={(v) => patch(r.key, { validFrom: v.start, validUntil: v.end ?? '' })} />
-              </span>
-              <span role="cell" className="mre-act">
-                {!single && <IconButton size="compact" icon="ri-close-circle-fill" aria-label={`Remove row ${i + 1}`} title="Remove" onClick={() => onChange(rows.filter((x) => x.key !== r.key))} />}
-              </span>
+      <div className="mre-list" role="rowgroup" ref={listRef}>
+        {lead}
+        {rows.map((r, i) => {
+          const u = userById(r.userId);
+          const who = u?.name ?? 'member ' + (i + 1);
+          const prev = prevAttrs[r.userId];
+            const attrOff = (v: string) => (v === 'UNSET' && !!prev && prev !== 'UNSET') || (v === 'BLINDED' && prev === 'UNBLINDED');
+          const opts = single && u ? [optionOf(u)] : candidates.filter((c) => c.id === r.userId || !chosen(r.key).has(c.id)).map(optionOf);
+          return (
+            <div className="mre-item" key={r.key} role="row">
+              <div className="mre-row">
+                <span role="cell">
+                  <MemberSelect aria-label={`User ${i + 1}`} placeholder="Select a person" disabled={single} options={opts} value={r.userId || null} error={errors[memberKey(r.key, 'user')]}
+                    onChange={(v) => patch(r.key, { userId: v })} />
+                </span>
+                <span role="cell"><Select aria-label={`Role of ${who}`} options={ROLES} value={r.role} error={errors[memberKey(r.key, 'role')]} onChange={(v) => patch(r.key, { role: v })} /></span>
+                <span role="cell">
+                  {attrLocked
+                    ? <span className={r.attr === 'UNSET' ? 'mre-ro app-muted' : 'mre-ro'}>{attrLabel(r.attr)}</span>
+                    : <Select aria-label={`Blinding of ${who}`} options={ATTRS.map((a) => ({ ...a, disabled: attrOff(a.value) }))} value={r.attr} error={errors[memberKey(r.key, 'attr')]} onChange={(v) => patch(r.key, { attr: v })} />}
+                </span>
+                <span role="cell">
+                  <ValidityPicker endable aria-label={`Validity, ${who}`} placeholder="Select start time" value={{ start: r.validFrom, end: r.validUntil || null }}
+                    error={errors[memberKey(r.key, 'from')] ?? errors[memberKey(r.key, 'to')]} onChange={(v) => patch(r.key, { validFrom: v.start, validUntil: v.end ?? '' })} />
+                </span>
+                <span role="cell" className="mre-act">
+                  {!single && <IconButton size="compact" icon="ri-close-circle-fill" aria-label={`Remove row ${i + 1}`} title="Remove" onClick={() => onChange(rows.filter((x) => x.key !== r.key))} />}
+                </span>
+              </div>
+              {r.userId && restorableUserIds.includes(r.userId) && <p className="mre-hint">Will be restored with the settings below.</p>}
             </div>
-            {r.userId && restorableUserIds.includes(r.userId) && <p className="mre-hint">Will be restored with the settings below.</p>}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
       {!single && (
         <div className="mre-add">
-          <Button variant="link" leftIcon="ri-add-line" onClick={() => onChange([...rows, emptyMemberRow(nextKey(rows))])}>{rows.length ? 'Add another' : 'Add member'}</Button>
+          <Button variant="link" leftIcon="ri-add-line" onClick={addRow}>{rows.length ? 'Add another' : 'Add member'}</Button>
         </div>
       )}
     </div>
