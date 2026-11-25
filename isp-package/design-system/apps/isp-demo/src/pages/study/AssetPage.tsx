@@ -1,125 +1,111 @@
-import { useMemo, useState } from 'react';
-import { Button, Dropdown, Status, Table, type TableColumn } from '@wiz/react';
-import { baselinesOf, baselineAsset, BL_CODES, BL_NAME, slotCarriedFrom } from '../../store/baseline';
+import { useState } from 'react';
+import { Button, Dropdown, EmptyState, Table, type TableColumn } from '@wiz/react';
+import { assetDirectoryType, CODE_TYPES, FILE_UPLOAD_GROUPS, TYPE } from '../../store/assets';
+import { canMaintainAsset } from '../../store/assetPermissions';
 import { S } from '../../store/selectors';
-import { isWritable } from '../../store/role';
 import { useDb } from '../../store/store';
+import type { Asset, Version } from '../../store/types';
 import { openDrawer, openModal, ui } from '../../store/ui';
-import type { Asset, BaselineCode } from '../../store/types';
-import { eventsLbl, PageToolbar, RowMenu, SearchBox } from './common';
+import { PageToolbar, RowMenu, SearchBox } from './common';
 import { AssetVersionDrawer } from './VersionDrawer';
 
-const ICON: Record<string, string> = { doc: 'ri-file-text-line', list: 'ri-list-check', shell: 'ri-table-line', code: 'ri-code-s-slash-line' };
-const BL = 'Study Baseline', OTHER = 'Other assets';
+const ICON: Record<string, string> = { doc: 'ri-file-text-line', list: 'ri-list-check', shell: 'ri-table-line', code: 'ri-code-line' };
 
-/** 行类型：bh 当前 Baseline 标题；slot / slotph Protocol 与 SAP 槽位；earlier 折叠开关；eb 更早的 Baseline（只读）；asset / assetph 其他资产；none 筛选无结果 */
-interface Row {
-  grp: string; kind: 'bh' | 'slot' | 'slotph' | 'earlier' | 'eb' | 'asset' | 'assetph' | 'none';
-  a?: Asset; n?: number; code?: string; label?: string; by?: string; date?: string; summary?: string; from?: string | null; count?: number; open?: boolean;
+const TYPE_GROUPS = ['Study Design', 'Study Spec', 'Code', 'Other'];
+
+interface AssetRow {
+  asset: Asset;
+  version: Version;
+  type: string;
 }
 
-const nameCell = (r: Row, indent = false) => {
-  const cls = 'app-nm' + (indent ? ' app-indent' : '');
-  if (r.kind === 'slotph' || r.kind === 'assetph') return <span className={cls + ' app-muted'}><i className={ICON.doc} aria-hidden="true" /><span className="app-ell">Not uploaded</span></span>;
-  return <span className={cls}><i className={ICON[r.a!.icon] || ICON.doc} aria-hidden="true" /><span className="app-ell">{r.a!.name}</span></span>;
-};
+const uploadTypes = [
+  ...FILE_UPLOAD_GROUPS.flatMap(({ label: group, codes }) =>
+    codes.map((value) => ({ value, group, label: value === 'PROTOCOL' ? 'Protocol' : TYPE(value)!.name }))),
+  ...Object.entries(CODE_TYPES).map(([value, label]) => ({ value, label, group: 'Code Package' })),
+];
 
-/** #/study/:sid/asset：Study Baseline（Protocol 与 SAP 的版本组合）+ Other assets 表；点资产行开版本抽屉 */
+function openVersion({ asset, version }: AssetRow) {
+  openDrawer({ kind: 'assetV', id: asset.id, n: version.n });
+}
+
 export function AssetPage({ sid }: { sid: string }) {
   useDb();
-  const writable = isWritable(sid);
-  const [tp, setTp] = useState('All');
-  const [q, setQ] = useState('');
-  const [earlierOpen, setEarlierOpen] = useState(false);
-  const isOther = (a: Asset) => !BL_CODES.includes(a.code as BaselineCode);
-  const real = S.assetsOf(sid).filter(isOther), ph = S.placeholdersOf(sid).filter(isOther);
-  const types = ['All', ...Array.from(new Set(real.map((a) => a.tl)))];
-  const needle = q.trim().toLowerCase();
-  const vis = real.filter((a) => (tp === 'All' || a.tl === tp) && (!needle || (a.name + ' ' + a.tl).toLowerCase().includes(needle)));
-  const phVis = ph.filter((p) => (tp === 'All' || p.tl === tp) && !needle);
+  const [type, setType] = useState('');
+  const [query, setQuery] = useState('');
+  const assets = S.assetsOf(sid);
+  const categories = assets.map((asset) => ({ asset, ...assetDirectoryType(asset) }));
+  const types = [...new Map(categories.map(({ name, group }) => [name, { name, group }])).values()]
+    .sort((a, b) => TYPE_GROUPS.indexOf(a.group) - TYPE_GROUPS.indexOf(b.group) || a.name.localeCompare(b.name));
+  const needle = query.trim().toLowerCase();
+  const selectedCategories = categories.filter(({ name }) => !type || name === type);
+  const rows: AssetRow[] = selectedCategories.flatMap(({ asset, name }) => asset.versions
+      .filter((version) => [asset.name, version.file, version.label]
+        .some((value) => value?.toLowerCase().includes(needle)))
+      .map((version) => ({ asset, version, type: name })));
 
-  const list = baselinesOf(sid), cur = list[0], earlier = list.slice(1);
-  const rows: Row[] = [];
-  if (cur) rows.push({ grp: BL, kind: 'bh', label: cur.label, by: cur.by, date: cur.date });
-  BL_CODES.forEach((code) => {
-    const slot = cur?.slots[code], a = slot ? S.asset(slot.assetId) : undefined;
-    if (cur && slot && a) rows.push({ grp: BL, kind: 'slot', a, n: slot.n, code, from: slotCarriedFrom(list, 0, code) });
-    else rows.push({ grp: BL, kind: 'slotph', a: baselineAsset(sid, code) ?? ({ code, tl: BL_NAME[code] } as Asset), code });
-  });
-  if (earlier.length) {
-    rows.push({ grp: BL, kind: 'earlier', count: earlier.length, open: earlierOpen });
-    if (earlierOpen) earlier.forEach((b) => rows.push({ grp: BL, kind: 'eb', label: b.label, date: b.date, by: b.by,
-      summary: BL_CODES.filter((c) => b.slots[c]).map((c) => { const s = b.slots[c]!; return BL_NAME[c] + ' ' + (S.vOf(S.asset(s.assetId)!, s.n)?.label ?? ''); }).join(', ') }));
-  }
-  if (real.length) {
-    if (vis.length + phVis.length) { vis.forEach((a) => rows.push({ grp: OTHER, kind: 'asset', a })); phVis.forEach((p) => rows.push({ grp: OTHER, kind: 'assetph', a: p, code: p.code })); }
-    else rows.push({ grp: OTHER, kind: 'none' });
-  } else phVis.forEach((p) => rows.push({ grp: OTHER, kind: 'assetph', a: p, code: p.code }));
+  const filteredCode = !type ? undefined
+    : type === 'Mock Shell' ? 'TFL_MOCKSHELL'
+    : selectedCategories[0]?.asset.code;
+  const allowedUploadTypes = uploadTypes.filter(({ value }) => canMaintainAsset(sid, value));
+  const canUploadFilteredType = allowedUploadTypes.some(({ value }) => value === filteredCode);
+  const upload = (code: string, assetId: string | null = null, replaceVersion?: number) =>
+    openModal({ kind: 'uploadAsset', sid, assetId, code, replaceVersion });
+  const uploadButton = canUploadFilteredType && filteredCode ? (
+    <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => upload(filteredCode)}>Upload</Button>
+  ) : allowedUploadTypes.length > 0 && (!type || !uploadTypes.some(({ value }) => value === filteredCode)) ? (
+    <Dropdown variant="primary" icon="ri-upload-2-line" label="Upload" align="right" width={228}
+      items={allowedUploadTypes} onSelect={(code) => upload(code)} />
+  ) : null;
+  const columns: TableColumn[] = [
+    { key: 'name', header: 'Name', render: (_value, { asset, version }: AssetRow) => (
+      <span className="app-nm">
+        <i className={ICON[asset.icon] ?? ICON.doc} aria-hidden="true" />
+        <span className="app-ell" title={version.file || asset.name}>{version.file || asset.name}</span>
+      </span>
+    ) },
+    { key: 'type', header: 'Type', width: 180, render: (_value, row: AssetRow) => row.type },
+    { key: 'version', header: 'Version', width: 112, render: (_value, { version }: AssetRow) => version.label },
+    { key: 'uploaded', header: 'Uploaded', width: 120, render: (_value, { version }: AssetRow) => version.date },
+    { key: 'more', header: '', width: 56, align: 'right', render: (_value, row: AssetRow) => canMaintainAsset(sid, row.asset.code) ? (
+      <RowMenu
+        label={`${row.asset.name} ${row.version.label}`}
+        items={[
+          { label: 'Upload new version', value: 'upload' },
+          { label: 'Replace content', value: 'replace', disabled: S.assetUsers(row.asset, row.version.n).length > 0 },
+        ]}
+        onSelect={(value) => upload(row.asset.code, row.asset.id, value === 'replace' ? row.version.n : undefined)}
+      />
+    ) : null },
+  ];
 
-  const upload = (code: string, assetId: string | null = null) => openModal({ kind: 'uploadAsset', sid, assetId, code });
-  const columns = useMemo<TableColumn[]>(() => [
-    { key: 'name', header: 'Name', render: (_v, r: Row) => {
-      if (r.kind === 'bh') return <span className="app-inline"><span className="app-nm">{r.label}</span><Status variant="style1" tone="blue" textCase="normal">Current</Status></span>;
-      if (r.kind === 'earlier') return <Button variant="link" size="small" leftIcon={r.open ? 'ri-arrow-down-s-line' : 'ri-arrow-right-s-line'} aria-expanded={r.open} onClick={() => setEarlierOpen((o) => !o)}>Earlier baselines ({r.count})</Button>;
-      if (r.kind === 'eb') return <span className="app-inline app-indent"><span className="app-nm">{r.label}</span><span className="app-muted app-ell">{r.summary}</span></span>;
-      if (r.kind === 'none') return <span className="app-muted">No assets match</span>;
-      return nameCell(r, r.kind === 'slot' || r.kind === 'slotph');
-    } },
-    { key: 'tl', header: 'Type', width: 100, render: (_v, r: Row) => (r.a && (r.kind === 'slot' || r.kind === 'slotph' || r.kind === 'asset' || r.kind === 'assetph') ? r.a.tl : '') },
-    { key: 'ver', header: 'Version', width: 200, render: (_v, r: Row) => {
-      if (r.kind === 'slotph' || r.kind === 'assetph') return <span className="app-muted">—</span>;
-      if (r.kind === 'slot') { const v = S.vOf(r.a!, r.n!)!; return r.from ? <span className="app-muted app-ell">{v.label} from {r.from}</span> : <span className="app-ell">{v.label}</span>; }
-      if (r.kind === 'asset') return S.latest(r.a!).label;
-      return '';
-    } },
-    { key: 'source', header: 'Source', width: 220, render: (_v, r: Row) => (r.kind === 'bh' || r.kind === 'eb' ? <span className="app-muted">{r.by}</span> : r.kind === 'slotph' || r.kind === 'assetph' ? 'Required' : r.kind === 'slot' || r.kind === 'asset' ? r.a!.source : '') },
-    { key: 'used', header: 'Used by', width: 220, render: (_v, r: Row) => {
-      if (r.kind === 'slotph' || r.kind === 'assetph') return <span className="app-muted">—</span>;
-      if (r.kind === 'slot') { const c = S.assetUsers(r.a!, r.n).length; return c ? eventsLbl(c) : '—'; }
-      if (r.kind === 'asset') {
-        const lv = S.latest(r.a!), users = S.assetUsers(r.a!), behind = users.filter((e) => e.refs.assets[r.a!.id].v < lv.n).length;
-        return <span className="app-inline">{users.length ? eventsLbl(users.length) : '—'}{behind > 0 && <Status variant="style1" tone="yellow" textCase="normal">{behind} behind</Status>}</span>;
-      }
-      return '';
-    } },
-    { key: 'upd', header: 'Updated', width: 80, render: (_v, r: Row) => {
-      if (r.kind === 'slotph' || r.kind === 'assetph') return <span className="app-muted">—</span>;
-      if (r.kind === 'bh' || r.kind === 'eb') return r.date;
-      if (r.kind === 'slot') return S.vOf(r.a!, r.n!)!.date;
-      if (r.kind === 'asset') return S.latest(r.a!).date;
-      return '';
-    } },
-    { key: 'more', header: '', width: 96, align: 'right', render: (_v, r: Row) => {
-      // 归档只读：上传入口不渲染
-      if (!writable) {
-        if (r.kind === 'slot') return <RowMenu label={r.a!.name} items={[{ label: 'Open Versions', value: 'open' }]}
-          onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'assetV', id: r.a!.id, n: r.n }); }} />;
-        if (r.kind === 'asset') return <RowMenu label={r.a!.name} items={[{ label: 'Open Versions', value: 'open' }]}
-          onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'assetV', id: r.a!.id }); }} />;
-        return null;
-      }
-      if (r.kind === 'slotph' || r.kind === 'assetph') return <Button variant="link" size="small" leftIcon="ri-upload-2-line" onClick={() => upload(r.code!)}>Upload</Button>;
-      if (r.kind === 'slot') return <RowMenu label={r.a!.name} items={[{ label: 'Open Versions', value: 'open' }, { label: 'Upload New Version', value: 'up' }]}
-        onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'assetV', id: r.a!.id, n: r.n }); if (v === 'up') upload(r.a!.code, r.a!.id); }} />;
-      if (r.kind === 'asset') return <RowMenu label={r.a!.name} items={[{ label: 'Open Versions', value: 'open' }, { label: 'Upload New Version', value: 'up' }, { label: 'Download…', value: 'dl', disabled: true }]}
-        onSelect={(v) => { if (v === 'open') openDrawer({ kind: 'assetV', id: r.a!.id }); if (v === 'up') upload(r.a!.code, r.a!.id); }} />;
-      return null;
-    } },
-  ], [sid, writable]);
+  const activeRow = ({ asset, version }: AssetRow) =>
+    ui.drawer?.kind === 'assetV' && ui.drawer.id === asset.id && ui.drawer.n === version.n;
 
-  const clickable = (r: Row) => r.kind === 'slot' || r.kind === 'asset';
-  const isActive = (r: Row) => clickable(r) && ui.drawer?.kind === 'assetV' && ui.drawer.id === r.a!.id && (r.kind === 'asset' || ui.drawer.n == null || ui.drawer.n === r.n);
   return (
     <div className="studies">
-      <PageToolbar
-        filters={<Dropdown size="medium" shadow="none" filterName="Type" label={tp} width={180} items={types.map((t) => ({ label: t, value: t, selected: t === tp }))} onSelect={(v) => setTp(String(v))} />}
-        search={<SearchBox value={q} onChange={setQ} placeholder="Search assets" />}
-        actions={writable && <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => upload('')}>Upload File</Button>} />
+      {assets.length > 0 && <PageToolbar
+        filters={<Dropdown size="medium" shadow="none" filterName="Type" label={type || 'All'} width={200}
+          items={[
+            { label: 'All', value: '', selected: !type },
+            ...types.map(({ name, group }) => ({ label: name, value: name, group, selected: name === type })),
+          ]}
+          onSelect={(value) => setType(String(value))} />}
+        search={<SearchBox value={query} onChange={setQuery} placeholder="Search name or version" />}
+        actions={uploadButton}
+      />}
       <div className="page-scroll">
-        <Table variant="plain" columnLayout="fixed" rowHeight={48} columns={columns} rows={rows} aria-label="Assets" groupBy={(r: Row) => r.grp} renderGroup={(g) => g}
-          onRowClick={(r: Row) => openDrawer({ kind: 'assetV', id: r.a!.id, n: r.kind === 'slot' ? r.n : undefined })} rowClickable={clickable} activeRow={isActive} />
+        {rows.length > 0 ? (
+          <Table variant="plain" columnLayout="fixed" rowHeight={48} columns={columns} rows={rows}
+            aria-label="Assets" onRowClick={openVersion} activeRow={activeRow} />
+        ) : assets.length === 0 ? (
+          <EmptyState title="No assets yet" action={uploadButton || undefined} />
+        ) : (
+          <EmptyState title={selectedCategories.length ? "No matching assets" : "No assets in this type"}
+            description={selectedCategories.length ? "Try a different search or type." : undefined} />
+        )}
       </div>
-      {ui.drawer?.kind === 'assetV' && <AssetVersionDrawer id={ui.drawer.id} n={ui.drawer.n} />}
+      {ui.drawer?.kind === 'assetV' && <AssetVersionDrawer key={ui.drawer.id} id={ui.drawer.id} n={ui.drawer.n} />}
     </div>
   );
 }

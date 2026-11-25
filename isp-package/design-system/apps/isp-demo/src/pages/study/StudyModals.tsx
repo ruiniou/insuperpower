@@ -1,28 +1,31 @@
-import { useState } from 'react';
-import { Avatar, Button, Checkbox, Field, FileBox, Input, Message, Modal, PickList, Radio, Select, Textarea } from '@wiz/react';
+import './code-package-upload.css';
+import { useRef, useState } from 'react';
+import { Avatar, Button, Checkbox, Field, FileBox, Input, Message, Modal, PickList, Select, Textarea, Upload } from '@wiz/react';
 import { go } from '../../router';
 import { AddMembersModal, ChangeBlindingModal, EditMemberModal, RemoveMemberModal, TransferAdminModal } from './MemberModals';
 import { ArchiveStudyModal, RestoreStudyModal } from './ArchiveModals';
 import { EnableBlindingModal, UnblindStudyModal } from './BlindingModals';
-import { CAT_ORDER, FILE_OK, TYPE, TYPES, SCOPES } from '../../store/assets';
+import { suggestNextVersion, VERSION_FORMAT_HINT } from '../../store/versions';
+import { CODE_TYPES, FILE_OK, TYPE, SCOPES } from '../../store/assets';
 import { hrefEvent, hrefStudy } from '../../store/actions';
-import { baselineTag, baselineUsers, currentBaseline, isBlCode, baselineAsset, suggestBaselineLabel } from '../../store/baseline';
+import { baselineTag } from '../../store/baseline';
 import { cutOf, SPACE, S } from '../../store/selectors';
 import { DS_FILE_OK } from '../../store/actions';
-import { createEvent, defaultEventRefs, savePinnedDatasets, SPEC_OF, specOptionsFor, uploadAsset, uploadDataset, usedByEvents, type BaselineMode, type Errors } from '../../store/study';
+import { createEvent, defaultEventRefs, replaceAssetContent, savePinnedDatasets, SPEC_OF, specOptionsFor, uploadAsset, uploadDataset, type Errors } from '../../store/study';
 import { closeModal, modalUi } from '../../store/ui';
+import { readCodeFolder, readCodeZip, readDroppedCodePackage } from '../../store/codePackage';
 import { useDb } from '../../store/store';
-import type { Asset } from '../../store/types';
+import type { Asset, CodePackageMember } from '../../store/types';
 
 const verOptions = (a: Asset) => a.versions.map((v, i) => ({ value: String(v.n), label: [v.label, baselineTag(a, v.n), i === 0 ? 'Latest' : ''].filter(Boolean).join(', ') }));
 const initials = (n: string) => n.split(' ').map((x) => x[0]).join('').toUpperCase();
 
-function Footer({ note, confirm, onConfirm }: { note?: string; confirm: string; onConfirm: () => void }) {
+function Footer({ note, confirm, onConfirm, disabled }: { note?: string; confirm: string; onConfirm: () => void; disabled?: boolean }) {
   return (
     <>
       {note && <span className="app-modal-note">{note}</span>}
       <Button onClick={closeModal}>Cancel</Button>
-      <Button variant="primary" onClick={onConfirm}>{confirm}</Button>
+      <Button variant="primary" disabled={disabled} onClick={onConfirm}>{confirm}</Button>
     </>
   );
 }
@@ -65,62 +68,124 @@ function CreateEventModal({ sid }: { sid: string }) {
   );
 }
 
-const typeOptions = CAT_ORDER.flatMap((c) => [{ value: '__' + c, label: c, disabled: true }, ...TYPES.filter((t) => t.cat === c).map((t) => ({ value: t.code, label: t.name }))]);
-
-/** Upload File / Upload new version：版本模式锁定类型与名称；版本号由用户填写。Protocol 与 SAP 另选 Baseline */
-function UploadAssetModal({ sid, assetId, code: code0 }: { sid: string; assetId: string | null; code: string }) {
+/** Registration and version append share the same form. */
+function UploadAssetModal({ sid, assetId, code: code0, replaceVersion }: { sid: string; assetId: string | null; code: string; replaceVersion?: number }) {
   const a = assetId ? S.asset(assetId) ?? null : null;
-  const cur = currentBaseline(sid), curUsers = cur ? baselineUsers(cur).length : 0;
-  const [f, setF] = useState({ code: a ? a.code : code0, name: a ? a.name : '', meta: {} as Record<string, string>, fileName: '', reason: '', version: '', baselineMode: 'new' as BaselineMode, baselineLabel: suggestBaselineLabel(sid) });
+  const replacing = replaceVersion !== undefined;
+  const [original] = useState(() => a && replacing ? S.vOf(a, replaceVersion) : undefined);
+  const [f, setF] = useState({ code: a?.code ?? code0, name: a?.name ?? '', meta: {} as Record<string, string>, fileName: '', fileContent: undefined as File | undefined, reason: '', version: suggestNextVersion(a?.versions ?? []) });
   const [er, setEr] = useState<Errors>({});
-  const t = TYPE(f.code);
-  const bl = isBlCode(f.code);
-  const existing = a ?? (isBlCode(f.code) ? baselineAsset(sid, f.code) ?? null : null);
-  const submit = () => {
-    const r = uploadAsset({ sid, assetId, ...f, name: existing ? existing.name : f.name });
-    if ('errors' in r) { setEr(r.errors); return; }
-    closeModal(); go(hrefStudy(sid, 'asset'), { drawer: { kind: 'assetV', id: r.asset.id } });
+  const [selectedPackage, setSelectedPackage] = useState<{ name: string; members: CodePackageMember[] } | null>(null);
+  const [reading, setReading] = useState(false);
+  const folderInput = useRef<HTMLInputElement | null>(null);
+  const zipInput = useRef<HTMLInputElement>(null);
+  const loadPackage = async (load: () => Promise<{ name: string; members: CodePackageMember[] }>) => {
+    if (reading) return;
+    setSelectedPackage(null);
+    setReading(true);
+    setEr((current) => ({ ...current, file: '' }));
+    try {
+      setSelectedPackage(await load());
+    } catch (error) {
+      setEr((current) => ({ ...current, file: error instanceof Error && error.message
+        ? error.message : 'Could not read the selected package.' }));
+    } finally {
+      setReading(false);
+    }
   };
-  const setType = (code: string) => {
-    const ex = isBlCode(code) ? baselineAsset(sid, code) : undefined;
-    setF({ ...f, code, meta: {}, name: ex ? ex.name : a ? a.name : existing ? '' : f.name });
-    setEr({ ...er, code: '' });
+  const packageUpload = Object.hasOwn(CODE_TYPES, f.code);
+  const t = TYPE(f.code);
+  const submit = () => {
+    const content = { fileName: f.fileName, fileContent: f.fileContent, packageMembers: selectedPackage?.members };
+    if (replacing && (!assetId || !original)) {
+      setEr({ form: 'This version is unavailable. Close the form and open it again.' });
+      return;
+    }
+    const r = replacing
+      ? replaceAssetContent(sid, assetId!, original!, content)
+      : uploadAsset({ sid, assetId, ...f, ...content });
+    if ('errors' in r) { setEr(r.errors); return; }
+    closeModal();
+    go(hrefStudy(sid, 'asset'), { drawer: { kind: 'assetV', id: r.asset.id, n: r.versionNumber } });
   };
   return (
-    <Modal title={a ? 'Upload New Version' : 'Upload File'} width={600} onClose={closeModal}
-      footer={<Footer confirm={a ? 'Upload version' : 'Upload'} onConfirm={submit} />}>
+    <Modal title={replacing ? 'Replace Content' : a ? 'Upload New Version' : 'Upload'} width={600} onClose={closeModal}
+      footer={<Footer confirm={replacing ? 'Replace' : a ? 'Upload version' : 'Upload'} onConfirm={submit} disabled={reading || !f.code} />}>
       <div className="app-form">
-        {a && <Message tone="info">Adding a new version of <b>{a.name}</b> (currently {S.latest(a).label}). Type is locked to the existing asset.</Message>}
         {er.form && <Message tone="error">{er.form}</Message>}
-        <Select label="File type" required searchable placeholder="Select a type…" disabled={!!a} options={typeOptions} value={f.code} error={er.code}
-          hint={a ? 'Locked when adding a version.' : 'From the 31 asset types. Write permission per role is checked by type.'}
-          onChange={setType} />
-        <Field label="File" required error={er.file} hint={'Allowed: ' + FILE_OK.map((x) => '.' + x).join(' ')}>
-          <FileBox accept={FILE_OK.map((x) => '.' + x).join(',')} fileName={f.fileName} invalid={!!er.file}
-            onChange={(n) => { setF({ ...f, fileName: n, name: f.name.trim() ? f.name : n.replace(/\.[^.]+$/, '') }); setEr({ ...er, file: '' }); }} />
-        </Field>
-        <Input label="Name" required readOnly={!!existing} placeholder="Filled from the file name if empty" maxLength={200} value={existing ? existing.name : f.name} error={er.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
-        <Input label="Version" required maxLength={64} value={f.version} error={er.version} onChange={(e) => { setF({ ...f, version: e.target.value }); setEr({ ...er, version: '' }); }} />
-        {bl && (
-          <Field label="Baseline" required>
-            <div className="app-bl-opt">
-              <Radio name="baseline-mode" label="Start a new baseline" checked={f.baselineMode === 'new' || !cur} onChange={() => { setF({ ...f, baselineMode: 'new' }); setEr({ ...er, baseline: '' }); }} />
-              {(f.baselineMode === 'new' || !cur) && (
-                <div className="app-bl-opt__sub">
-                  <Input aria-label="Baseline version" maxLength={64} value={f.baselineLabel} error={er.baseline} onChange={(e) => { setF({ ...f, baselineLabel: e.target.value }); setEr({ ...er, baseline: '' }); }} />
-                </div>
-              )}
-              {cur && <Radio name="baseline-mode" label={'Add to current baseline ' + cur.label} disabled={curUsers > 0} checked={f.baselineMode === 'current'} onChange={() => { setF({ ...f, baselineMode: 'current' }); setEr({ ...er, baseline: '' }); }} />}
-              {cur && curUsers > 0 && <span className="app-hint app-bl-opt__sub">{usedByEvents(curUsers)}</span>}
-            </div>
-          </Field>
+        {a && <Input label="Asset" readOnly value={a.name} />}
+        <Input label="Asset type" readOnly value={f.code === 'PROTOCOL' ? 'Protocol' : t?.name ?? a?.tl ?? f.code} error={er.code} />
+        {replacing && <Input label="Version" readOnly value={original?.label ?? ''} />}
+        {packageUpload ? (
+          <>
+            {!a && <Input label="Package name" required value={f.name} error={er.name}
+              onChange={(event) => setF({ ...f, name: event.target.value })} />}
+            <Field label={replacing ? "Replacement package" : "Package"} required error={er.file}>
+              <div className="code-package-upload">
+                <input ref={(element) => {
+                  folderInput.current = element;
+                  element?.setAttribute('webkitdirectory', '');
+                }} type="file" hidden multiple disabled={reading}
+                  onChange={(event) => {
+                    const files = Array.from(event.target.files ?? []);
+                    event.target.value = '';
+                    if (!files.length) return;
+                    void loadPackage(async () => ({
+                      name: files[0].webkitRelativePath.split('/')[0] || files[0].name,
+                      members: await readCodeFolder(files),
+                    }));
+                  }} />
+                <input ref={zipInput} type="file" hidden accept=".zip" disabled={reading}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = '';
+                    if (file) void loadPackage(async () => ({ name: file.name, members: await readCodeZip(file) }));
+                  }} />
+                <Upload className="code-package-upload__zone" multiple={false} selectedInZone disabled={reading}
+                  title={reading ? 'Checking package…' : 'Drop one folder or ZIP file'}
+                  hint="1–100 files, up to 512 KB total. ZIP files must also be 512 KB or smaller and unencrypted."
+                  files={selectedPackage ? [selectedPackage.name] : []}
+                  onFilesChange={(files) => {
+                    if (files.length) return;
+                    setSelectedPackage(null);
+                    setEr((current) => ({ ...current, file: '' }));
+                  }}
+                  onFilesDrop={(data) => { void loadPackage(() => readDroppedCodePackage(data)); }}
+                  browseActions={<>
+                    <Button size="small" disabled={reading} onClick={() => folderInput.current?.click()}>Choose folder</Button>
+                    <Button size="small" disabled={reading} onClick={() => zipInput.current?.click()}>Choose ZIP file</Button>
+                  </>} />
+              </div>
+            </Field>
+          </>
+        ) : (
+          <>
+            <Field label={replacing ? "Replacement file" : "File"} required error={er.file} hint={'Allowed: ' + FILE_OK.map((x) => '.' + x).join(' ')}>
+              <FileBox accept={FILE_OK.map((x) => '.' + x).join(',')} fileName={f.fileName} invalid={!!er.file}
+                onRemove={() => {
+                  setF((current) => ({ ...current, fileName: '', fileContent: undefined }));
+                  setEr((current) => ({ ...current, file: '' }));
+                }}
+                onChange={(name, fileContent) => {
+                  setF({ ...f, fileName: name, fileContent, name: f.name.trim() ? f.name : name.replace(/\.[^.]+$/, '') });
+                  setEr({ ...er, file: '' });
+                }} />
+            </Field>
+            {!a && <Input label="Name" required placeholder="Filled from the file name if empty" maxLength={200}
+              value={f.name} error={er.name} onChange={(event) => setF({ ...f, name: event.target.value })} />}
+          </>
         )}
-        <Field label="Metadata">
-          {t ? (t.req.length ? (
-            <div className="app-form__row2">{t.req.map((r) => <Input key={t.code + r} label={r} required value={f.meta[r] || ''} error={er['m:' + r]} onChange={(e) => setF({ ...f, meta: { ...f.meta, [r]: e.target.value } })} />)}</div>
-          ) : <span className="app-hint">No required metadata for this type.</span>) : <span className="app-hint">Select a type to see its required metadata.</span>}
-        </Field>
-        <Textarea label="Reason" rows={2} maxLength={1000} placeholder={a ? 'Defaults to "Appended file version"' : 'Optional'} value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} />
+        {!replacing && <>
+          <Input label="Version" required value={f.version} hint={VERSION_FORMAT_HINT} error={er.version}
+            onChange={(event) => { setF({ ...f, version: event.target.value }); setEr({ ...er, version: '' }); }} />
+          {!!t?.req.length && (
+            <div className="app-form__row2">
+              {t.req.map((field) => <Input key={field} label={field} required value={f.meta[field] || ''}
+                error={er['m:' + field]} onChange={(event) => setF({ ...f, meta: { ...f.meta, [field]: event.target.value } })} />)}
+            </div>
+          )}
+          <Textarea label="Reason" rows={2} maxLength={1000} placeholder="Optional" value={f.reason} onChange={(e) => setF({ ...f, reason: e.target.value })} />
+        </>}
       </div>
     </Modal>
   );
@@ -146,13 +211,18 @@ function UploadDatasetModal({ sid, dsId, mode: mode0 }: { sid: string; dsId: str
         {er.form && <Message tone="error">{er.form}</Message>}
         <Input label="Dataset name" placeholder="Uses the file name if empty" readOnly={!!d} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <div className="app-form__row2">
-          <Select label="Data type" required disabled={!!d} options={['RawData', 'SDTM', 'ADaM']} value={f.cat} onChange={(v) => setF({ ...f, cat: v, spec: '' })} />
-          <Select label="Mode" required placeholder="Select mode…" disabled={!!d} options={['Dummy', 'Synthetic', 'PROD']} value={f.mode} error={er.mode}
-            onChange={(v) => { setF({ ...f, mode: v }); setEr({ ...er, mode: '' }); }} />
+          {d ? <>
+            <Input label="Data type" readOnly value={f.cat} />
+            <Input label="Mode" readOnly value={f.mode} />
+          </> : <>
+            <Select label="Data type" required options={['RawData', 'SDTM', 'ADaM']} value={f.cat} onChange={(v) => setF({ ...f, cat: v, spec: '' })} />
+            <Select label="Mode" required placeholder="Select mode…" options={['Dummy', 'Synthetic', 'PROD']} value={f.mode} error={er.mode}
+              onChange={(v) => { setF({ ...f, mode: v }); setEr({ ...er, mode: '' }); }} />
+          </>}
         </div>
-        <span className="app-hint">Mode is never inferred from the file name.</span>
+        {!d && <span className="app-hint">Mode is never inferred from the file name.</span>}
         <div className="app-form__row2">
-          <Input label="Version" required maxLength={64} value={f.version} error={er.version} onChange={(e) => { setF({ ...f, version: e.target.value }); setEr({ ...er, version: '' }); }} />
+          <Input label="Version" required maxLength={64} value={f.version} hint={VERSION_FORMAT_HINT} error={er.version} onChange={(e) => { setF({ ...f, version: e.target.value }); setEr({ ...er, version: '' }); }} />
           <Input label="Cut" placeholder="e.g. C01" maxLength={64} value={f.cut} onChange={(e) => setF({ ...f, cut: e.target.value })} />
         </div>
         {specs.length > 0 && <Select label={SPEC_OF[f.cat].label} placeholder="None" options={[{ value: NO_SPEC, label: 'None' }, ...specs.map((x) => ({ value: x, label: x }))]} value={f.spec || undefined} onChange={(v) => setF({ ...f, spec: v === NO_SPEC ? '' : v })} />}
@@ -207,7 +277,7 @@ export function StudyModals() {
   if (m.kind === 'enableBlinding') return <EnableBlindingModal key={key} sid={m.sid} />;
   if (m.kind === 'unblindStudy') return <UnblindStudyModal key={key} sid={m.sid} />;
   if (m.kind === 'createEvent') return <CreateEventModal key={key} sid={m.sid} />;
-  if (m.kind === 'uploadAsset') return <UploadAssetModal key={key} sid={m.sid} assetId={m.assetId} code={m.code} />;
+  if (m.kind === 'uploadAsset') return <UploadAssetModal key={key} sid={m.sid} assetId={m.assetId} code={m.code} replaceVersion={m.replaceVersion} />;
   if (m.kind === 'chooseDatasets') return <ChooseDatasetsModal key={key} eid={m.eid} space={m.space} />;
   if (m.kind === 'addMembers') return <AddMembersModal key={key} sid={m.sid} userId={m.userId} />;
   if (m.kind === 'editMember') return <EditMemberModal key={key} sid={m.sid} memberId={m.memberId} />;

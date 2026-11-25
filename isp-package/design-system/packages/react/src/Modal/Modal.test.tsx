@@ -129,3 +129,12 @@ describe('Tooltip / Upload / 按钮', () => {
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
   });
 });
+
+it('restores the upload picker after removing the single selection inside the zone', () => {
+  const { container } = render(<Upload selectedInZone multiple={false} defaultFiles={['programs.zip']}
+    browseActions={<button type="button">Browse package</button>} />);
+  expect(container.querySelector('.wiz-upload__zone--selected')).toContainElement(screen.getByText('programs.zip'));
+  expect(screen.queryByRole('button', { name: 'Browse package' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Remove programs.zip' }));
+  expect(screen.getByRole('button', { name: 'Browse package' })).toBeVisible();
+});

@@ -1,0 +1,8 @@
+.code-package-upload {
+  display: grid;
+  gap: var(--wiz-spacing-sm);
+}
+
+.wiz-upload.code-package-upload__zone {
+  width: 100%;
+}

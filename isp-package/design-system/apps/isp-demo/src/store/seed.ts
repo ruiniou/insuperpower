@@ -1,9 +1,15 @@
-import { TENANT_USERS, userByName } from './people';
+import { DEMO_TENANT, TENANT_USERS, userByName } from './people';
 import type { AuditAction, Baseline, BlindAttr, Database, EventRec, Flow, MemberRole, Study, Version } from './types';
 
 export const V = (n: number, by: string, date: string, note = '', o: Partial<Version> = {}): Version => ({ n, label: 'v' + n, by, date, note, ...o });
 /** Asset 版本：label 是用户填写的版本号 */
 const AV = (n: number, label: string, by: string, date: string, note = ''): Version => V(n, by, date, note, { label });
+
+const sampleSapFile = (version: Version): Version => ({
+  ...version,
+  file: `STU-001-SAP-${version.label}-sample.txt`,
+  fileContent: `Demo sample only\nStudy: STU-001\nAsset: SAP\nVersion: ${version.label}\n`,
+});
 
 export const newFlow = (o: Partial<Flow> = {}): Flow => ({
   ui: { sel: null, edge: null, inputsOpen: false, confirm: null },
@@ -22,13 +28,13 @@ export function createSeed(): Database {
     members: [],
     audit: [],
     studies: ([
-      { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'User Name', lifecycle: 'ACTIVE', blinding: 'Unblinded', updated: 'Oct 31, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
-      { id: 'STU-002', name: 'Breast Cancer Phase II Trial', ta: 'Oncology', phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE', blinding: 'Blinded', updated: 'Oct 26, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' },
-      { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', admin: 'Wang Fang', lifecycle: 'ARCHIVED', blinding: 'Unblinded', updated: 'Sep 18, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Wang Fang', createdAt: 'Mar 5, 2026' },
-    ] as Study[]).concat(Array.from({ length: 45 }, (_, i): Study => ({ id: 'TMP-' + String(i + 1).padStart(3, '0'), name: 'Temp pagination study ' + (i + 1), ta: ['Oncology', 'Hematology', 'Cardiology'][i % 3], phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE' as const, blinding: 'Unblinded' as const, updated: 'Oct 20, 2026', desc: '', tenant: 'Demo Tenant', createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' }))), // TEMP-PAGINATION 预览用，看完删除
+      { id: 'STU-001', name: 'NSCLC Phase III Trial', ta: 'Oncology', phase: 'Phase III', admin: 'User Name', lifecycle: 'ACTIVE', blinding: 'Unblinded', updated: 'Oct 31, 2026', desc: '', tenant: DEMO_TENANT, createdBy: 'Wang Fang', createdAt: 'Aug 12, 2026' },
+      { id: 'STU-002', name: 'Breast Cancer Phase II Trial', ta: 'Oncology', phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE', blinding: 'Blinded', updated: 'Oct 26, 2026', desc: '', tenant: DEMO_TENANT, createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' },
+      { id: 'STU-003', name: 'Lymphoma Phase I Trial', ta: 'Hematology', phase: 'Phase I', admin: 'Wang Fang', lifecycle: 'ARCHIVED', blinding: 'Unblinded', updated: 'Sep 18, 2026', desc: '', tenant: DEMO_TENANT, createdBy: 'Wang Fang', createdAt: 'Mar 5, 2026' },
+    ] as Study[]).concat(Array.from({ length: 45 }, (_, i): Study => ({ id: 'TMP-' + String(i + 1).padStart(3, '0'), name: 'Temp pagination study ' + (i + 1), ta: ['Oncology', 'Hematology', 'Cardiology'][i % 3], phase: 'Phase II', admin: 'Zhao Min', lifecycle: 'ACTIVE' as const, blinding: 'Unblinded' as const, updated: 'Oct 20, 2026', desc: '', tenant: DEMO_TENANT, createdBy: 'Zhao Min', createdAt: 'Sep 2, 2026' }))), // TEMP-PAGINATION 预览用，看完删除
     assets: [
       { id: 'A1', studyId: 'STU-001', name: 'STU-001 Protocol', code: 'PROTOCOL', tl: 'Protocol', icon: 'doc', source: 'Uploaded', versions: [AV(2, 'Amendment 1', 'Li Wei', 'Oct 12', 'Approved'), AV(1, 'v1.0', 'Li Wei', 'Oct 3')] },
-      { id: 'A2', studyId: 'STU-001', name: 'STU-001 SAP', code: 'SAP', tl: 'SAP', icon: 'doc', source: 'Uploaded', versions: [AV(3, 'v3.0', 'Chen Yu', 'Oct 28', 'Revised sensitivity analyses'), AV(2, 'v2.0', 'Li Wei', 'Oct 15', 'Approved'), AV(1, 'v1.0', 'Li Wei', 'Oct 3')] },
+      { id: 'A2', studyId: 'STU-001', name: 'STU-001 SAP', code: 'SAP', tl: 'SAP', icon: 'doc', source: 'Uploaded', versions: [AV(3, 'v3.0', 'Chen Yu', 'Oct 28', 'Revised sensitivity analyses'), AV(2, 'v2.0', 'Li Wei', 'Oct 15', 'Approved'), AV(1, 'v1.0', 'Li Wei', 'Oct 3')].map(sampleSapFile) },
       { id: 'A3', studyId: 'STU-001', name: 'STU-001 CRF', code: 'CRF', tl: 'CRF', icon: 'doc', source: 'Uploaded', versions: [AV(2, 'v2.0', 'Zhao Min', 'Oct 22', 'Revised forms'), AV(1, 'v1.0', 'Zhao Min', 'Oct 14', 'Approved')] },
       { id: 'A4', studyId: 'STU-001', name: 'STU-001 ADaM Spec', code: 'ADAM_SPEC', tl: 'ADaM Spec', icon: 'doc', source: 'Uploaded', versions: [AV(3, 'v1.2', 'Li Wei', 'Oct 20'), AV(2, 'v1.1', 'Li Wei', 'Oct 14'), AV(1, 'v1.0', 'Li Wei', 'Oct 8')] },
       { id: 'A5', studyId: 'STU-001', name: 'STU-001 SDTM Spec', code: 'SDTM_SPEC', tl: 'SDTM Spec', icon: 'doc', source: 'Uploaded', versions: [AV(1, 'v1.0', 'Li Wei', 'Oct 20')] },

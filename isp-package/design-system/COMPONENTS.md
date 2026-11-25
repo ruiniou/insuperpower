@@ -45,7 +45,7 @@
 
 | 组件 | 用途 | 状态 |
 |---|---|---|
-| Field / FieldBox | 表单控件的外壳（标签、必填、错误、hint） | 稳定 |
+| Field / FieldBox | 表单控件的外壳（标签、必填、错误、hint）。Input / Textarea 的 `readOnly` 使用只读外观，内容可选择和复制 | 稳定 |
 | Input | 单行输入 | 稳定 |
 | Textarea | 多行输入 | 稳定 |
 | Select | 单选下拉 | 稳定 |
@@ -56,8 +56,8 @@
 | Radio | 单选框 | 稳定 |
 | Switch | 开关 | 稳定 |
 | Chip | 标签、筛选芯片 | 稳定 |
-| Upload / FileChip | 文件上传区与文件芯片 | 稳定 |
-| FileBox | 文件选择框（单文件，显示文件名） | 无 Wiz 稿 |
+| Upload / FileChip | 拖放或点击选文件，显示与移除已选文件。`browseActions` 可在上传区内提供选择入口，`onFilesDrop` 可接管拖放并自行校验文件或文件夹。`selectedInZone` 在选中后以 FileChip 替换上传区内容 | 稳定 |
+| FileBox | 紧凑的单文件选择框，显示文件名，回传原始 `File`，`onRemove` 可显示移除操作 | 无 Wiz 稿 |
 | PickList | 多选列表选择器（带列头，选中行浅蓝底） | 无 Wiz 稿 |
 | CheckPill | 整块可点的勾选胶囊（多选） | 无 Wiz 稿 |
 | Divider | 分隔线 | 稳定 |

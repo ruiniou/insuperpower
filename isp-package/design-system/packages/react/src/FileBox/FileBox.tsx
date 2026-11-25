@@ -1,4 +1,5 @@
 import { useRef, type HTMLAttributes } from 'react';
+import { IconButton } from '../IconButton/IconButton';
 import { Button } from '../Button/Button';
 import { cx } from '../cx';
 import './FileBox.css';
@@ -10,6 +11,7 @@ export interface FileBoxProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onCh
   /** 例如 ".pdf,.docx"，传给原生 input */
   accept?: string;
   onChange?: (fileName: string, file: File) => void;
+  onRemove?: () => void;
   buttonLabel?: string;
   emptyText?: string;
   disabled?: boolean;
@@ -17,7 +19,7 @@ export interface FileBoxProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onCh
   invalid?: boolean;
 }
 
-export function FileBox({ fileName, accept, onChange, buttonLabel = 'Choose file…', emptyText = 'No file chosen', disabled, invalid, className, ...rest }: FileBoxProps) {
+export function FileBox({ fileName, accept, onChange, onRemove, buttonLabel = 'Choose file…', emptyText = 'No file chosen', disabled, invalid, className, ...rest }: FileBoxProps) {
   const input = useRef<HTMLInputElement>(null);
   return (
     <div {...rest} className={cx('wiz-filebox', invalid && 'is-invalid', disabled && 'is-disabled', className)}>
@@ -25,6 +27,8 @@ export function FileBox({ fileName, accept, onChange, buttonLabel = 'Choose file
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onChange?.(f.name, f); e.target.value = ''; }} />
       <Button size="small" leftIcon="ri-upload-2-line" disabled={disabled} onClick={() => input.current?.click()}>{buttonLabel}</Button>
       <span className={cx('wiz-filebox__name', fileName && 'has-file')} title={fileName || undefined}>{fileName || emptyText}</span>
+      {fileName && onRemove && <IconButton icon="ri-close-line" size="small" disabled={disabled}
+        aria-label={`Remove ${fileName}`} tooltip="Remove file" onClick={onRemove} />}
     </div>
   );
 }

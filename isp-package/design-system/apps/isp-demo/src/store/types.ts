@@ -6,7 +6,8 @@ export type Loop = 'A' | 'B';
 export type Rec<T> = Record<NodeId, T>;
 
 /** n 是内部序号（不显示）；label 是上传时用户填写的版本号 */
-export interface Version { n: number; label: string; by: string; date: string; note: string; file?: string; meta?: Record<string, string> }
+export interface CodePackageMember { path: string; size: number; hash: string; content: Blob }
+export interface Version { n: number; label: string; by: string; date: string; note: string; file?: string; fileContent?: Blob | string; packageMembers?: readonly CodePackageMember[]; meta?: Record<string, string> }
 export type Lifecycle = 'ACTIVE' | 'ARCHIVED' | 'DELETED';
 export type Blinding = 'Unblinded' | 'Blinded';
 export interface Study {
@@ -60,8 +61,9 @@ export interface EventRec {
 export type AuditAction =
   | 'Study created' | 'Study details updated'
   | 'Member added' | 'Member updated' | 'Blinding status changed' | 'Member removed'
-  | 'Study Admin transferred' | 'Event Owner changed' | 'Version registered'
+  | 'Study Admin transferred' | 'Event Owner changed' | 'Version registered' | 'Version content replaced'
   | 'Study archived' | 'Study restored' | 'Blinding enabled' | 'Study unblinded';
+
 /** 审计记录：time 为本地 ISO 串 YYYY-MM-DDTHH:mm；changes 一句话；reason 可空 */
 export interface AuditEvent { id: string; studyId: string; time: string; actor: string; action: AuditAction; changes: string; reason: string | null }
 export interface Database {
@@ -70,6 +72,7 @@ export interface Database {
   studies: Study[]; members: StudyMember[]; assets: Asset[]; baselines: Baseline[]; datasets: Dataset[]; protections: Protection[]; events: EventRec[];
   /** 只增，新的在前 */
   audit: AuditEvent[];
+  /** Simulated inputs for sources without a Demo service. */
 }
 
 export interface NodeDef {

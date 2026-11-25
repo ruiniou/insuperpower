@@ -1,4 +1,4 @@
-import { useRef, useState, type DragEvent, type HTMLAttributes } from 'react';
+import { useRef, useState, type DragEvent, type HTMLAttributes, type ReactNode } from 'react';
 import { cx } from '../cx';
 import { useControllable } from '../useControllable';
 import './Upload.css';
@@ -13,19 +13,25 @@ export interface UploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onCha
   disabled?: boolean;
   /** 是否在下方渲染已选文件条，默认 true */
   showFiles?: boolean;
+  /** Replace the picker with the selected file list inside the same zone. */
+  selectedInZone?: boolean;
   /** 受控文件名列表 */
   files?: string[];
   defaultFiles?: string[];
   onFilesChange?: (files: string[]) => void;
   /** 覆盖点击行为（不弹原生选择器） */
   onBrowse?: () => void;
+  /** Alternate file pickers rendered inside a non-interactive upload zone. */
+  browseActions?: ReactNode;
+  /** Handles dropped content when the upload zone uses custom pickers. */
+  onFilesDrop?: (data: DataTransfer) => void;
   /** 强制 hover 样式，供展示用 */
   forceHover?: boolean;
 }
 
 export function Upload({
   title = 'Drag and Drop or Browse File', hint = 'Supports .docx, .xlsx ; Max 50 MB', accept, multiple = true, disabled, showFiles = true,
-  files, defaultFiles = [], onFilesChange, onBrowse, forceHover, className, ...rest
+  selectedInZone = false, files, defaultFiles = [], onFilesChange, onBrowse, browseActions, onFilesDrop, forceHover, className, ...rest
 }: UploadProps) {
   const [list, setList] = useControllable<string[]>(files, defaultFiles, onFilesChange);
   const [drag, setDrag] = useState(false);
@@ -33,34 +39,59 @@ export function Upload({
 
   const addNames = (names: string[]) => { if (names.length) setList(multiple ? [...list, ...names] : names.slice(0, 1)); };
   const browse = () => { if (disabled) return; if (onBrowse) onBrowse(); else input.current?.click(); };
-  const onDrop = (e: DragEvent) => { e.preventDefault(); setDrag(false); if (!disabled) addNames(Array.from(e.dataTransfer.files).map((f) => f.name)); };
+  const onDrop = (e: DragEvent) => {
+    e.preventDefault();
+    setDrag(false);
+    if (disabled) return;
+    if (onFilesDrop) onFilesDrop(e.dataTransfer);
+    else addNames(Array.from(e.dataTransfer.files).map((f) => f.name));
+  };
+
+  const customBrowse = browseActions != null;
+  const acceptsDrop = !customBrowse || Boolean(onFilesDrop);
+
+  const fileList = showFiles && list.length > 0 && (
+    <ul className="wiz-upload__files">
+      {list.map((name, i) => (
+        <li key={`${name}-${i}`}>
+          <FileChip name={name} onRemove={disabled ? undefined : () => setList(list.filter((_, j) => j !== i))} />
+        </li>
+      ))}
+    </ul>
+  );
+
+  if (selectedInZone && fileList) {
+    return (
+      <div {...rest} className={cx('wiz-upload', className)}>
+        <div className="wiz-upload__zone--selected"
+          onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'none'; }}
+          onDrop={(event) => event.preventDefault()}>
+          {fileList}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div {...rest} className={cx('wiz-upload', className)}>
       <div
-        role="button"
-        tabIndex={disabled ? -1 : 0}
+        role={customBrowse ? undefined : "button"}
+        tabIndex={customBrowse ? undefined : disabled ? -1 : 0}
         aria-disabled={disabled || undefined}
-        className={cx('wiz-upload__zone', (drag || forceHover) && 'is-hover', disabled && 'is-disabled')}
-        onClick={browse}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); browse(); } }}
-        onDragOver={(e) => { e.preventDefault(); if (!disabled) setDrag(true); }}
-        onDragLeave={() => setDrag(false)}
-        onDrop={onDrop}
+        className={cx('wiz-upload__zone', customBrowse && 'wiz-upload__zone--custom-browse', (drag || forceHover) && 'is-hover', disabled && 'is-disabled')}
+        onClick={customBrowse ? undefined : browse}
+        onKeyDown={customBrowse ? undefined : (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); browse(); } }}
+        onDragOver={!acceptsDrop ? undefined : (e) => { e.preventDefault(); if (!disabled) setDrag(true); }}
+        onDragLeave={!acceptsDrop ? undefined : () => setDrag(false)}
+        onDrop={acceptsDrop ? onDrop : undefined}
       >
         <i className="ri-file-add-fill wiz-upload__icon" aria-hidden="true" />
         <span className="wiz-upload__title">{title}</span>
         {hint && <span className="wiz-upload__hint">{hint}</span>}
-        <input ref={input} type="file" hidden accept={accept} multiple={multiple} disabled={disabled} data-testid="wiz-upload-input"
-          onChange={(e) => { addNames(Array.from(e.target.files ?? []).map((f) => f.name)); e.target.value = ''; }} />
+        {customBrowse ? <div className="wiz-upload__actions">{browseActions}</div> : <input ref={input} type="file" hidden accept={accept} multiple={multiple} disabled={disabled} data-testid="wiz-upload-input"
+          onChange={(e) => { addNames(Array.from(e.target.files ?? []).map((f) => f.name)); e.target.value = ''; }} />}
       </div>
-      {showFiles && list.length > 0 && (
-        <ul className="wiz-upload__files">
-          {list.map((name, i) => (
-            <li key={`${name}-${i}`}><FileChip name={name} onRemove={disabled ? undefined : () => setList(list.filter((_, j) => j !== i))} /></li>
-          ))}
-        </ul>
-      )}
+      {fileList}
     </div>
   );
 }

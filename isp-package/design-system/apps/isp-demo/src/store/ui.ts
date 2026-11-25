@@ -12,7 +12,7 @@ export function applyPendingDrawer() { ui.drawer = ui.pending ?? null; ui.pendin
 /** 弹窗状态：由页头按钮 / 行菜单 / 抽屉按钮打开，StudyModals 统一渲染 */
 export type ModalState =
   | { kind: 'createEvent'; sid: string }
-  | { kind: 'uploadAsset'; sid: string; assetId: string | null; code: string }
+  | { kind: 'uploadAsset'; sid: string; assetId: string | null; code: string; replaceVersion?: number }
   | { kind: 'uploadDataset'; sid: string; dsId: string | null; mode: string }
   | { kind: 'chooseDatasets'; eid: string; space: string }
   | { kind: 'addMembers'; sid: string; userId: string | null }

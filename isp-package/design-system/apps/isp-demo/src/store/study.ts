@@ -1,16 +1,18 @@
-import { DS_CATS, FILE_OK, MODE_SPACE, SHORT, TYPE } from './assets';
+import { canMaintainAsset } from './assetPermissions';
+import { CODE_TYPES, DS_CATS, FILE_UPLOAD_GROUPS, FILE_OK, MODE_SPACE, SHORT, TYPE } from './assets';
+import { parseVersionLabel, storedVersionLabel, VERSION_FORMAT_HINT } from './versions';
+import { validateCodePackage } from './codePackage';
 import { DS_FILE_OK } from './actions';
 import { dLong, dShort } from './dates';
 import { SPACES } from './config';
 import { S } from './selectors';
 import { can, isWritable } from './role';
 import { newFlow, V } from './seed';
-import { baselineAsset, baselinesOf, baselineUsers, BL_NAME, currentBaseline, isBlCode } from './baseline';
 import { emit, getDb, toast } from './store';
 import { diff, logAudit } from './audit';
 import { memberKey, peopleOf, todayIso, validateMemberRows, validDate, type MemberRow } from './members';
-import { ME_USER, userById } from './people';
-import type { Asset, Baseline, BlindAttr, Dataset, EventRec, MemberRole } from './types';
+import { DEMO_TENANT, ME_USER, userById } from './people';
+import type { Asset, BlindAttr, CodePackageMember, Dataset, EventRec, MemberRole, Version } from './types';
 
 export { memberKey, peopleOf, validDate };
 
@@ -48,40 +50,65 @@ export function createEvent(f: CreateEventForm): { errors: Errors } | { id: stri
   return { id, nAssets: n };
 }
 
-export type BaselineMode = 'new' | 'current';
-export interface UploadAssetForm { sid: string; assetId: string | null; code: string; name: string; meta: Record<string, string>; fileName: string; reason: string; version: string; baselineMode: BaselineMode; baselineLabel: string }
-export const usedByEvents = (n: number) => 'Used by ' + n + (n === 1 ? ' event' : ' events') + '. Start a new baseline instead.';
-const sameLabel = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+interface AssetUploadContent {
+  fileName: string;
+  fileContent?: Blob;
+  packageMembers?: readonly CodePackageMember[];
+}
 
-/** 上传文件 / 新版本：新文件会顶替同类型的「Required · Not uploaded」占位。
- *  Protocol 与 SAP：Study 内各只有一个 Asset，已有则追加版本；同时新建 Baseline（未改的槽位沿用 Current）或替换 Current 的同类槽位（Current 被引用时不可替换） */
-export function uploadAsset(f: UploadAssetForm): { errors: Errors } | { asset: Asset } {
+export interface UploadAssetForm extends AssetUploadContent {
+  sid: string;
+  assetId: string | null;
+  code: string;
+  name: string;
+  meta: Record<string, string>;
+  reason: string;
+  version: string;
+}
+
+function assetContentError(content: AssetUploadContent, isPackage: boolean): string | undefined {
+  if (isPackage) {
+    try {
+      validateCodePackage(content.packageMembers ?? []);
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Choose a valid code package.';
+    }
+  } else if (!content.fileName) return 'Choose a file.';
+  else if (!FILE_OK.includes(extOf(content.fileName))) {
+    return 'Unsupported format. Allowed: ' + FILE_OK.map((ext) => '.' + ext).join(' ');
+  }
+}
+
+/** Register a separate asset, or append a version to an explicit target. */
+export function uploadAsset(f: UploadAssetForm): { errors: Errors } | { asset: Asset; versionNumber: number } {
   if (!isWritable(f.sid)) return { errors: { form: studyReadOnly } };
   const db = getDb(), er: Errors = {}, t = TYPE(f.code);
-  const bl = !!t && isBlCode(t.code) ? t.code : null;
-  const a = (f.assetId ? S.asset(f.assetId) ?? null : null) ?? (bl ? baselineAsset(f.sid, bl) ?? null : null);
-  if (a && a.studyId !== f.sid) return { errors: { form: 'Choose an asset in this study.' } };
-  if (!t) er.code = 'Select a file type.';
-  const name = f.name.trim(); if (!name) er.name = 'Enter a name or choose a file.';
-  const version = f.version.trim();
-  if (!version) er.version = 'Enter a version.';
-  else if (a && a.versions.some((v) => sameLabel(v.label, version))) er.version = 'This version already exists.';
-  if (t) t.req.forEach((r) => { if (!(f.meta[r] || '').trim()) er['m:' + r] = 'Required.'; });
-  if (!f.fileName) er.file = 'Choose a file.'; else if (FILE_OK.indexOf(extOf(f.fileName)) < 0) er.file = 'Unsupported format. Allowed: ' + FILE_OK.map((x) => '.' + x).join(' ');
-  const list = baselinesOf(f.sid), cur = list[0];
-  const asNew = !!bl && (f.baselineMode === 'new' || !cur);
-  const blLabel = f.baselineLabel.trim();
-  if (bl && asNew) {
-    if (!blLabel) er.baseline = 'Enter a baseline version.';
-    else if (list.some((b) => sameLabel(b.label, blLabel))) er.baseline = 'This baseline version already exists.';
-  } else if (bl && cur) {
-    const n = baselineUsers(cur).length;
-    if (n) er.baseline = usedByEvents(n);
+  const a = f.assetId === null ? undefined : S.asset(f.assetId);
+  if (f.assetId !== null && (!a || a.studyId !== f.sid || a.required || a.code !== f.code)) {
+    return { errors: { form: 'Choose a valid asset in this study.' } };
   }
-  if (Object.keys(er).length) return { errors: er };
+  if (!canMaintainAsset(f.sid, f.code)) {
+    return { errors: { form: 'You do not have permission to maintain this asset type.' } };
+  }
+  const isPackage = Boolean(CODE_TYPES[f.code]);
+  if (!t || (!a && !isPackage && !FILE_UPLOAD_GROUPS.some(({ codes }) => codes.includes(f.code)))) {
+    er.code = 'Select a file type.';
+  }
+  const name = a?.name ?? f.name.trim();
+  if (!name) er.name = 'Enter a name or choose a file.';
+  const version = parseVersionLabel(f.version);
+  if (!f.version.trim()) er.version = 'Enter a version.';
+  else if (!version) er.version = VERSION_FORMAT_HINT;
+  else if (a?.versions.some((v) => storedVersionLabel(v.label) === version)) er.version = 'This version already exists.';
+  if (t) t.req.forEach((r) => { if (!(f.meta[r] || '').trim()) er['m:' + r] = 'Required.'; });
+  const fileError = assetContentError(f, isPackage);
+  if (fileError) er.file = fileError;
+  if (!version || Object.keys(er).length) return { errors: er };
   const note = f.reason.trim() || (a ? 'Appended file version' : 'Initial upload');
   const nextN = a ? S.latest(a).n + 1 : 1;
-  const ver = V(nextN, db.me.name, dShort(), note, { label: version, meta: { ...f.meta }, file: f.fileName });
+  const ver = V(nextN, db.me.name, dShort(), note, { label: version, meta: { ...f.meta }, ...(isPackage
+    ? { packageMembers: f.packageMembers?.slice() }
+    : { file: f.fileName, ...(f.fileContent && { fileContent: f.fileContent }) }) });
   let target = a;
   if (a) a.versions.unshift(ver);
   else {
@@ -91,19 +118,41 @@ export function uploadAsset(f: UploadAssetForm): { errors: Errors } | { asset: A
   }
   const st = S.study(f.sid); if (st) st.updated = dLong();
   logAudit({ studyId: f.sid, action: 'Version registered', changes: target!.name + ' ' + version, reason: f.reason });
-  if (bl) {
-    const slot = { assetId: target!.id, n: nextN };
-    if (asNew) {
-      const b: Baseline = { id: 'B' + (++db.seq.baseline), studyId: f.sid, label: blLabel, slots: { ...(cur?.slots ?? {}), [bl]: slot }, by: db.me.name, date: dShort(), note: f.reason.trim() };
-      db.baselines.unshift(b);
-      toast('Uploaded ' + BL_NAME[bl] + ' ' + version + '. Baseline ' + blLabel + ' created.');
-    } else {
-      cur!.slots[bl] = slot;
-      toast('Uploaded ' + BL_NAME[bl] + ' ' + version + ' to Baseline ' + cur!.label + '.');
-    }
-  } else toast((a ? 'New version ' : 'Uploaded ') + target!.name + ' ' + version);
+  toast('Uploaded ' + target!.name + ' ' + version + '.');
   emit();
-  return { asset: target! };
+  return { asset: target!, versionNumber: nextN };
+}
+
+export function replaceAssetContent(
+  sid: string, assetId: string, original: Version, content: AssetUploadContent,
+): { errors: Errors } | { asset: Asset; versionNumber: number } {
+  if (!isWritable(sid)) return { errors: { form: studyReadOnly } };
+  const asset = S.asset(assetId);
+  if (!asset || asset.studyId !== sid || !canMaintainAsset(sid, asset.code)) {
+    return { errors: { form: 'You do not have permission to maintain this version.' } };
+  }
+  const index = asset.versions.findIndex((version) => version.n === original.n);
+  // Each content change installs a new Version object while keeping its stable version number.
+  if (index < 0 || asset.versions[index] !== original) {
+    return { errors: { form: 'This version has changed. Close the form and open it again.' } };
+  }
+  if (S.assetUsers(asset, original.n).length > 0) {
+    return { errors: { form: 'An Event references this version. Upload a new version instead.' } };
+  }
+  const isPackage = Object.hasOwn(CODE_TYPES, asset.code);
+  const fileError = assetContentError(content, isPackage);
+  if (fileError) return { errors: { file: fileError } };
+  if (!isPackage && !content.fileContent?.size) return { errors: { file: 'Choose a non-empty file.' } };
+
+  asset.versions[index] = { ...original, ...(isPackage
+    ? { packageMembers: content.packageMembers?.slice() }
+    : { file: content.fileName, fileContent: content.fileContent }) };
+  const study = S.study(sid);
+  if (study) study.updated = dLong();
+  logAudit({ studyId: sid, action: 'Version content replaced', changes: asset.name + ' ' + original.label });
+  toast('Replaced content for ' + asset.name + ' ' + original.label + '.');
+  emit();
+  return { asset, versionNumber: original.n };
 }
 
 /** 每种 Data type 对应唯一一类 Spec（Asset 类型）；候选只取该类已有的版本。该类 Asset 还没有时候选为空，字段不渲染，有了自然出现 */
@@ -120,7 +169,7 @@ export function specOptionsFor(sid: string, cat: string): string[] {
 }
 
 export interface UploadDatasetForm { sid: string; dsId: string | null; name: string; cat: string; mode: string; version: string; cut: string; spec: string; fileName: string; reason: string }
-/** 上传数据集 / 新版本：模式必须显式选择，不从文件名推断；版本号由上传者填写，同一数据集内不区分大小写唯一；同空间同类别同名则追加版本 */
+/** 上传数据集 / 新版本：模式必须显式选择，不从文件名推断；版本号由上传者填写，同一数据集内唯一；同空间同类别同名则追加版本 */
 export function uploadDataset(f: UploadDatasetForm): { errors: Errors } | { ds: Dataset; space: string } {
   if (!isWritable(f.sid)) return { errors: { form: studyReadOnly } };
   const db = getDb(), er: Errors = {}, d0 = f.dsId ? S.ds(f.dsId) ?? null : null;
@@ -129,11 +178,12 @@ export function uploadDataset(f: UploadDatasetForm): { errors: Errors } | { ds: 
   const space = MODE_SPACE[f.mode], stem = f.fileName.replace(/\.[^.]+$/, '');
   const nm = (d0 ? d0.name : ((f.name || stem).trim() || stem)).toUpperCase().replace(/\s+/g, '_');
   let d = d0 || (space ? db.datasets.find((x) => x.studyId === f.sid && x.space === space && x.cat === f.cat && x.name === nm) : undefined);
-  const version = f.version.trim();
-  if (!version) er.version = 'Enter a version.';
-  else if (d && d.versions.some((v) => sameLabel(v.label, version))) er.version = 'This version already exists.';
+  const version = parseVersionLabel(f.version);
+  if (!f.version.trim()) er.version = 'Enter a version.';
+  else if (!version) er.version = VERSION_FORMAT_HINT;
+  else if (d?.versions.some((v) => storedVersionLabel(v.label) === version)) er.version = 'This version already exists.';
   if (!f.fileName) er.file = 'Choose a data file.'; else if (DS_FILE_OK.indexOf(extOf(f.fileName)) < 0) er.file = 'Unsupported format. Allowed: ' + DS_FILE_OK.map((x) => '.' + x).join(' ');
-  if (Object.keys(er).length) return { errors: er };
+  if (!version || Object.keys(er).length) return { errors: er };
   const meta: Record<string, string> = {};
   if (f.cut.trim()) meta.cut = f.cut.trim();
   if (f.spec && specOptionsFor(f.sid, f.cat).includes(f.spec)) meta.spec = f.spec;
@@ -222,7 +272,7 @@ export function createStudy(f: CreateStudyForm): { errors: Errors } | { id: stri
   if (Object.keys(er).length) return { errors: er };
   const id = f.id.trim();
   if (db.studies.some((s) => normalizeStudyId(s.id) === normalizeStudyId(id))) return { errors: { id: 'ID unavailable. Change it, or contact an authorized administrator.' } };
-  db.studies.unshift({ id, name: f.name.trim(), ta: f.ta.trim(), phase: f.phase, admin: db.me.name, lifecycle: 'ACTIVE', blinding: 'Unblinded', updated: dLong(), desc: f.desc.trim(), tenant: 'Demo Tenant', createdBy: db.me.name, createdAt: dLong() });
+  db.studies.unshift({ id, name: f.name.trim(), ta: f.ta.trim(), phase: f.phase, admin: db.me.name, lifecycle: 'ACTIVE', blinding: 'Unblinded', updated: dLong(), desc: f.desc.trim(), tenant: DEMO_TENANT, createdBy: db.me.name, createdAt: dLong() });
   db.seq.study++;
   const mk = (userId: string, role: string, attr: string, validFrom: string, validUntil: string | null, isAdmin: boolean) => {
     const u = userById(userId)!;

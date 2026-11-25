@@ -19,13 +19,15 @@ export function StudyFields({ values, errors = {}, mode, idLocked, autoFocusId, 
   return (
     <>
       <div className="csf-row csf-row--idname">
-        <Input label="Study ID" required={req} autoFocus={autoFocusId} disabled={ro || idLocked} hint={mode === 'create' ? 'Unique in your tenant. Up to 64 characters.' : undefined} {...txt('id')} />
-        <Input label="Study name" required={req} disabled={ro} {...txt('name')} />
+        <Input label="Study ID" required={req} autoFocus={autoFocusId} readOnly={ro || idLocked} hint={mode === 'create' ? 'Unique in your tenant. Up to 64 characters.' : undefined} {...txt('id')} />
+        <Input label="Study name" required={req} readOnly={ro} {...txt('name')} />
       </div>
-      <Textarea label="Description" rows={3} disabled={ro} hint={ro ? undefined : <span className="csf-count">{values.desc.length} / 2000</span>} {...txt('desc')} />
+      <Textarea label="Description" rows={3} readOnly={ro} hint={ro ? undefined : <span className="csf-count">{values.desc.length} / 2000</span>} {...txt('desc')} />
       <div className="csf-row">
-        <Input label="Therapeutic area" disabled={ro} {...txt('ta')} />
-        <Select label="Phase" placeholder="Not specified" disabled={ro} options={[{ value: '', label: 'Not specified' }, ...phases]} value={values.phase} onChange={(v) => onChange?.('phase', v)} />
+        <Input label="Therapeutic area" readOnly={ro} {...txt('ta')} />
+        {ro ? <Input label="Phase" value={values.phase || 'Not specified'} readOnly />
+          : <Select label="Phase" placeholder="Not specified" options={[{ value: '', label: 'Not specified' }, ...phases]}
+              value={values.phase} onChange={(v) => onChange?.('phase', v)} />}
       </div>
     </>
   );

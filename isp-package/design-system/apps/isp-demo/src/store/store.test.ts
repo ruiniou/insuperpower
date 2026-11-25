@@ -1,14 +1,16 @@
+import { assetDownloadFile } from './assetDownload';
+import { suggestNextVersion } from './versions';
 import { afterEach, beforeEach } from 'vitest';
 import { DOWN, NODES } from './config';
 import { btnFor, ovCtx } from './flow';
 import { ovDoReplace, ovKeep, ovLock, ovRun, ovStartOrFix, quickUploadDs } from './actions';
 import { attentionRows, inputsGroups, nodeCard, popoverFor } from './overview';
-import { baselineAsset, baselinesOf, baselineUsers, slotCarriedFrom, suggestBaselineLabel } from './baseline';
+import { baselinesOf, baselineUsers, slotCarriedFrom } from './baseline';
 import { cutOf, S, specOf, vLabelBl, wfInfo } from './selectors';
-import { savePinnedDatasets, specOptionsFor, uploadAsset, uploadDataset } from './study';
+import { replaceAssetContent, savePinnedDatasets, specOptionsFor, uploadAsset, uploadDataset } from './study';
 import { getDb, resetDb, setToastHandler } from './store';
 import { activeMembers, addMembers, emptyMemberRow, evKey, memberCount, memberOf, membersOf, removalImpact, removeMember, sortMembers, updateMember, validateMemberRow, wfKey, peopleOf, changeBlinding, transferStudyAdmin, canAddMembers } from './members';
-import { can, DUTIES, setDuty } from './role';
+import { can, DUTIES, session, setDuty } from './role';
 import { auditOf } from './audit';
 
 let toasts: string[] = [];
@@ -262,8 +264,6 @@ describe('Study 页 MVP：职责与资料', () => {
 });
 
 describe('Study Baseline', () => {
-  const sap = (sid: string) => baselineAsset(sid, 'SAP')!;
-  const form = (o: Partial<Parameters<typeof uploadAsset>[0]>): Parameters<typeof uploadAsset>[0] => ({ sid: 'STU-001', assetId: null, code: 'SAP', name: 'x', meta: { 'SAP external version': '1' }, fileName: 'sap.pdf', reason: '', version: 'v4.0', baselineMode: 'new', baselineLabel: 'v4.0', ...o });
   it('种子：STU-001 Current v3.0，Protocol 沿用 from v2.0，SAP 不沿用；Current 被引用', () => {
     const list = baselinesOf('STU-001');
     expect(list.map((b) => b.label)).toEqual(['v3.0', 'v2.0', 'v1.0']);
@@ -272,41 +272,145 @@ describe('Study Baseline', () => {
     expect(baselineUsers(list[0]).length).toBeGreaterThan(0);
     expect(baselineUsers(baselinesOf('STU-002')[0])).toHaveLength(0);
   });
-  it('新建 Baseline：只换 SAP 槽位，Protocol 沿用；预填 v4.0；追加版本不新建 Asset', () => {
-    expect(suggestBaselineLabel('STU-001')).toBe('v4.0');
-    const n = getDb().assets.length;
-    const r = uploadAsset(form({}));
-    expect('asset' in r).toBe(true);
-    expect(getDb().assets).toHaveLength(n);
-    const list = baselinesOf('STU-001');
-    expect(list[0].label).toBe('v4.0');
-    expect(list[0].slots.SAP).toEqual({ assetId: 'A2', n: 4 });
-    expect(slotCarriedFrom(list, 0, 'PROTOCOL')).toBe('v2.0');
-    expect(toasts.at(-1)).toBe('Uploaded SAP v4.0. Baseline v4.0 created.');
-  });
-  it('被引用的 Current 不能 Add to current；未被引用的 STU-002 可以替换槽位', () => {
-    const r = uploadAsset(form({ baselineMode: 'current' }));
-    expect('errors' in r && r.errors.baseline).toMatch(/^Used by \d+ events?\. Start a new baseline instead\.$/);
-    const r2 = uploadAsset(form({ sid: 'STU-002', version: 'v1.0', baselineMode: 'current', baselineLabel: '' }));
-    expect('asset' in r2).toBe(true);
-    expect(baselinesOf('STU-002')).toHaveLength(1);
-    expect(baselinesOf('STU-002')[0].slots.SAP).toEqual({ assetId: 'A11', n: 2 });
-    expect(toasts.at(-1)).toBe('Uploaded SAP v1.0 to Baseline v1.0.');
-    expect(sap('STU-002').versions).toHaveLength(2);
-  });
-  it('版本号与 Baseline 版本号校验', () => {
-    const e1 = uploadAsset(form({ version: ' ' })), e2 = uploadAsset(form({ version: 'V3.0' })), e3 = uploadAsset(form({ baselineLabel: 'V3.0' })), e4 = uploadAsset(form({ baselineLabel: '' }));
-    expect('errors' in e1 && e1.errors.version).toBe('Enter a version.');
-    expect('errors' in e2 && e2.errors.version).toBe('This version already exists.');
-    expect('errors' in e3 && e3.errors.baseline).toBe('This baseline version already exists.');
-    expect('errors' in e4 && e4.errors.baseline).toBe('Enter a baseline version.');
-  });
   it('Event 侧标签：同一版本属于多个 Baseline 取最新', () => {
     expect(vLabelBl(S.asset('A1')!, 2)).toBe('Amendment 1, Baseline v3.0');
     expect(vLabelBl(S.asset('A2')!, 2)).toBe('v2.0, Baseline v2.0');
     expect(vLabelBl(S.asset('A4')!, 3)).toBe('v1.2');
   });
 });
+
+describe('Asset upload', () => {
+  let originalDuty: typeof session.duty;
+  beforeEach(() => {
+    originalDuty = session.duty;
+    setDuty('Study Admin');
+  });
+  afterEach(() => setDuty(originalDuty));
+
+  it('enforces code-track Maintain grants again at submit', () => {
+    const member = getDb().members.find((entry) => entry.studyId === 'STU-001' && entry.isAdmin)!;
+    const packageMembers = [{ path: 'main.sas', size: 3, content: new Blob(['run']), hash: 'fixture' }];
+    setDuty('Member');
+    member.role = 'DEV';
+    expect(uploadAsset(form({ code: 'TFL_QC_CODE', packageMembers }))).toMatchObject({ errors: { form: expect.stringContaining('permission') } });
+    const result = uploadAsset(form({ code: 'TFL_PRODUCTION_CODE', packageMembers }));
+    expect(result).toHaveProperty('versionNumber', 1);
+    if (!('asset' in result)) throw new Error('DEV package was not registered');
+    member.role = 'QC';
+    expect(uploadAsset(form({ assetId: result.asset.id, code: 'TFL_PRODUCTION_CODE', version: '4.1', packageMembers }))).toHaveProperty('errors.form');
+    expect(result.asset.versions).toHaveLength(1);
+    expect(uploadAsset(form({ code: 'TFL_QC_CODE', packageMembers }))).toHaveProperty('versionNumber', 1);
+  });
+
+  const form = (o: Partial<Parameters<typeof uploadAsset>[0]>): Parameters<typeof uploadAsset>[0] => ({ sid: 'STU-001', assetId: null, code: 'SAP', name: 'x', meta: { 'SAP external version': '1' }, fileName: 'sap.pdf', reason: '', version: '4.0', ...o });
+  it('registers a separate SAP when no target is supplied', () => {
+    const result = uploadAsset(form({ version: '3.0' }));
+    expect(result).toMatchObject({ asset: { name: 'x', code: 'SAP' }, versionNumber: 1 });
+    expect(S.asset('A2')?.versions).toHaveLength(3);
+  });
+
+  it('appends to the explicit asset and preserves existing Event references', () => {
+    const oldVersion = structuredClone(S.vOf(S.asset('A2')!, 3));
+    const references = structuredClone(getDb().events.map((event) => event.refs.assets));
+    expect(uploadAsset(form({ assetId: 'A2' }))).toMatchObject({ asset: { id: 'A2' }, versionNumber: 4 });
+    expect(S.vOf(S.asset('A2')!, 3)).toEqual(oldVersion);
+    expect(getDb().events.map((event) => event.refs.assets)).toEqual(references);
+    expect(baselinesOf('STU-001')).toHaveLength(3);
+  });
+
+  it('suggests numeric successors and stores numeric segments without a prefix', () => {
+    expect(suggestNextVersion([])).toBe('1.0');
+    expect(suggestNextVersion(S.asset('A1')!.versions)).toBe('1.1');
+    expect(suggestNextVersion(S.asset('A2')!.versions)).toBe('3.1');
+    expect(uploadAsset(form({ version: '2.4.4' }))).toMatchObject({ asset: { versions: [{ label: '2.4.4' }] } });
+    for (const version of ['v3.0', '3..0', '.3', '3.', '3．0', '３.０', '3. 0']) {
+      expect(uploadAsset(form({ version }))).toHaveProperty('errors.version');
+    }
+    expect(uploadAsset(form({ assetId: 'A2', version: '3.0' }))).toMatchObject({ errors: { version: 'This version already exists.' } });
+    expect(uploadAsset(form({ assetId: 'A2', version: ' 3.10 ' }))).toHaveProperty('versionNumber', 4);
+    expect(S.asset('A2')!.versions[0].label).toBe('3.10');
+    expect(suggestNextVersion(S.asset('A2')!.versions)).toBe('3.11');
+  });
+
+  it('returns the original content for the exact version and rechecks Download permission', () => {
+    const previousDuty = session.duty;
+    try {
+      setDuty('Study Admin');
+      const asset = S.asset('A2')!;
+      const content = new Blob(['New SAP version'], { type: 'text/plain' });
+      const oldVersion = S.vOf(asset, 2)!;
+      expect(uploadAsset(form({ assetId: asset.id, fileContent: content }))).toHaveProperty('versionNumber', 4);
+      expect(assetDownloadFile(asset.id, 4)).toEqual({ name: 'sap.pdf', content });
+      const downloaded = assetDownloadFile(asset.id, 2);
+      expect(downloaded).toHaveProperty('name', oldVersion.file);
+      expect('content' in downloaded && downloaded.content.size).toBe((oldVersion.fileContent as string).length);
+      expect(assetDownloadFile(asset.id, 99)).toHaveProperty('error');
+
+      const member = getDb().members.find((entry) => entry.studyId === asset.studyId && entry.isAdmin)!;
+      member.role = 'QC';
+      setDuty('Member');
+      expect(assetDownloadFile(asset.id, 2)).toHaveProperty('error');
+    } finally {
+      setDuty(previousDuty);
+    }
+  });
+
+  it('registers and appends code package versions without mixing tracks or accepting conflicting paths', () => {
+    const members = [{ path: 'analysis/run.sas', size: 3, content: new Blob(['run']), hash: 'demo-digest' }];
+    const result = uploadAsset(form({ code: 'TFL_QC_CODE', name: 'QC programs', version: '1.0', packageMembers: members }));
+    expect(result).toHaveProperty('versionNumber', 1);
+    if (!('asset' in result)) throw new Error('Package was not registered');
+    expect(result.asset.versions[0].packageMembers).toEqual(members);
+    expect(uploadAsset(form({ assetId: result.asset.id, code: 'TFL_PRODUCTION_CODE', packageMembers: members }))).toHaveProperty('errors.form');
+    expect(uploadAsset(form({ assetId: result.asset.id, code: 'TFL_QC_CODE', packageMembers: [...members, ...members] }))).toHaveProperty('errors.file');
+    expect(result.asset.versions).toHaveLength(1);
+    expect(uploadAsset(form({ assetId: result.asset.id, code: 'TFL_QC_CODE', packageMembers: members }))).toHaveProperty('versionNumber', 2);
+  });
+
+  it('replaces content in place and rejects stale or Event-referenced versions', () => {
+    const asset = S.asset('A2')!;
+    const original = S.vOf(asset, 1)!;
+    const content = { fileName: 'replacement.txt', fileContent: new Blob(['replacement']) };
+    const initialCount = asset.versions.length;
+    expect(replaceAssetContent(asset.studyId, asset.id, original, content)).toHaveProperty('versionNumber', 1);
+    expect(asset.versions).toHaveLength(initialCount);
+    expect(S.vOf(asset, 1)).toEqual({ ...original, file: content.fileName, fileContent: content.fileContent });
+    expect(auditOf(asset.studyId)[0].action).toBe('Version content replaced');
+    expect(replaceAssetContent(asset.studyId, asset.id, original, content)).toMatchObject({
+      errors: { form: expect.stringContaining('has changed') },
+    });
+    const referenced = S.vOf(asset, 3)!;
+    expect(replaceAssetContent(asset.studyId, asset.id, referenced, content)).toMatchObject({
+      errors: { form: expect.stringContaining('Event references') },
+    });
+    expect(S.vOf(asset, 3)).toBe(referenced);
+  });
+
+  it('replaces complete package contents and rejects invalid replacements without writing', () => {
+    const members = [{ path: 'main.sas', size: 3, content: new Blob(['run']), hash: 'fixture' }];
+    const result = uploadAsset(form({ code: 'TFL_QC_CODE', packageMembers: members }));
+    if (!('asset' in result)) throw new Error('QC package was not registered');
+    const { asset } = result;
+    const original = asset.versions[0];
+    const replacement = [{ ...members[0], path: 'new/main.sas' }];
+    expect(replaceAssetContent(asset.studyId, asset.id, original, {
+      fileName: '', packageMembers: [...replacement, ...replacement],
+    })).toHaveProperty('errors.file');
+    expect(asset.versions[0]).toBe(original);
+    expect(replaceAssetContent(asset.studyId, asset.id, original, {
+      fileName: '', packageMembers: replacement,
+    })).toHaveProperty('versionNumber', original.n);
+    expect(asset.versions).toEqual([{ ...original, packageMembers: replacement }]);
+  });
+
+  it('rejects duplicate labels, missing targets and mismatched asset types', () => {
+    expect(uploadAsset(form({ assetId: 'A2', version: ' 3.0 ' }))).toMatchObject({ errors: { version: 'This version already exists.' } });
+    for (const assetId of ['missing', 'A1', 'A11']) {
+      expect(uploadAsset(form({ assetId }))).toHaveProperty('errors.form');
+    }
+  });
+});
+
 
 describe('Study Member', () => {
   const row = (key: number, userId: string, o: Partial<ReturnType<typeof emptyMemberRow>> = {}) => emptyMemberRow(key, { userId, validFrom: '2026-12-01T09:00', ...o });
@@ -487,19 +591,20 @@ describe('Study Member', () => {
 });
 
 describe('Dataset：版本号、Cut / Spec、Event 选数据', () => {
-  const form = { sid: 'STU-001', dsId: null, name: 'ADSL', cat: 'ADaM', mode: 'Dummy', version: 'v2.0', cut: 'C03', spec: 'STU-001 ADaM Spec v1.2', fileName: 'adsl.csv', reason: '' };
-  it('版本号由用户填写，必填，同一数据集内不区分大小写唯一', () => {
+  const form = { sid: 'STU-001', dsId: null, name: 'ADSL', cat: 'ADaM', mode: 'Dummy', version: '2.0', cut: 'C03', spec: 'STU-001 ADaM Spec v1.2', fileName: 'adsl.csv', reason: '' };
+  it('版本号必填，仅接受数字段，同一数据集内唯一', () => {
     expect(uploadDataset({ ...form, version: ' ' })).toEqual({ errors: { version: 'Enter a version.' } });
-    expect(uploadDataset({ ...form, version: 'V1.2' })).toEqual({ errors: { version: 'This version already exists.' } });
+    expect(uploadDataset({ ...form, version: 'V1.2' })).toHaveProperty('errors.version');
+    expect(uploadDataset({ ...form, version: '1.2' })).toEqual({ errors: { version: 'This version already exists.' } });
     const r = uploadDataset(form);
-    expect('ds' in r && S.latest(r.ds).label).toBe('v2.0');
-    expect(toasts.at(-1)).toBe('Uploaded ADSL v2.0.');
+    expect('ds' in r && S.latest(r.ds).label).toBe('2.0');
+    expect(toasts.at(-1)).toBe('Uploaded ADSL 2.0.');
   });
   it('Cut 与 Spec 存入 meta，RawData 不存 Spec', () => {
     const r = uploadDataset(form);
     expect('ds' in r && cutOf(S.latest(r.ds))).toBe('C03');
     expect('ds' in r && specOf(S.latest(r.ds))).toBe('STU-001 ADaM Spec v1.2');
-    const raw = uploadDataset({ ...form, name: 'RAW1', cat: 'RawData', version: 'r1' });
+    const raw = uploadDataset({ ...form, name: 'RAW1', cat: 'RawData', version: '1' });
     expect('ds' in raw && specOf(S.latest(raw.ds))).toBe('');
   });
   it('Spec 候选集由 Data type 决定，类型与 Spec 不匹配时不保存', () => {
@@ -508,7 +613,7 @@ describe('Dataset：版本号、Cut / Spec、Event 选数据', () => {
     expect(specOptionsFor('STU-001', 'RawData')).toEqual([]); // 目录里还没有 Raw Data Spec
     getDb().assets.push({ id: 'A90', studyId: 'STU-001', name: 'STU-001 Raw Data Spec', code: 'RAW_DATA_SPEC', tl: 'Raw Data Spec', icon: 'doc', versions: [{ n: 1, label: 'v1.0', by: 'Li Wei', date: 'Oct 1', note: '' }] });
     expect(specOptionsFor('STU-001', 'RawData')).toEqual(['STU-001 Raw Data Spec v1.0']);
-    const r = uploadDataset({ ...form, name: 'DM2', cat: 'SDTM', version: 'v1.0', spec: 'STU-001 ADaM Spec v1.2' });
+    const r = uploadDataset({ ...form, name: 'DM2', cat: 'SDTM', version: '1.0', spec: 'STU-001 ADaM Spec v1.2' });
     expect('ds' in r && specOf(S.latest(r.ds))).toBe('');
   });
   it('种子 Spec 都指向真实存在的 Asset 版本', () => {
@@ -610,8 +715,8 @@ describe('Study 审计', () => {
     const f = { sid: 'STU-001', dsId: null, name: 'ADSL', cat: 'ADaM', mode: 'PROD', version: '', cut: '', spec: '', fileName: 'adsl.xpt', reason: '' };
     uploadDataset(f);
     expect(count()).toBe(n);
-    uploadDataset({ ...f, version: 'v9.0', reason: 'Data cut 3' });
-    expect(head()).toMatchObject({ action: 'Version registered', changes: 'ADSL v9.0', reason: 'Data cut 3' });
+    uploadDataset({ ...f, version: '9.0', reason: 'Data cut 3' });
+    expect(head()).toMatchObject({ action: 'Version registered', changes: 'ADSL 9.0', reason: 'Data cut 3' });
   });
 
   it('记录只增：已有记录在后续操作后保持原样，顺序不变', () => {
@@ -681,7 +786,7 @@ describe('Study Archive、Restore 与归档只读规则（交接单 13）', () =
     const reason = 'Old form submission';
     const details = { name: 'Edited study', desc: '', ta: 'Oncology', phase: 'Phase III', reason };
     const event = { sid, name: 'New event', goal: '', scope: '', reason, refs: {} };
-    const asset = { sid, assetId: null, code: 'SAP', name: 'SAP', meta: {}, fileName: 'sap.pdf', reason, version: 'v99', baselineMode: 'new' as const, baselineLabel: 'v99' };
+    const asset = { sid, assetId: null, code: 'SAP', name: 'SAP', meta: {}, fileName: 'sap.pdf', reason, version: 'v99' };
     const dataset = { sid, dsId: null, name: 'ADSL', cat: 'ADaM', mode: 'Dummy', version: 'v99', cut: '', spec: '', fileName: 'adsl.csv', reason };
 
     expect(archiveStudy(sid, 'Study closeout')).toEqual({ ok: true });

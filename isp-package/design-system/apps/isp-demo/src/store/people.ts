@@ -1,4 +1,5 @@
 /** 当前租户的有效用户（用户 ID 去重；创建者本人不在候选里）。用户在 eConfig 侧邀请，iSP 不提供邀请入口 */
+export const DEMO_TENANT = 'Demo Tenant';
 /** 当前登录用户（Demo 的 me）。创建者本人不在候选里，但在自己创建或担任 Admin 的 Study 里是成员 */
 export const ME_USER: TenantUser = { id: 'U-101', name: 'User Name', email: 'user.name@demo-tenant.com' };
 export interface TenantUser { id: string; name: string; email: string }
