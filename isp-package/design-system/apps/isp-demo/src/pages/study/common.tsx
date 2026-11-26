@@ -21,13 +21,13 @@ export const SearchBox = ({ value, onChange, placeholder }: { value: string; onC
 /**
  * 页面工具栏（全局统一版式）：一行 48 高。
  * 左：start（标题 + 计数 / 返回链接，二选一，可无）→ filters（筛选 Dropdown，按重要度从左到右）；
- * 右：search（默认直接显示搜索框，行拥挤时才收成图标）→ actions（次要操作在前，主 CTA 在最右，全页只有一个 Primary）。
+ * 右：search（保留搜索框宽度，空间不足时先截断筛选值）→ actions（次要操作在前，主 CTA 在最右，全页只有一个 Primary）。
  */
 export function PageToolbar({ start, filters, search, actions }: { start?: ReactNode; filters?: ReactNode; search?: ReactNode; actions?: ReactNode }) {
   return (
     <div className="page-head">
-      <span className="page-tools">{start}{filters}</span>
-      <span className="page-tools">{search}{actions}</span>
+      <span className="page-tools page-tools--start">{start}{filters}</span>
+      <span className="page-tools page-tools--end">{search}{actions}</span>
     </div>
   );
 }

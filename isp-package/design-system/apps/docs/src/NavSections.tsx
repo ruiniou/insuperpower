@@ -131,6 +131,16 @@ export function NavSections() {
       <Sec id="n-menu" title="导航 · Dropdown / PopoverMenu / MenuItem" nodes="" meta="原型 .menu2 新版：圆角 12、项高 32、项圆角 8、内边距 4、选中项品牌蓝 + 500、边框 1px grey-40、shadow-popover；↑↓ Home End Esc" cols={260}>
         <Cell label="Dropdown（点击打开）"><div style={{ minHeight: 230 }}><Dropdown label="Actions" items={menuItems} /></div></Cell>
         <Cell label="Dropdown · primary · icon · align right"><div style={{ minHeight: 230 }}><Dropdown label="New" variant="primary" icon="ri-add-line" align="right" items={menuItems} /></div></Cell>
+        <Cell label="Filter chip 无筛选 / 单选"><div className="row">
+          <Dropdown filterName="Type" items={[{ label: 'All', selected: true }]} />
+          <Dropdown filterName="Status" label="Active" items={[{ label: 'Active', selected: true }]} />
+        </div></Cell>
+        <Cell label="Filter chip 多选 / 窄宽度截断"><div style={{ width: 160 }}>
+          <Dropdown multiple filterName="Role" label="Study Admin, System Owner" items={[
+            { label: 'Study Admin', selected: true },
+            { label: 'System Owner', selected: true },
+          ]} />
+        </div></Cell>
         <Cell label="PopoverMenu · 自定义触发（open 强制展开）"><div style={{ minHeight: 230 }}><PopoverMenu open trigger={<IconButton icon="ri-more-2-fill" aria-label="More" />} items={[{ label: 'With icon', icon: 'ri-edit-line' }, ...menuItems]} /></div></Cell>
         <Cell label="MenuItem · 默认 / 悬停 / 选中 / 危险 / 禁用"><div style={{ width: 200 }}>
           <MenuItem item={{ label: 'Default' }} /><MenuItem item={{ label: 'Hover' }} forceHover /><MenuItem item={{ label: 'Selected', selected: true }} />

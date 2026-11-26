@@ -98,7 +98,7 @@
 | TopNav | 顶栏（Mac / Win 项目选择器） | 稳定 |
 | Logo | ISP 标志 | 稳定 |
 | Breadcrumb | 面包屑，悬停层级名称展开同级切换（无 ▾） | 无 Wiz 稿 |
-| Dropdown | 下拉菜单按钮；菜单本体是 PopoverMenu / MenuItem（目录 `PopoverMenu/`）。`multiple` 为多选筛选：行前带复选框，点选不关菜单，选中状态由 `items[].selected` 给；`filterName` 下 `label` 为空时只显示图标加名称（借鉴 Atlas FilterChip 的多选行为）。`filterName` 用 Body 2 字号（13 px），工具栏通常用 medium（32 px）。菜单项可用 `disabledReason` 给禁用项提供 Tooltip 和读屏说明。Danger 只定义选项样式；操作是否需要确认由业务流程决定。菜单项规则：破坏性项设 `danger: true`，自动沉底并与前面分隔；超过 6 项用 `group` 分组，组间自动加分隔线（`normalizeMenuItems`） | 无 Wiz 稿 |
+| Dropdown | 下拉菜单按钮；菜单本体是 PopoverMenu / MenuItem（目录 `PopoverMenu/`）。`multiple` 为多选筛选：行前带复选框，点选后保持菜单打开，选中状态由 `items[].selected` 提供。设置 `filterName` 后，入口显示「名称: 当前值」，空值显示 All。多选值按菜单顺序用逗号加空格分隔。空间不足时仅截断值，悬停或键盘聚焦显示完整回显。左侧图标可用于表示筛选维度，默认省略。`filterName` 用 Body 2 字号（13 px），工具栏通常用 medium（32 px）。菜单项可用 `disabledReason` 给禁用项提供 Tooltip 和读屏说明。Danger 只定义选项样式；操作是否需要确认由业务流程决定。菜单项规则：破坏性项设 `danger: true`，自动沉底并与前面分隔；超过 6 项用 `group` 分组，组间自动加分隔线（`normalizeMenuItems`） | 无 Wiz 稿 |
 | TitleBar | 标题栏（标题、描述、右侧操作） | 稳定 |
 | Splitter | 可拖拽分隔条 | 稳定 |
 | Card | 卡片容器；`--wiz-card-padding` 钩子 | 无 Wiz 稿 |

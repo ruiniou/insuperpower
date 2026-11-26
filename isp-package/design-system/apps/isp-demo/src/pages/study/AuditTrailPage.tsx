@@ -45,7 +45,7 @@ export function AuditTrailPage({ sid }: { sid: string }) {
   ], [tz]);
 
   const pick = (opts: string[], v: string, set: (x: string) => void, name: string, width: number) => (
-    <Dropdown size="medium" shadow="none" filterName={name} label={v === ALL ? '' : v} width={width} items={opts.map((o) => ({ label: o, value: o, selected: o === v }))} onSelect={(x) => set(String(x))} />
+    <Dropdown size="medium" shadow="none" filterName={name} label={v} width={width} items={opts.map((o) => ({ label: o, value: o, selected: o === v }))} onSelect={(x) => set(String(x))} />
   );
 
   return (

@@ -13,7 +13,6 @@ import { initials, PageToolbar, RowMenu } from './common';
 const STATUS_OPTS = ['Active', 'Removed', 'All'] as const;
 type StatusFilter = (typeof STATUS_OPTS)[number];
 const PAGE_SIZES = [10, 20, 50];
-const filterLabel = (sel: string[]) => (sel.length === 0 ? '' : sel.length === 1 ? ROLES.find((r) => r.value === sel[0])?.label ?? sel[0] : String(sel.length));
 
 /** #/study/:sid/member：Study 成员列表。归档后不渲染 Add members 和行 More。 */
 export function MemberPage({ sid, initialUnspecified = false }: { sid: string; initialUnspecified?: boolean }) {
@@ -88,11 +87,11 @@ export function MemberPage({ sid, initialUnspecified = false }: { sid: string; i
     <div className="studies">
       {all.length > 0 && <PageToolbar
         filters={<>
-          <Dropdown multiple size="medium" shadow="none" filterName="Role" icon="ri-filter-3-line" label={filterLabel(roles)} width={160}
+          <Dropdown multiple size="medium" shadow="none" filterName="Role" label={ROLES.filter(({ value }) => roles.includes(value)).map(({ label }) => label).join(', ')} width={160}
             items={ROLES.map((r) => ({ label: r.label, value: r.value, selected: roles.includes(r.value) }))}
             onSelect={(v) => setRoles((p) => (p.includes(String(v)) ? p.filter((x) => x !== v) : [...p, String(v)]))} />
           <Dropdown size="medium" shadow="none" filterName="Status" label={status} width={160} items={STATUS_OPTS.map((t) => ({ label: t, value: t, selected: t === status }))} onSelect={(v) => setStatus(String(v) as StatusFilter)} />
-          <Dropdown size="medium" shadow="none" filterName="Blinding" label={unspecified ? 'Unspecified' : ''} items={[{ label: 'All', value: 'all', selected: !unspecified }, { label: 'Unspecified', value: 'unspecified', selected: unspecified }]} onSelect={(v) => setUnspecified(v === 'unspecified')} />
+          <Dropdown size="medium" shadow="none" filterName="Blinding" label={unspecified ? 'Unspecified' : 'All'} items={[{ label: 'All', value: 'all', selected: !unspecified }, { label: 'Unspecified', value: 'unspecified', selected: unspecified }]} onSelect={(v) => setUnspecified(v === 'unspecified')} />
         </>}
         search={<Search size="compact" width={220} placeholder="Search members" aria-label="Search members" value={q} onChange={(e) => setQ(e.target.value)} />}
         actions={addMembers} />}

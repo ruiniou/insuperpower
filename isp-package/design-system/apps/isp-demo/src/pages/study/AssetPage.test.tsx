@@ -19,7 +19,7 @@ it('asks for an upload type only when the Asset list has no specific type filter
   expect(screen.getByRole('textbox', { name: 'Asset type' })).toHaveValue('SAP');
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
-  fireEvent.click(screen.getByRole('button', { name: /Type\s*All/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Type: All' }));
   fireEvent.click(within(screen.getByRole('menu')).getByRole('menuitem', { name: 'Protocol' }));
   fireEvent.click(screen.getByRole('button', { name: 'Upload' }));
   expect(screen.getByRole('textbox', { name: 'Asset type' })).toHaveValue('Protocol');

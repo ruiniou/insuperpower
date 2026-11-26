@@ -25,7 +25,6 @@ const updatedTime = (study: Study) => Date.parse(study.updated) || 0;
 const STUDY_PAGE_SIZES = [10, 20, 50];
 
 /** 多选筛选：空数组即未筛选，全部取消勾选即清除 */
-const filterLabel = (sel: string[]) => (sel.length === 0 ? '' : sel.length === 1 ? sel[0] : String(sel.length));
 const filterItems = (opts: string[], sel: string[]) => opts.map((o) => ({ label: o, value: o, selected: sel.includes(o) }));
 const toggleFilter = (sel: string[], v: string) => (sel.includes(v) ? sel.filter((x) => x !== v) : [...sel, v]);
 
@@ -74,14 +73,14 @@ export function StudiesPage() {
     <div className="studies">
       {visibleStudies.length > 0 && <PageToolbar
         filters={<>
-          <Dropdown size="medium" shadow="none" filterName="Status" icon="ri-filter-3-line"
+          <Dropdown size="medium" shadow="none" filterName="Status"
             label={STATUS_OPTIONS.find((option) => option.value === status)?.label}
             width={180}
             items={STATUS_OPTIONS.map((option) => ({ ...option, selected: option.value === status }))}
             onSelect={(value) => {
               if (value === 'ACTIVE' || value === 'ARCHIVED') setStatus(value);
             }} />
-          <Dropdown multiple size="medium" shadow="none" filterName="Therapeutic area" icon="ri-filter-3-line" label={filterLabel(ta)} width={220} items={filterItems(tas, ta)} onSelect={(v) => setTa((p) => toggleFilter(p, v))} />
+          <Dropdown multiple size="medium" shadow="none" filterName="Therapeutic area" label={tas.filter((area) => ta.includes(area)).join(', ')} width={220} items={filterItems(tas, ta)} onSelect={(v) => setTa((p) => toggleFilter(p, v))} />
         </>}
         search={<Search size="compact" width={220} placeholder="Search studies" aria-label="Search studies" value={q} onChange={(e) => setQ(e.target.value)} />}
         actions={can('study.create') && <Button variant="primary" leftIcon="ri-add-line" onClick={() => go('#/studies/new')}>New Study</Button>} />}

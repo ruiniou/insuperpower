@@ -16,11 +16,14 @@ button { font-family: inherit; }
 .app-empty b { color: var(--wiz-color-text-primary); font-size: var(--wiz-text-subtitle-1-size); }
 .app-empty code { font-family: var(--wiz-font-family-mono); }
 
-.page-head { height: 48px; padding: 0 var(--wiz-spacing-lg); display: flex; align-items: center; justify-content: space-between; flex: none; }
+.page-head { min-height: 48px; padding: 0 var(--wiz-spacing-lg); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--wiz-spacing-sm); flex: none; }
 .page-title { margin-right: var(--wiz-spacing-sm); display: flex; align-items: center; gap: var(--wiz-spacing-sm); font-size: var(--wiz-text-subtitle-1-size); font-weight: var(--wiz-font-weight-semibold); }
 .page-title i { font-style: normal; font-weight: var(--wiz-font-weight-regular); font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-secondary); }
 .page-head .wiz-seg { margin-left: calc(-1 * var(--wiz-spacing-md)); } /* 光学对齐：首项文字与页面左内容线（页签、表头文字）对齐，选中底色向左悬挂 */
 .page-tools { display: flex; align-items: center; gap: var(--wiz-spacing-sm); }
+.page-tools--start { flex: 1 1 0; min-width: min-content; }
+.page-tools--start > .wiz-dropdown-filter-root--multiple { flex-shrink: 10; }
+.page-tools--end { flex: none; margin-inline-start: auto; }
 .page-scroll { flex: 1; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
 
 /* Studies */
