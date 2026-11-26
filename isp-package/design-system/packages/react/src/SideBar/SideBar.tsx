@@ -10,8 +10,8 @@ export type SideBarTabState = 'unselected' | 'selected' | 'hover';
 export type SideBarSelectedTone = 'solid' | 'soft';
 
 export interface SideBarTabsProps extends Omit<HTMLAttributes<HTMLButtonElement>, 'children'> {
-  /** 图标 ri 类名 */
-  icon?: string;
+  /** Remix 图标类名，null 表示纯文字导航项 */
+  icon?: string | null;
   label?: string;
   /** 第二行小字（如最近事件所属 Study）；有则高 44 */
   description?: string;
@@ -30,7 +30,7 @@ export function SideBarTabs({ icon = 'ri-home-5-line', label, description, activ
   return (
     <button type="button" className={cx('wiz-sidebar-tab', `is-${st}`, collapsed && 'is-collapsed', selectedTone === 'soft' && 'is-soft', description && 'has-desc', className)}
       title={collapsed ? label : undefined} aria-label={collapsed ? label : undefined} aria-current={st === 'selected' ? 'page' : undefined} {...rest}>
-      <i className={cx('wiz-sidebar-tab__icon', icon)} aria-hidden="true" />
+      {(icon || collapsed) && <i className={cx('wiz-sidebar-tab__icon', icon ?? 'ri-home-5-line')} aria-hidden="true" />}
       {!collapsed && (description
         ? <span className="wiz-sidebar-tab__two"><span className="wiz-sidebar-tab__text">{label}</span><small>{description}</small></span>
         : <span className="wiz-sidebar-tab__text">{label}</span>)}

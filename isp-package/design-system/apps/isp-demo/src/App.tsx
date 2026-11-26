@@ -10,6 +10,7 @@ import { useRoute } from './router';
 import { S } from './store/selectors';
 import { useDb } from './store/store';
 import { ToastBridge } from './toast';
+import { StudyPermissionsPage } from './pages/study/StudyPermissionsPage';
 import { AssetPage } from './pages/study/AssetPage';
 import { DatasetPage } from './pages/study/DatasetPage';
 import { MemberPage } from './pages/study/MemberPage';
@@ -26,6 +27,10 @@ function Page() {
   if (R.name === 'study') {
     if (!S.workspaceStudy(R.sid)) return <NotFoundPage what="Study" id={R.sid} />;
     if (R.tab === 'events') return <EventsPage sid={R.sid} />;
+    if (R.tab === 'asset' && R.space === 'permissions') return <StudyPermissionsPage key={R.sid + '/asset'} sid={R.sid} origin="document" />;
+    if (R.tab === 'dataset' && R.space?.startsWith('permissions')) {
+      return <StudyPermissionsPage key={R.sid + '/dataset'} sid={R.sid} origin="dataset" space={R.space.split(':')[1]} />;
+    }
     if (R.tab === 'asset') return <AssetPage sid={R.sid} />;
     if (R.tab === 'member') return <MemberPage key={R.sid + ":" + R.space} sid={R.sid} initialUnspecified={R.space === "unspecified"} />;
     if (R.tab === 'dataset') return <DatasetPage sid={R.sid} space={R.space} />;

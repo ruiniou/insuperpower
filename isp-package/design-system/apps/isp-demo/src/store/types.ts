@@ -62,7 +62,7 @@ export type AuditAction =
   | 'Study created' | 'Study details updated'
   | 'Member added' | 'Member updated' | 'Blinding status changed' | 'Member removed'
   | 'Study Admin transferred' | 'Event Owner changed' | 'Version registered' | 'Version content replaced' | 'Version archived'
-  | 'Study deleted' | 'Study archived' | 'Study restored' | 'Blinding enabled' | 'Study unblinded';
+  | 'Study permissions updated' | 'Study deleted' | 'Study archived' | 'Study restored' | 'Blinding enabled' | 'Study unblinded';
 export interface StudyDeletionEvidence {
   requestId: string;
   tenant: string;
@@ -74,6 +74,7 @@ export interface StudyDeletionEvidence {
 /** 审计记录：time 为本地 ISO 串 YYYY-MM-DDTHH:mm；changes 一句话；reason 可空 */
 export interface AuditEvent { id: string; studyId: string; time: string; actor: string; action: AuditAction; changes: string; reason: string | null; deletion?: StudyDeletionEvidence }
 export interface Database {
+  studyPolicies?: Record<string, Partial<Record<'document' | 'dataset', Record<string, string>>>>;
   me: { name: string; ini: string };
   seq: { study: number; event: number; asset: number; ds: number; baseline: number; member: number; audit: number };
   studies: Study[]; members: StudyMember[]; assets: Asset[]; baselines: Baseline[]; datasets: Dataset[]; protections: Protection[]; events: EventRec[];

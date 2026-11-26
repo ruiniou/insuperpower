@@ -1,9 +1,12 @@
 import { assetVersionDependency } from '../../store/study';
 import { useState } from 'react';
-import { Button, Dropdown, EmptyState, Table, type TableColumn } from '@wiz/react';
+import { Button, Dropdown, EmptyState, IconButton, Table, type TableColumn } from '@wiz/react';
 import { assetDirectoryType, CODE_TYPES, FILE_UPLOAD_GROUPS, TYPE } from '../../store/assets';
-import { canMaintainAsset } from '../../store/assetPermissions';
+import { canSeeAsset, canMaintainAsset } from '../../store/assetPermissions';
 import { S } from '../../store/selectors';
+import { go } from '../../router';
+import { hrefStudy } from '../../store/actions';
+import { canViewStudyPermissions } from '../../store/studyPermissions';
 import { useDb } from '../../store/store';
 import type { Asset, Version } from '../../store/types';
 import { openDrawer, openModal, ui } from '../../store/ui';
@@ -46,7 +49,8 @@ export function AssetPage({ sid }: { sid: string }) {
   useDb();
   const [type, setType] = useState('');
   const [query, setQuery] = useState('');
-  const assets = S.assetsOf(sid);
+  const assets = S.assetsOf(sid).filter(canSeeAsset);
+  const canManage = canViewStudyPermissions(sid);
   const hasVersions = assets.some((asset) => asset.versions.length > 0);
   const categories = assets.map((asset) => ({ asset, ...assetDirectoryType(asset) }));
   const types = [...new Map(categories.map(({ name, group }) => [name, { name, group }])).values()]
@@ -100,15 +104,19 @@ export function AssetPage({ sid }: { sid: string }) {
 
   return (
     <div className="studies">
-      {hasVersions && <PageToolbar
-        filters={<Dropdown size="medium" shadow="none" filterName="Type" label={type || 'All'} width={200}
+      {(hasVersions || canManage) && <PageToolbar
+        filters={hasVersions && <Dropdown size="medium" shadow="none" filterName="Type" label={type || 'All'} width={200}
           items={[
             { label: 'All', value: '', selected: !type },
             ...types.map(({ name, group }) => ({ label: name, value: name, group, selected: name === type })),
           ]}
           onSelect={(value) => setType(String(value))} />}
-        search={<SearchBox value={query} onChange={setQuery} placeholder="Search name or version" />}
-        actions={uploadButton}
+        search={hasVersions && <SearchBox value={query} onChange={setQuery} placeholder="Search name or version" />}
+        actions={<>
+          {hasVersions && uploadButton}
+          {canManage && <IconButton icon="ri-shield-user-line" variant="outline" aria-label="Study Permissions"
+            onClick={() => go(hrefStudy(sid, 'asset', 'permissions'))} />}
+        </>}
       />}
       <div className="page-scroll">
         {rows.length > 0 ? (

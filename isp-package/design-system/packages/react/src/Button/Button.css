@@ -37,7 +37,7 @@
 .wiz-button--secondary.is-disabled, .wiz-button--secondary:disabled { color: var(--wiz-grey-60); }
 
 /* Danger */
-.wiz-button--danger-outline { background: var(--wiz-main-white); color: var(--wiz-main-error); }
+.wiz-button--danger-outline { box-shadow: none; background: var(--wiz-main-white); color: var(--wiz-main-error); }
 .wiz-button--danger-outline:hover:not(:disabled), .wiz-button--danger-outline.is-hover { border-color: var(--wiz-main-error); }
 .wiz-button--danger-solid { background: var(--wiz-main-error); color: var(--wiz-main-white); }
 .wiz-button--danger-solid:hover:not(:disabled), .wiz-button--danger-solid.is-hover { background: var(--wiz-red-70); }

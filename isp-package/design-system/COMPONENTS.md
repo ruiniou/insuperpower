@@ -81,7 +81,7 @@
 
 | 组件 | 用途 | 状态 |
 |---|---|---|
-| Button | 按钮：Primary / Secondary / Danger / Link；Secondary 和 Link 无阴影。Link 用于蓝色文字动作，默认及 Hover 无下划线，Hover 有浅色底，键盘聚焦有焦点环。Primary 和 Danger 可通过 `shadow="none"` 去阴影；`block` 撑满 | 稳定 |
+| Button | 按钮：Primary / Secondary / Danger / Link；Secondary、描边 Danger 和 Link 无阴影。Link 用于蓝色文字动作，默认及 Hover 无下划线，Hover 有浅色底，键盘聚焦有焦点环。Primary 和实心 Danger 可通过 `shadow="none"` 去阴影；`block` 撑满 | 稳定 |
 | IconButton | 图标按钮 | 稳定 |
 | CloseButton | 关闭按钮 | 稳定 |
 | OnStatusButton | 用在深色或彩色状态条上的半透明按钮 | 稳定 |

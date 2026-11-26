@@ -4,7 +4,7 @@ import { VersionRow } from '@wiz/isp';
 import { go } from '../../router';
 import { hrefEvent } from '../../store/actions';
 import { assetDownloadFile, assetDownloadPackage } from '../../store/assetDownload';
-import { canDownloadAsset } from '../../store/assetPermissions';
+import { canDownloadAsset, canPreviewAsset, canSeeAsset } from '../../store/assetPermissions';
 import { toast } from '../../store/store';
 import { assetDirectoryType } from '../../store/assets';
 import { cutOf, specOf, SPACE, S } from '../../store/selectors';
@@ -28,7 +28,26 @@ export function AssetVersionDrawer({ id, n }: { id: string; n?: number }) {
   const [preparingZip, setPreparingZip] = useState(false);
   const asset = S.asset(id);
   const version = asset && (n == null ? S.latest(asset) : S.vOf(asset, n));
-  if (!asset || !version) return null;
+  const [preview, setPreview] = useState<{ version: Version; name: string; text: string } | null>(null);
+  if (!asset || !version || !canSeeAsset(asset)) return null;
+
+  const previewFiles = canPreviewAsset(asset) ? (version.packageMembers
+    ?.filter(({ path }) => /\.(sas|r|py|txt|csv|json|xml)$/i.test(path))
+    .map(({ path, content }) => ({ name: path, content }))
+    ?? (version.file && version.fileContent && (typeof version.fileContent === 'string' || /^text\//.test(version.fileContent.type))
+      ? [{ name: version.file, content: version.fileContent }] : [])) : [];
+
+  const openPreview = async (file: typeof previewFiles[number]) => {
+    try {
+      const text = typeof file.content === 'string' ? file.content : await file.content.text();
+      const current = S.asset(id);
+      if (current && canPreviewAsset(current) && S.vOf(current, version.n) === version) {
+        setPreview({ version, name: file.name, text });
+      }
+    } catch {
+      toast('Could not open the preview. Try again.', { type: 'error' });
+    }
+  };
 
   const events = S.assetUsers(asset, version.n);
   const selectVersion = (value: number) => openDrawer({ kind: 'assetV', id, n: value });
@@ -69,6 +88,7 @@ export function AssetVersionDrawer({ id, n }: { id: string; n?: number }) {
             <dt>File</dt>
             <dd className="asset-drawer__file">
               <span>{version.file}</span>
+              {previewFiles[0] && <Button size="small" onClick={() => void openPreview(previewFiles[0])}>Preview</Button>}
               {!version.archived && version.fileContent && canDownloadAsset(asset) && (
                 <Button size="small" leftIcon="ri-download-2-line" onClick={download}>Download</Button>
               )}
@@ -88,6 +108,17 @@ export function AssetVersionDrawer({ id, n }: { id: string; n?: number }) {
           {version.meta?.['Effective date'] && <><dt>Effective date</dt><dd>{version.meta['Effective date']}</dd></>}
           {asset.source && asset.source !== 'Uploaded' && <><dt>Source</dt><dd>{asset.source}</dd></>}
         </dl>
+
+        {version.packageMembers && previewFiles.length > 0 && <section className="asset-drawer__section" aria-label="Preview files">
+          <h3>Preview files</h3>
+          <ul className="asset-drawer__items">{previewFiles.map((file) => <li key={file.name}>
+            <Button variant="link" onClick={() => void openPreview(file)}>{file.name}</Button>
+          </li>)}</ul>
+        </section>}
+        {preview?.version === version && canPreviewAsset(asset) && <section className="asset-drawer__section" aria-label="File preview">
+          <h3>{preview.name}</h3>
+          <pre className="study-permissions__preview">{preview.text}</pre>
+        </section>}
 
         <section className="asset-drawer__section" aria-labelledby="asset-referenced-events">
           <h3 id="asset-referenced-events">Referenced Events</h3>

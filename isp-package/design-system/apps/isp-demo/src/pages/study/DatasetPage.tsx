@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Button, EmptyState, SegmentedControl, Table, type TableColumn } from '@wiz/react';
+import { Button, EmptyState, IconButton, SegmentedControl, Table, type TableColumn } from '@wiz/react';
 import { go } from '../../router';
 import { hrefStudy } from '../../store/actions';
 import { DS_CATS } from '../../store/assets';
 import { cutOf, SPACES, S } from '../../store/selectors';
 import { isWritable } from '../../store/role';
+import { canViewStudyPermissions } from '../../store/studyPermissions';
 import { useDb } from '../../store/store';
 import { openDrawer, openModal, ui } from '../../store/ui';
 import type { Dataset } from '../../store/types';
@@ -39,12 +40,14 @@ export function DatasetPage({ sid, space }: { sid: string; space: string | null 
   ], [sid, sp.mode, writable]);
   const here = S.datasetsOf(sid, sp.key).length;
   const uploadDatasetButton = writable && <Button variant="primary" leftIcon="ri-upload-2-line" onClick={() => upload(null)}>Upload Dataset</Button>;
+  const permissions = canViewStudyPermissions(sid) && <IconButton icon="ri-shield-user-line" variant="outline"
+    aria-label="Study Permissions" onClick={() => go(hrefStudy(sid, 'dataset', 'permissions:' + sp.key))} />;
   return (
     <div className="studies">
-      {total > 0 && <PageToolbar
-        filters={<SegmentedControl aria-label="Dataset mode" items={SPACES.map((s) => ({ value: s.key, label: s.name }))} value={sp.key} onChange={(v) => go(hrefStudy(sid, 'dataset', v))} />}
+      {(total > 0 || permissions) && <PageToolbar
+        filters={total > 0 && <SegmentedControl aria-label="Dataset mode" items={SPACES.map((s) => ({ value: s.key, label: s.name }))} value={sp.key} onChange={(v) => go(hrefStudy(sid, 'dataset', v))} />}
         search={here > 0 && <SearchBox value={q} onChange={setQ} placeholder="Search datasets" />}
-        actions={here > 0 && uploadDatasetButton} />}
+        actions={<>{here > 0 && uploadDatasetButton}{permissions}</>} />}
       <div className="page-scroll">
         {rows.length === 0
           ? <EmptyState title={total === 0 ? 'No datasets yet' : here ? 'No datasets match' : `No ${sp.name} datasets yet`}

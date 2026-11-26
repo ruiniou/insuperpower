@@ -41,6 +41,13 @@ export function createSeed(): Database {
       { id: 'A6', studyId: 'STU-001', name: 'Primary Analysis TOC', code: 'TOC_TFL_DEFINITION', tl: 'TOC', icon: 'list', source: 'Promoted from WF-03', versions: [AV(1, 'v1.0', 'Li Wei', 'Oct 30')] },
       { id: 'A7', studyId: 'STU-001', name: 'Primary Analysis Mock Shell', code: 'TABLE_SHELL', tl: 'Shell', icon: 'shell', source: 'Promoted from WF-03', versions: [AV(2, 'v1.1', 'Li Wei', 'Oct 31'), AV(1, 'v1.0', 'Li Wei', 'Oct 29')] },
       { id: 'A8', studyId: 'STU-001', name: 'Primary Analysis SAS code', code: 'TFL_PRODUCTION_CODE', tl: 'Prod. code', icon: 'code', source: 'Promoted from WF-04', versions: [AV(1, 'v1.0', 'Chen Yu', 'Nov 1')] },
+      { id: 'A12', studyId: 'STU-001', name: 'SDTM Demographics Code Package', code: 'SDTM_PROGRAM', tl: 'SDTM Code (DEV)', icon: 'code', source: 'Uploaded', versions: [
+        V(1, 'Li Wei', 'Oct 30', '', {
+          label: 'v1.0',
+          file: 'dm.sas',
+          fileContent: '/* Demo SDTM Demographics mapping */\ndata sdtm.dm;\n  set staging.demographics;\nrun;\n',
+        }),
+      ] },
       { id: 'A9', studyId: 'STU-001', name: '', code: 'ACRF', tl: 'aCRF', icon: 'doc', required: true, versions: [] },
       { id: 'A10', studyId: 'STU-002', name: 'STU-002 Protocol', code: 'PROTOCOL', tl: 'Protocol', icon: 'doc', source: 'Uploaded', versions: [AV(1, 'v1.0', 'Zhao Min', 'Oct 20', 'Approved')] },
       { id: 'A11', studyId: 'STU-002', name: 'STU-002 SAP', code: 'SAP', tl: 'SAP', icon: 'doc', source: 'Uploaded', versions: [AV(1, 'v0.9', 'Zhao Min', 'Oct 24')] },

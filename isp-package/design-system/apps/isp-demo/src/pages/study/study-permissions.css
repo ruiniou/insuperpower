@@ -1,0 +1,119 @@
+.study-permissions__tabs {
+  --wiz-tabs-padding: 0 var(--wiz-spacing-lg);
+}
+
+.study-permissions__workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.study-permissions__roles {
+  flex: 0 0 10rem;
+  padding: var(--wiz-spacing-md);
+  border-inline-end: 1px solid var(--wiz-color-border-subtle);
+  overflow: auto;
+}
+
+.study-permissions__content {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.study-permissions__summary {
+  padding: var(--wiz-spacing-md) var(--wiz-spacing-lg) 0;
+}
+
+.study-permissions__summary h2,
+.study-permissions__summary p {
+  margin: 0 0 var(--wiz-spacing-sm);
+}
+
+.study-permissions__tracks,
+.study-permissions__grant {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--wiz-spacing-sm);
+}
+
+.study-permissions__grant {
+  column-gap: var(--wiz-spacing-md);
+}
+
+.study-permissions__tracks {
+  column-gap: var(--wiz-spacing-xl);
+}
+
+.study-permissions__tracks--paired {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  column-gap: var(--wiz-spacing-sm);
+}
+
+.study-permissions__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--wiz-spacing-xs) var(--wiz-spacing-md);
+  color: var(--wiz-color-text-secondary);
+}
+
+.study-permissions__legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wiz-spacing-xs);
+}
+
+.study-permissions__icon {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1em;
+  block-size: 1em;
+  font-size: var(--wiz-text-h3-size);
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.study-permissions__permission {
+  display: inline-flex;
+}
+
+.study-permissions__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--wiz-spacing-sm);
+  padding: var(--wiz-spacing-md) var(--wiz-spacing-xl);
+  border-block-start: 1px solid var(--wiz-color-border-subtle);
+}
+
+.study-permissions__diff {
+  max-block-size: 35vh;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  margin-block-end: var(--wiz-spacing-md);
+}
+
+.study-permissions__preview {
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 48rem) {
+  .study-permissions__workspace {
+    flex-direction: column;
+  }
+
+  .study-permissions__roles {
+    display: flex;
+    flex: 0 0 auto;
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--wiz-color-border-subtle);
+  }
+
+  .study-permissions__roles > button {
+    flex: 0 0 auto;
+  }
+}

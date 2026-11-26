@@ -12,6 +12,7 @@ import { S, SPACES } from './store/selectors';
 import { can, DUTIES, session, setDuty, type Duty, hasStudyDeletionAccess } from './store/role';
 import { toast, useDb } from './store/store';
 import { openDrawer, openModal, ui } from './store/ui';
+import { canSeeAsset } from './store/assetPermissions';
 import { isTocWorkbench } from './pages/review/route';
 
 /** 页头面包屑（含 ▾ 同级切换）与页签随路由变化。面包屑不含 Studies（列表入口在 Nav），只有 Studies 列表页自己显示 */
@@ -26,9 +27,12 @@ function useHeader(R: Route): { crumbs: BreadcrumbItem[]; tabs: ReactNode } {
   if (R.name === 'studyNew') return { crumbs: [{ label: 'New Study' }], tabs: null };
   if (R.name === 'study') {
     if (!S.workspaceStudy(R.sid)) return { crumbs: [{ label: 'Study not found' }], tabs: null };
-    const items = [{ value: 'events', label: <>Events <i className="app-count">{S.eventsOf(R.sid).length}</i></> }, { value: 'asset', label: <>Asset <i className="app-count">{S.assetsOf(R.sid).length}</i></> }, { value: 'dataset', label: <>Dataset <i className="app-count">{S.datasetsOf(R.sid).length}</i></> }, { value: 'member', label: <>Member <i className="app-count">{memberCount(R.sid)}</i></> }];
+    const items = [{ value: 'events', label: <>Events <i className="app-count">{S.eventsOf(R.sid).length}</i></> }, { value: 'asset', label: <>Asset <i className="app-count">{S.assetsOf(R.sid).filter(canSeeAsset).length}</i></> }, { value: 'dataset', label: <>Dataset <i className="app-count">{S.datasetsOf(R.sid).length}</i></> }, { value: 'member', label: <>Member <i className="app-count">{memberCount(R.sid)}</i></> }];
     /** Audit trail 是 Study 内的二级页：页签栏保留但不高亮，面包屑多一级 */
     const crumbs = R.tab === 'audit' ? [studyCrumb(R.sid, false), { label: 'Audit trail' }] : R.tab === 'blinding' ? [studyCrumb(R.sid, false), { label: 'Blinding management' }] : [studyCrumb(R.sid, true)];
+    const isPermissions = (R.tab === 'asset' && R.space === 'permissions')
+      || (R.tab === 'dataset' && R.space?.startsWith('permissions:'));
+    if (isPermissions) crumbs.push({ label: 'Study Permissions' });
     return { crumbs, tabs: <Tabs variant="underline" aria-label="Study sections" items={items} value={R.tab} onChange={(v) => go(hrefStudy(R.sid, v))} /> };
   }
   const e = S.workspaceEvent(R.eid);
