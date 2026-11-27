@@ -1,7 +1,5 @@
-import { useState } from 'react';
-import { Button, Checkbox, ConfirmDialog, EmptyState, SideBarTabs, Table, Tabs, Textarea, Tooltip, type TableColumn } from '@wiz/react';
-import { go } from '../../router';
-import { hrefStudy } from '../../store/actions';
+import { useState, type ReactNode } from 'react';
+import { Button, Checkbox, SegmentedControl, ConfirmDialog, EmptyState, Table, Textarea, Tooltip, type TableColumn } from '@wiz/react';
 import { isWritable } from '../../store/role';
 import {
   canViewStudyPermissions, datasetPermissions, documentPermissions, permissionActions,
@@ -15,15 +13,11 @@ import './study-permissions.css';
 
 type Role = MemberRole | 'admin';
 type Draft = Record<string, PermissionChange>;
-interface MatrixRow { group: string; label: string; items: PermissionItem[] }
 
 const roles = Object.entries(permissionRoles) as [MemberRole, string][];
-const scopes = [{ value: 'document', label: 'Document' }, { value: 'dataset', label: 'Dataset' }];
-const permissionIcons = {
-  W: 'ri-edit-line',
-  P: 'ri-eye-line',
-  D: 'ri-download-2-line',
-} as const;
+const roleColumns: [Role, string][] = [['admin', 'Study Admin'], ...roles];
+type Action = (typeof permissionActions)[number]['key'];
+const actionOptions = [{ value: 'all', label: 'All' }, ...permissionActions.map(({ key, label }) => ({ value: key, label }))];
 
 const diffColumns: TableColumn[] = [
   { key: 'label', header: 'Policy item' },
@@ -31,86 +25,70 @@ const diffColumns: TableColumn[] = [
   { key: 'proposed', header: 'Proposed value', width: 120 },
 ];
 
-export function StudyPermissionsPage({ sid, origin, space }: {
-  sid: string; origin: PermissionScope; space?: string;
+export function StudyPermissionsPage({ sid, scope }: {
+  sid: string; scope: PermissionScope;
 }) {
-  const [scope, setScope] = useState(origin);
-  const [role, setRole] = useState<Role>('STAT');
-  const [drafts, setDrafts] = useState<Record<PermissionScope, Draft>>({ document: {}, dataset: {} });
+  const [action, setAction] = useState<Action | 'all'>('P');
+  const [roleFilter, setRoleFilter] = useState<Role | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [draft, setDraft] = useState<Draft>({});
   const [dialog, setDialog] = useState<'review' | 'discard' | null>(null);
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
   const allowed = canViewStudyPermissions(sid);
   const writable = allowed && isWritable(sid);
-  const resource = origin === 'document' ? 'asset' : 'dataset';
-  const back = <Button variant="link" leftIcon="ri-arrow-left-line" onClick={() => go(hrefStudy(sid, resource, space))}>
-    {origin === 'document' ? 'Back to assets' : 'Back to datasets'}
-  </Button>;
-
-  if (!allowed) return <div className="studies"><PageToolbar start={back} />
+  if (!allowed) return <div className="studies">
     <EmptyState title="Study permissions unavailable" description="A current Study Admin can access these policies." />
   </div>;
 
-  const draft = drafts[scope];
   const changes = Object.values(draft);
-  const updateDraft = (next: Draft) => setDrafts({ ...drafts, [scope]: next });
   const keyOf = (role: MemberRole, item: PermissionItem) => role + ':' + item.code;
-  const diff = changes.flatMap(({ item, proposed, role }) => {
+  const diff = changes.map(({ item, proposed, role }) => {
     const { current } = permissionValue(sid, scope, role, item);
-    return permissionActions.filter(({ key }) => current.includes(key) !== proposed.includes(key))
-      .map(({ key, label }) => ({
-        label: [permissionRoles[role], scope === 'dataset' ? item.group : '', item.label, item.track, label].filter(Boolean).join(' / '),
-        current: current.includes(key) ? 'On' : 'Off',
-        proposed: proposed.includes(key) ? 'On' : 'Off',
-      }));
+    return {
+      label: [permissionRoles[role], scope === 'dataset' ? item.group : '', item.label, item.track].filter(Boolean).join(' / '),
+      current: current || '—',
+      proposed: proposed || '—',
+    };
   });
 
-  const renderActions = (item: PermissionItem) => {
-    const name = [scope === 'dataset' ? item.group : '', item.label, item.track].filter(Boolean).join(' ');
-    if (role === 'admin') return <div className="study-permissions__grant" role="group" aria-label={name + ': Maintain, Preview and Download inherited'}>
-      {item.track && <span>{item.track}</span>}
-      {permissionActions.map(({ key, label }) => <Tooltip key={key} content={label + ' (Inherited)'}>
-        <i className={`study-permissions__icon ${permissionIcons[key]}`} aria-hidden="true" />
-      </Tooltip>)}
-    </div>;
-    const { ceiling, current } = permissionValue(sid, scope, role, item);
+  const stage = (role: MemberRole, item: PermissionItem, proposed: string, current: string) => {
     const key = keyOf(role, item);
-    const value = draft[key]?.proposed ?? current;
-    return <div className="study-permissions__grant" role="group" aria-label={name}>
-      {item.track && <span className="wiz-text-body-2">{item.track}</span>}
-      {permissionActions.map(({ key: action, label }) => {
-        const blocked = !ceiling.includes(action);
-        const hint = blocked ? label + ' is outside the system ceiling.' : label;
-        return <Tooltip key={action} content={hint}>
-          <span className="study-permissions__permission"
-            tabIndex={blocked ? 0 : undefined}
-            role={blocked ? 'group' : undefined}
-            aria-label={blocked ? name + ': ' + hint : undefined}>
-            <Checkbox label={<i className={`study-permissions__icon ${permissionIcons[action]}`} aria-hidden="true" />}
-              aria-label={name + ' ' + label + (blocked ? ', outside system ceiling' : '')}
-              checked={value.includes(action)} disabled={!writable || blocked}
-              onChange={(checked) => {
-                const proposed = permissionActions.map(({ key }) => key)
-                  .filter((key) => key === action ? checked : value.includes(key)).join('');
-                const next = { ...draft };
-                if (proposed === current) delete next[key];
-                else next[key] = { role, item, proposed };
-                updateDraft(next);
-              }} />
-          </span>
-        </Tooltip>;
-      })}
-    </div>;
+    const next = { ...draft };
+    if (proposed === current) delete next[key];
+    else next[key] = { role, item, proposed };
+    setDraft(next);
+  };
+
+  const renderCheckbox = (role: Role, item: PermissionItem, permission: Action) => {
+    const label = permissionActions.find(({ key }) => key === permission)!.label;
+    const name = [scope === 'dataset' ? item.group : '', item.label, item.track,
+      role === 'admin' ? 'Study Admin' : permissionRoles[role], label].filter(Boolean).join(' / ');
+    if (role === 'admin') return <Checkbox checked disabled aria-label={name + ', read-only'} />;
+
+    const { ceiling, current } = permissionValue(sid, scope, role, item);
+    const value = draft[keyOf(role, item)]?.proposed ?? current;
+    const checked = value.includes(permission);
+    const blocked = !ceiling.includes(permission);
+    const checkbox = <Checkbox checked={checked} disabled={!writable || blocked}
+      aria-label={name + (blocked ? ', outside system ceiling' : '')}
+      onChange={(next) => stage(role, item, permissionActions.map(({ key }) => key)
+        .filter((key) => key === permission ? next : value.includes(key)).join(''), current)} />;
+
+    if (blocked) return <Tooltip content={label + ' is outside the system ceiling.'}>
+      <span className="study-permissions__checkbox" role="group" tabIndex={0}
+        aria-label={name + ', outside system ceiling'}>{checkbox}</span>
+    </Tooltip>;
+
+    return <span className={checked !== current.includes(permission)
+      ? 'study-permissions__checkbox study-permissions__changed' : 'study-permissions__checkbox'}>{checkbox}</span>;
   };
 
   const items = scope === 'document' ? documentPermissions : datasetPermissions;
   const groups = [...new Set(items.map(({ group }) => group))];
-  const columns: TableColumn[] = [
-    { key: 'label', header: scope === 'document' ? 'Document type' : 'Mode', width: 180 },
-    { key: 'actions', header: 'Permissions', render: (_value, row: MatrixRow) => (
-      <div className={row.items.length > 1 ? "study-permissions__tracks study-permissions__tracks--paired" : "study-permissions__tracks"}>{row.items.map((item) => <div key={item.code}>{renderActions(item)}</div>)}</div>
-    ) },
-  ];
+  const visibleRoles = roleFilter ? roleColumns.filter(([role]) => role === roleFilter) : roleColumns;
+  const visibleActions = permissionActions.filter(({ key }) => action === 'all' || key === action);
+  const columnCount = visibleRoles.length;
 
   const closeDialog = () => { setDialog(null); setError(''); };
   const openReview = () => { setReason(''); setError(''); setDialog('review'); };
@@ -123,40 +101,80 @@ export function StudyPermissionsPage({ sid, origin, space }: {
       toast('Permissions could not be saved. Check your access and the system ceiling.', { type: 'error' });
       return;
     }
-    updateDraft({});
+    setDraft({});
     closeDialog();
     toast('Permissions updated.', { type: 'success' });
   };
 
   return <div className="studies study-permissions">
-    <PageToolbar start={back} actions={<div className="study-permissions__legend wiz-text-caption" aria-label="Permission legend">
-      {permissionActions.map(({ key, label }) => <span key={key}>
-        <i className={`study-permissions__icon ${permissionIcons[key]}`} aria-hidden="true" /> {label}
-      </span>)}
-    </div>} />
-    <Tabs variant="underline" className="study-permissions__tabs" aria-label="Permission scope" items={scopes} value={scope}
-      onChange={(value) => setScope(value === 'dataset' ? 'dataset' : 'document')} />
+    <PageToolbar actions={<SegmentedControl aria-label="Permission action" items={actionOptions} value={action}
+        onChange={(value) => setAction(value as Action | 'all')} />} />
     <div className="study-permissions__workspace">
-      <nav className="study-permissions__roles" aria-label="Policy roles">
-        {([['admin', 'Study Admin'], ...roles] as [Role, string][]).map(([value, label]) => (
-          <SideBarTabs key={value} icon={null} label={label} active={value === role} selectedTone="soft" onClick={() => setRole(value)} />
-        ))}
-      </nav>
-      <div className="study-permissions__content">
-        <div className="study-permissions__summary">
-          <h2 className="wiz-text-subtitle-2">{role === 'admin' ? 'Study Admin' : permissionRoles[role]}</h2>
-          {role === 'admin' && <p className="wiz-text-body-2">Inherited from the current Study Admin responsibility.</p>}
-          {!writable && <p className="wiz-text-body-2">This Study is read-only.</p>}
-        </div>
-        <Table aria-label={scope === 'document' ? 'Document permissions' : 'Dataset permissions'}
-          variant="plain" columnLayout="fixed" rowHeight={48} columns={columns}
-          rows={groups.flatMap((group) => {
+      <div className="study-permissions__content wiz-table wiz-table--plain">
+        {!writable && <p className="study-permissions__summary wiz-text-body-2">This Study is read-only.</p>}
+        <table className={'wiz-table__grid is-fixed study-permissions__matrix' + (roleFilter ? ' study-permissions__matrix--filtered' : action === 'all' ? ' study-permissions__matrix--all-actions' : '')}
+          aria-label={(scope === 'document' ? 'Document' : 'Dataset') + ' permissions, ' + (action === 'all' ? 'all actions' : visibleActions[0].label)}>
+          <colgroup>
+            <col className="study-permissions__resource-col" />
+            {visibleRoles.map(([role]) => <col key={role}
+              className={!roleFilter && role === 'admin' && action !== 'all' ? 'study-permissions__admin-col' : undefined} />)}
+          </colgroup>
+          <thead>
+            <tr className={action === 'all' ? 'study-permissions__main-head' : undefined}>
+              <th scope="col" className="wiz-table__th">{scope === 'document' ? 'Document type' : 'Mode'}</th>
+              {visibleRoles.map(([role, label]) => (
+                <th key={role} scope="col" className={role === 'admin' ? 'wiz-table__th study-permissions__admin-head' : 'wiz-table__th'}>
+                  <Tooltip content={roleFilter === role ? 'Clear filter' : 'Filter by role'}>
+                    <button type="button" className="study-permissions__text-action study-permissions__role-filter"
+                      aria-label={label + ', filter by role'} aria-pressed={roleFilter === role}
+                      onClick={() => setRoleFilter((current) => current === role ? null : role)}>
+                      <span>{label}</span>
+                      <i className="ri-filter-3-line" aria-hidden="true" />
+                    </button>
+                  </Tooltip>
+                </th>
+              ))}
+            </tr>
+            {action === 'all' && <tr className="study-permissions__action-head" aria-hidden="true">
+              <td className="wiz-table__th" />
+              {visibleRoles.map(([role]) => <td key={role} className="wiz-table__th">
+                <span className="study-permissions__checks">
+                  {visibleActions.map(({ key, label }) => <span key={key} title={label}>{key}</span>)}
+                </span>
+              </td>)}
+            </tr>}
+          </thead>
+          {groups.map((group) => {
+            const groupKey = scope + '/' + group;
+            const expanded = !collapsed[groupKey];
             const grouped = items.filter((item) => item.group === group);
-            return [...new Set(grouped.map(({ label }) => label))].map((label) => ({
-              group, label, items: grouped.filter((item) => item.label === label),
-            }));
+            return <tbody key={groupKey}>
+              <tr className="study-permissions__section">
+                <th scope="rowgroup" className="wiz-table__th">
+                  <button type="button" className="study-permissions__text-action" aria-expanded={expanded}
+                    onClick={() => setCollapsed({ ...collapsed, [groupKey]: expanded })}>
+                    <i className={expanded ? 'ri-arrow-down-s-line' : 'ri-arrow-right-s-line'} aria-hidden="true" />
+                    {group}
+                  </button>
+                </th>
+                <td colSpan={columnCount} />
+              </tr>
+              {expanded && grouped.map((item, index) => {
+                const packageStart = item.track && grouped[index - 1]?.label !== item.label;
+                return <StudyPermissionRows key={item.code} packageLabel={packageStart ? item.label : undefined}
+                  item={item} columnCount={columnCount}>
+                  {visibleRoles.map(([role]) => (
+                    <td key={role} className="wiz-table__td">
+                      {action === 'all' ? <div className="study-permissions__checks">
+                        {visibleActions.map(({ key }) => <span key={key}>{renderCheckbox(role, item, key)}</span>)}
+                      </div> : renderCheckbox(role, item, action)}
+                    </td>
+                  ))}
+                </StudyPermissionRows>;
+              })}
+            </tbody>;
           })}
-          groupBy={(row: MatrixRow) => row.group} renderGroup={(group) => group} />
+        </table>
       </div>
     </div>
     {writable && <footer className="study-permissions__footer">
@@ -172,8 +190,25 @@ export function StudyPermissionsPage({ sid, origin, space }: {
       <Textarea label="Reason for change" required value={reason} onChange={(event) => { setReason(event.target.value); setError(''); }} error={error} />
     </ConfirmDialog>}
     {dialog === 'discard' && <ConfirmDialog title="Discard Permission Changes?"
-      description="This discards all unsaved changes in the current tab."
+      description="This discards all unsaved changes in this permission matrix."
       confirmLabel="Discard Changes" cancelLabel="Keep Editing" tone="danger" onCancel={closeDialog}
-      onConfirm={() => { updateDraft({}); closeDialog(); }} />}
+      onConfirm={() => { setDraft({}); closeDialog(); }} />}
   </div>;
+}
+
+function StudyPermissionRows({ packageLabel, item, columnCount, children }: {
+  packageLabel?: string;
+  item: PermissionItem;
+  columnCount: number;
+  children: ReactNode;
+}) {
+  return <>
+    {packageLabel && <tr className="study-permissions__package">
+      <th scope="row" className="wiz-table__td">{packageLabel}</th><td colSpan={columnCount} />
+    </tr>}
+    <tr>
+      <th scope="row" className="wiz-table__td">{item.track ?? item.label}</th>
+      {children}
+    </tr>
+  </>;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Divider, ConfirmDialog, EmptyState, IconButton, MemberSelect, Message, Select, Status, Tooltip } from '@wiz/react';
+import { Button, Divider, ConfirmDialog, EmptyState, IconButton, Message, Select, Status, Tooltip } from '@wiz/react';
 import { MemberRowsEditor } from './MemberRowsEditor';
 import { StudyFields } from './StudyFields';
 import { go, leave } from '../router';
@@ -99,7 +99,10 @@ function CreateStudyForm() {
                 lead={(
                   <div className="mre-item mre-item--lead" role="row">
                     <div className="mre-row">
-                      <span role="cell" className="mre-who"><MemberSelect disabled aria-label="Study Admin" options={[{ value: 'me', name: db.me.name, initials: db.me.ini }]} value="me" /><Status variant="style1" tone="blue" textCase="normal">Study Admin</Status></span>
+                      <span role="cell" className="mre-who">
+                        <span className="mre-who__name">{db.me.name}</span>
+                        <Status variant="style1" tone="blue" textCase="normal">Study Admin</Status>
+                      </span>
                       <span role="cell"><Select aria-label="Your Role" options={ROLES} value={f.role} onChange={(v) => set('role', v)} /></span>
                       <span role="cell"><Select aria-label="Your blinding" options={BLIND_ATTRS} value={f.attr} onChange={(v) => set('attr', v)} /></span>
                       <span role="cell" className="mre-na">—</span><span role="cell" className="mre-na">—</span><span role="cell" />

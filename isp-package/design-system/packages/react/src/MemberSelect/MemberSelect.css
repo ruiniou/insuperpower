@@ -38,3 +38,6 @@
 .wiz-member__name small { font-size: var(--wiz-text-caption-size); color: var(--wiz-color-text-muted); }
 .wiz-member__tick { flex: none; font-size: 16px; line-height: 1; }
 .wiz-member__empty { min-height: 32px; padding: 0 var(--wiz-spacing-sm); display: flex; align-items: center; color: var(--wiz-grey-60); }
+
+.wiz-member__input { flex: 1; min-width: 0; padding: 0; border: 0; outline: 0; font: inherit; color: inherit; background: transparent; }
+.wiz-member__input::placeholder { color: var(--wiz-color-text-muted); }

@@ -61,7 +61,7 @@ export interface SideBarProps extends Omit<HTMLAttributes<HTMLElement>, 'onSelec
   /** 底部设置类项目，显示在用户行上方 */
   footerItems?: NavItem[];
   /** 用户：头像（姓名前两个词的首字母）+ 姓名 */
-  user?: { name: string; email?: string };
+  user?: { name: string; email?: string; showAvatar?: boolean };
   /** Logo 行内容；默认原型的粗体文字 ISP，传 null 不显示该行（无折叠按钮时） */
   logo?: ReactNode;
   /** 宽度（默认 160，可配合 Splitter 调整） */
@@ -122,7 +122,7 @@ export function SideBar({
         {footerItems.map((it) => <SideBarTabs key={it.label} icon={it.icon} label={it.label} onClick={it.onClick} />)}
         {user && (
           <div className="wiz-sidebar__user" title={user.email}>
-            <span className="wiz-sidebar__avatar" aria-hidden="true">{userInitials(user.name || user.email || '?')}</span>
+            {user.showAvatar !== false && <span className="wiz-sidebar__avatar" aria-hidden="true">{userInitials(user.name || user.email || '?')}</span>}
             <span className="wiz-sidebar__email">{user.name}</span>
           </div>
         )}

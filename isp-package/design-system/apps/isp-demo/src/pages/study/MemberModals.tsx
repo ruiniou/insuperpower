@@ -59,7 +59,7 @@ export function AddMembersModal({ sid, userId }: { sid: string; userId: string |
     <Modal className="add-members-modal" title="Add members" width={narrow ? 520 : 1000} onClose={closeModal} footer={<Footer confirm="Add" onConfirm={submit} />}>
       <div className="app-form">
         {er.form && <Message tone="error">{er.form}</Message>}
-        <MemberRowsEditor layout={narrow ? 'stacked' : 'grid'} mode="multi" rows={rows} onChange={setRows} excludeUserIds={active} studyBlinded={isStudyBlinded(sid)} restorableUserIds={removed} prevAttrs={prevAttrs} attrLocked={!canChangeBlinding(sid)} errors={er} onClearError={clear} aria-label="Members to add" />
+        <MemberRowsEditor layout={narrow ? 'stacked' : 'grid'} mode="multi" searchUserInField splitValidity rows={rows} onChange={setRows} excludeUserIds={active} studyBlinded={isStudyBlinded(sid)} restorableUserIds={removed} prevAttrs={prevAttrs} attrLocked={!canChangeBlinding(sid)} errors={er} onClearError={clear} aria-label="Members to add" />
         <Textarea label="Reason" required rows={2} maxLength={1000} placeholder="Why these people are being added" value={reason} error={er.reason}
           onChange={(e) => { setReason(e.target.value); clear('reason'); }} />
       </div>
@@ -85,7 +85,7 @@ export function EditMemberModal({ sid, memberId }: { sid: string; memberId: stri
     <Modal title="Edit role and validity" width={520} onClose={closeModal} footer={<Footer confirm="Update" onConfirm={submit} />}>
       <div className="app-form">
         {er.form && <Message tone="error">{er.form}</Message>}
-        <MemberRowsEditor layout="stacked" mode="single" attrLocked rows={rows} onChange={setRows} studyBlinded={isStudyBlinded(sid)} errors={er} onClearError={clear} aria-label="Member" />
+        <MemberRowsEditor layout="stacked" mode="single" splitValidity attrLocked rows={rows} onChange={setRows} studyBlinded={isStudyBlinded(sid)} errors={er} onClearError={clear} aria-label="Member" />
         <Textarea label="Reason" required rows={2} maxLength={1000} placeholder="Why the role or validity is changing" value={reason} error={er.reason}
           onChange={(e) => { setReason(e.target.value); clear('reason'); }} />
       </div>
@@ -125,7 +125,7 @@ export function RemoveMemberModal({ sid, memberId }: { sid: string; memberId: st
                         {impact.events.map((e) => (
               <div className="mem-impact__row" key={e.id}>
                 <span className="mem-impact__what"><span className="app-ell">{e.name}</span><span className="mem-impact__sub">Event Owner</span></span>
-                <MemberSelect aria-label={'New Event Owner of ' + e.name} placeholder="Select a new owner" options={options} value={ev[evKey(e.id)] || null} onChange={pick(evKey(e.id), setEv)} />
+                <MemberSelect showAvatar={false} aria-label={'New Event Owner of ' + e.name} placeholder="Select a new owner" options={options} value={ev[evKey(e.id)] || null} onChange={pick(evKey(e.id), setEv)} />
               </div>
             ))}
           </div>
@@ -137,7 +137,7 @@ export function RemoveMemberModal({ sid, memberId }: { sid: string; memberId: st
               return (
                 <div className="mem-impact__row" key={k}>
                   <span className="mem-impact__what"><span className="app-ell">{event.name}</span><span className="mem-impact__sub">Workflow {w.id}</span></span>
-                  <MemberSelect aria-label={`New owner of ${w.id} in ${event.name}`} placeholder="Select a new owner" options={options} value={wf[k] || null} onChange={pick(k, setWf)} />
+                  <MemberSelect showAvatar={false} aria-label={`New owner of ${w.id} in ${event.name}`} placeholder="Select a new owner" options={options} value={wf[k] || null} onChange={pick(k, setWf)} />
                 </div>
               );
             })}
@@ -201,7 +201,7 @@ export function TransferAdminModal({ sid }: { sid: string }) {
       <div className="app-form">
         {er.form && <Message tone="error">{er.form}</Message>}
         <p className="mem-impact__h">You’ll stay a member but lose Study Admin rights. Only the new Study Admin can hand them back.</p>
-        <MemberSelect label="New Study Admin" required aria-label="New Study Admin" disabled={none} placeholder={none ? 'No other active members' : 'Select a person'} options={options} value={to || null} error={er.to}
+        <MemberSelect showAvatar={false} label="New Study Admin" required aria-label="New Study Admin" disabled={none} placeholder={none ? 'No other active members' : 'Select a person'} options={options} value={to || null} error={er.to}
           onChange={(v) => { setTo(v); setEr((p) => { const n = { ...p }; delete n.to; return n; }); }} />
         <Textarea label="Reason" required rows={2} maxLength={1000} placeholder="Why the Study Admin is changing hands" value={reason} error={er.reason}
           onChange={(e) => { setReason(e.target.value); setEr((p) => { const n = { ...p }; delete n.reason; return n; }); }} />

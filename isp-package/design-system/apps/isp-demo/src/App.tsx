@@ -27,9 +27,9 @@ function Page() {
   if (R.name === 'study') {
     if (!S.workspaceStudy(R.sid)) return <NotFoundPage what="Study" id={R.sid} />;
     if (R.tab === 'events') return <EventsPage sid={R.sid} />;
-    if (R.tab === 'asset' && R.space === 'permissions') return <StudyPermissionsPage key={R.sid + '/asset'} sid={R.sid} origin="document" />;
+    if (R.tab === 'asset' && R.space === 'permissions') return <StudyPermissionsPage key={R.sid + '/asset'} sid={R.sid} scope="document" />;
     if (R.tab === 'dataset' && R.space?.startsWith('permissions')) {
-      return <StudyPermissionsPage key={R.sid + '/dataset'} sid={R.sid} origin="dataset" space={R.space.split(':')[1]} />;
+      return <StudyPermissionsPage key={R.sid + '/dataset'} sid={R.sid} scope="dataset" />;
     }
     if (R.tab === 'asset') return <AssetPage sid={R.sid} />;
     if (R.tab === 'member') return <MemberPage key={R.sid + ":" + R.space} sid={R.sid} initialUnspecified={R.space === "unspecified"} />;

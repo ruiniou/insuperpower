@@ -32,7 +32,10 @@ function useHeader(R: Route): { crumbs: BreadcrumbItem[]; tabs: ReactNode } {
     const crumbs = R.tab === 'audit' ? [studyCrumb(R.sid, false), { label: 'Audit trail' }] : R.tab === 'blinding' ? [studyCrumb(R.sid, false), { label: 'Blinding management' }] : [studyCrumb(R.sid, true)];
     const isPermissions = (R.tab === 'asset' && R.space === 'permissions')
       || (R.tab === 'dataset' && R.space?.startsWith('permissions:'));
-    if (isPermissions) crumbs.push({ label: 'Study Permissions' });
+    if (isPermissions) {
+      const href = hrefStudy(R.sid, R.tab, R.tab === 'dataset' ? R.space?.split(':')[1] : undefined);
+      crumbs.push({ label: R.tab === 'asset' ? 'Asset' : 'Dataset', href, onClick: () => go(href) }, { label: 'Study Permissions' });
+    }
     return { crumbs, tabs: <Tabs variant="underline" aria-label="Study sections" items={items} value={R.tab} onChange={(v) => go(hrefStudy(R.sid, v))} /> };
   }
   const e = S.workspaceEvent(R.eid);
@@ -147,7 +150,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <ReviewNavContext.Provider value={{ collapsed: navCollapsed, expand: () => setNavCollapsed(false), copilotOpen: copilot, openCopilot: () => setCopilot(true), closeCopilot: () => setCopilot(false) }}>
         <div className="app app--review">
           <Pane open={!navCollapsed} width={nav.w + 8} gapEnd dragging={nav.dragging || cp.dragging}>
-            <SideBar items={items} value={active} selectedTone="soft" user={{ name: db.me.name }} collapsible collapsed={false} onToggle={setNavCollapsed} expandedWidth={nav.w}
+            <SideBar items={items} value={active} selectedTone="soft" user={{ name: db.me.name, showAvatar: false }} collapsible collapsed={false} onToggle={setNavCollapsed} expandedWidth={nav.w}
               onSelect={(v) => { if (v === 'studies') go('#/studies'); }} />
           </Pane>
           {!navCollapsed && navSplitter}
@@ -161,7 +164,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="app">
       <Pane open={!mainNavCollapsed} width={nav.w + 8} gapEnd dragging={nav.dragging || cp.dragging}>
       <div className="app-side">
-      <SideBar items={items} value={active} selectedTone="soft" user={{ name: db.me.name }} collapsible collapsed={false} onToggle={setMainNavCollapsed} expandedWidth={nav.w}
+      <SideBar items={items} value={active} selectedTone="soft" user={{ name: db.me.name, showAvatar: false }} collapsible collapsed={false} onToggle={setMainNavCollapsed} expandedWidth={nav.w}
         onSelect={(v) => { if (v === 'studies') go('#/studies'); }} />
         <div className="app-role"><Select size="small" aria-label="Demo role" label="Demo role" options={DUTIES.map((d) => ({ value: d, label: d }))} value={session.duty} onChange={(v) => setDuty(v as Duty)} /></div>
       </div>

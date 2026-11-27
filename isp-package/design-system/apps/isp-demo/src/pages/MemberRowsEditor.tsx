@@ -14,6 +14,8 @@ export interface MemberRowsEditorProps {
   excludeUserIds?: string[];
   /** Study 级盲态为 Blinded：属性必填（只在 Unblinded 时表头显示说明） */
   studyBlinded: boolean;
+  searchUserInField?: boolean;
+  splitValidity?: boolean;
   /** single：用户锁定，不能增删行 */
   mode: 'multi' | 'single';
   errors?: MemberErrors;
@@ -38,7 +40,7 @@ const ATTRS = BLIND_ATTRS.map((a) => ({ value: a.value, label: a.label }));
 const optionOf = (u: { id: string; name: string; email: string }) => ({ value: u.id, name: u.name, hint: u.email });
 
 /** 成员行表格：Add members 弹窗、Edit 单行、Create Study 的初始成员共用。列：User、Role、Blinding、Validity（开始必填，结束可选，精确到分钟）、删除 */
-export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBlinded, mode, errors = {}, onClearError, prevAttrs = {}, attrLocked, restorableUserIds = [], lead, layout = 'grid', ...rest }: MemberRowsEditorProps) {
+export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBlinded, mode, searchUserInField, splitValidity, errors = {}, onClearError, prevAttrs = {}, attrLocked, restorableUserIds = [], lead, layout = 'grid', ...rest }: MemberRowsEditorProps) {
   const single = mode === 'single';
   const listRef = useRef<HTMLDivElement>(null);
   const scrollToAddedRow = useRef(false);
@@ -58,6 +60,16 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
     onChange(rows.map((r) => (r.key === key ? { ...r, ...p } : r)));
     (Object.keys(p) as Array<keyof typeof FIELD>).forEach((k) => { onClearError?.(memberKey(key, FIELD[k])); if (k === 'validFrom') onClearError?.(memberKey(key, 'to')); });
   };
+  const timeZone = systemTimeZone().label;
+  const validityField = (row: MemberRow, who: string, field: 'validFrom' | 'validUntil') => {
+    const start = field === 'validFrom';
+    const label = start ? 'Valid from' : 'Valid until';
+    return <ValidityPicker label={layout === 'stacked' ? <>{label}{start && <span className="mre-tz">{timeZone}</span>}</> : undefined}
+      aria-label={`${label} for ${who}`} required={start} clearable={!start} singlePointLabel={start ? 'Start' : 'End'}
+      placeholder={start ? 'Select start time' : 'No end time'}
+      value={{ start: row[field], end: null }} error={errors[memberKey(row.key, start ? 'from' : 'to')]}
+      onChange={(value) => patch(row.key, { [field]: value.start })} />;
+  };
   const chosen = (key: number) => new Set(rows.filter((r) => r.key !== key && r.userId).map((r) => r.userId));
   const candidates = TENANT_USERS.filter((u) => !excludeUserIds.includes(u.id));
 
@@ -74,7 +86,7 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
             return (
               <div className="mre-block" key={r.key}>
                 {!single && rows.length > 1 && <Button className="mre-block__rm" variant="link" size="small" onClick={() => onChange(rows.filter((x) => x.key !== r.key))}>Remove</Button>}
-                <MemberSelect label="User" required={!single} aria-label={`User ${i + 1}`} placeholder="Select a person" disabled={single} options={opts} value={r.userId || null} error={errors[memberKey(r.key, 'user')]}
+                <MemberSelect showAvatar={false} searchInField={searchUserInField} label="User" required={!single} aria-label={`User ${i + 1}`} placeholder="Select a person" disabled={single} options={opts} value={r.userId || null} error={errors[memberKey(r.key, 'user')]}
                   hint={r.userId && restorableUserIds.includes(r.userId) ? 'Will be restored with the settings below.' : undefined} onChange={(v) => patch(r.key, { userId: v })} />
                 <div className="mre-block__2">
                   <Select label="Role" aria-label={`Role of ${who}`} options={ROLES} value={r.role} error={errors[memberKey(r.key, 'role')]} onChange={(v) => patch(r.key, { role: v })} />
@@ -84,8 +96,11 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
                         onChange={(v) => patch(r.key, { attr: v })} />}
                 </div>
                 {!attrLocked && !studyBlinded && <p className="mre-hint mre-hint--tight">Blinding is not enforced while the study is not blinded.</p>}
-                <ValidityPicker endable label={<>Validity <span className="mre-tz">{systemTimeZone().label}</span></>} required aria-label={`Validity, ${who}`} placeholder="Select start time" value={{ start: r.validFrom, end: r.validUntil || null }}
-                  error={errors[memberKey(r.key, 'from')] ?? errors[memberKey(r.key, 'to')]} onChange={(v) => patch(r.key, { validFrom: v.start, validUntil: v.end ?? '' })} />
+                {splitValidity ? <div className="mre-block__2">
+                  {validityField(r, who, 'validFrom')}
+                  {validityField(r, who, 'validUntil')}
+                </div> : <ValidityPicker endable label={<>Validity <span className="mre-tz">{systemTimeZone().label}</span></>} required aria-label={`Validity, ${who}`} placeholder="Select start time" value={{ start: r.validFrom, end: r.validUntil || null }}
+                  error={errors[memberKey(r.key, 'from')] ?? errors[memberKey(r.key, 'to')]} onChange={(v) => patch(r.key, { validFrom: v.start, validUntil: v.end ?? '' })} />}
               </div>
             );
           })}
@@ -96,7 +111,7 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
   }
 
   return (
-    <div className="mre" role="table" aria-label={rest['aria-label'] ?? 'Members'}>
+    <div className={splitValidity ? 'mre mre--split-validity' : 'mre'} role="table" aria-label={rest['aria-label'] ?? 'Members'}>
       <div className="mre-row mre-row--head" role="row">
         <span role="columnheader">User</span>
         <span role="columnheader">Role</span>
@@ -108,7 +123,10 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
             </Tooltip>
           )}
         </span>
-        <span role="columnheader" className="mre-th">Validity<span className="mre-tz">{systemTimeZone().label}</span></span>
+        {splitValidity ? <>
+          <span role="columnheader" className="mre-th">Valid from<span className="mre-tz">{timeZone}</span></span>
+          <span role="columnheader">Valid until</span>
+        </> : <span role="columnheader" className="mre-th">Validity<span className="mre-tz">{timeZone}</span></span>}
         <span role="columnheader"><span className="mre-sr">Action</span></span>
       </div>
       <div className="mre-list" role="rowgroup" ref={listRef}>
@@ -123,7 +141,7 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
             <div className="mre-item" key={r.key} role="row">
               <div className="mre-row">
                 <span role="cell">
-                  <MemberSelect aria-label={`User ${i + 1}`} placeholder="Select a person" disabled={single} options={opts} value={r.userId || null} error={errors[memberKey(r.key, 'user')]}
+                  <MemberSelect showAvatar={false} searchInField={searchUserInField} aria-label={`User ${i + 1}`} placeholder="Select a person" disabled={single} options={opts} value={r.userId || null} error={errors[memberKey(r.key, 'user')]}
                     onChange={(v) => patch(r.key, { userId: v })} />
                 </span>
                 <span role="cell"><Select aria-label={`Role of ${who}`} options={ROLES} value={r.role} error={errors[memberKey(r.key, 'role')]} onChange={(v) => patch(r.key, { role: v })} /></span>
@@ -132,10 +150,13 @@ export function MemberRowsEditor({ rows, onChange, excludeUserIds = [], studyBli
                     ? <span className={r.attr === 'UNSET' ? 'mre-ro app-muted' : 'mre-ro'}>{attrLabel(r.attr)}</span>
                     : <Select aria-label={`Blinding of ${who}`} options={ATTRS.map((a) => ({ ...a, disabled: attrOff(a.value) }))} value={r.attr} error={errors[memberKey(r.key, 'attr')]} onChange={(v) => patch(r.key, { attr: v })} />}
                 </span>
-                <span role="cell">
+                {splitValidity ? <>
+                  <span role="cell">{validityField(r, who, 'validFrom')}</span>
+                  <span role="cell">{validityField(r, who, 'validUntil')}</span>
+                </> : <span role="cell">
                   <ValidityPicker endable aria-label={`Validity, ${who}`} placeholder="Select start time" value={{ start: r.validFrom, end: r.validUntil || null }}
                     error={errors[memberKey(r.key, 'from')] ?? errors[memberKey(r.key, 'to')]} onChange={(v) => patch(r.key, { validFrom: v.start, validUntil: v.end ?? '' })} />
-                </span>
+                </span>}
                 <span role="cell" className="mre-act">
                   {!single && <IconButton size="compact" icon="ri-close-circle-fill" aria-label={`Remove row ${i + 1}`} title="Remove" onClick={() => onChange(rows.filter((x) => x.key !== r.key))} />}
                 </span>

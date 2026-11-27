@@ -1,18 +1,7 @@
-.study-permissions__tabs {
-  --wiz-tabs-padding: 0 var(--wiz-spacing-lg);
-}
-
 .study-permissions__workspace {
   display: flex;
   flex: 1;
   min-height: 0;
-}
-
-.study-permissions__roles {
-  flex: 0 0 10rem;
-  padding: var(--wiz-spacing-md);
-  border-inline-end: 1px solid var(--wiz-color-border-subtle);
-  overflow: auto;
 }
 
 .study-permissions__content {
@@ -31,54 +20,114 @@
   margin: 0 0 var(--wiz-spacing-sm);
 }
 
-.study-permissions__tracks,
-.study-permissions__grant {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--wiz-spacing-sm);
+.study-permissions__matrix {
+  width: 100%;
+  min-width: 48rem;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-.study-permissions__grant {
-  column-gap: var(--wiz-spacing-md);
+.study-permissions__matrix--all-actions {
+  min-width: 54rem;
 }
 
-.study-permissions__tracks {
-  column-gap: var(--wiz-spacing-xl);
+.study-permissions__matrix--filtered {
+  min-width: 24rem;
 }
 
-.study-permissions__tracks--paired {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  column-gap: var(--wiz-spacing-sm);
+.study-permissions__resource-col { width: 11rem; }
+.study-permissions__admin-col { width: 7rem; }
+
+.study-permissions__matrix tr > :first-child {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
 }
 
-.study-permissions__legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--wiz-spacing-xs) var(--wiz-spacing-md);
-  color: var(--wiz-color-text-secondary);
+.study-permissions__matrix .study-permissions__section > * {
+  background: var(--wiz-grey-10);
+  border-block-end: 1px solid var(--wiz-color-border-subtle);
 }
 
-.study-permissions__legend > span {
+.study-permissions__matrix .study-permissions__package th {
+  font-weight: var(--wiz-text-subtitle-2-weight);
+}
+
+.study-permissions__text-action {
   display: inline-flex;
   align-items: center;
   gap: var(--wiz-spacing-xs);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
 }
 
-.study-permissions__icon {
+.study-permissions__text-action:hover {
+  color: var(--wiz-color-text-primary);
+}
+
+.study-permissions__text-action:focus-visible {
+  outline: 2px solid var(--wiz-color-focus);
+  outline-offset: var(--wiz-spacing-xs);
+}
+
+.study-permissions__checks {
   display: inline-grid;
-  place-items: center;
-  inline-size: 1em;
-  block-size: 1em;
-  font-size: var(--wiz-text-h3-size);
-  line-height: 1;
+  grid-template-columns: repeat(3, var(--wiz-spacing-xl));
+  gap: var(--wiz-spacing-xs);
+  align-items: center;
+  text-align: center;
+}
+
+.study-permissions__main-head > .wiz-table__th {
+  border-block-end: 0;
+}
+
+.study-permissions__action-head > .wiz-table__th {
+  height: var(--wiz-spacing-xl);
+  vertical-align: top;
+}
+
+.study-permissions__role-filter {
+  color: var(--wiz-color-text-primary);
+}
+
+.study-permissions__admin-head .study-permissions__role-filter {
+  white-space: nowrap;
+}
+
+.study-permissions__role-filter i {
+  flex: none;
+  color: var(--wiz-color-text-secondary);
+  visibility: hidden;
+}
+
+.study-permissions__role-filter:is(:hover, :focus-visible, [aria-pressed='true']) i {
+  visibility: visible;
+}
+
+.study-permissions__role-filter[aria-pressed='true'] i {
+  color: var(--wiz-color-text-link);
+}
+
+.study-permissions__role-filter:hover {
+  background: var(--wiz-color-surface-hover);
+  border-radius: var(--wiz-radius-xs);
+}
+
+.study-permissions__checkbox {
+  display: inline-flex;
   vertical-align: middle;
 }
 
-.study-permissions__permission {
-  display: inline-flex;
+.study-permissions__changed {
+  outline: 1px solid var(--wiz-color-focus);
+  border-radius: var(--wiz-radius-xs);
 }
 
 .study-permissions__footer {
@@ -99,21 +148,4 @@
 .study-permissions__preview {
   overflow: auto;
   white-space: pre-wrap;
-}
-
-@media (max-width: 48rem) {
-  .study-permissions__workspace {
-    flex-direction: column;
-  }
-
-  .study-permissions__roles {
-    display: flex;
-    flex: 0 0 auto;
-    border-inline-end: 0;
-    border-block-end: 1px solid var(--wiz-color-border-subtle);
-  }
-
-  .study-permissions__roles > button {
-    flex: 0 0 auto;
-  }
 }

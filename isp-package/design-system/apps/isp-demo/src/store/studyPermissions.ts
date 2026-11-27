@@ -59,7 +59,7 @@ export const datasetPermissions: PermissionItem[] = ['RawData', 'SDTM', 'ADaM'].
 export function permissionValue(sid: string, scope: PermissionScope, role: MemberRole, item: PermissionItem) {
   const [initial, ceiling = initial] = item.values[Object.keys(permissionRoles).indexOf(role)].split('/');
   const current = getDb().studyPolicies?.[sid]?.[scope]?.[role + ':' + item.code] ?? initial;
-  return { ceiling, current };
+  return { ceiling, current, initial };
 }
 
 export function activeStudyMember(sid: string, userId = ME_USER.id) {

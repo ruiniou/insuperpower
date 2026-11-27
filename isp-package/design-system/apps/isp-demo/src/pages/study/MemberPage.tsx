@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Avatar, Button, Dropdown, EmptyState, Search, Status, Table, type TableColumn } from '@wiz/react';
+import { Button, Dropdown, EmptyState, Search, Status, Table, type TableColumn } from '@wiz/react';
 import { formatRange, systemTimeZone } from '@wiz/isp';
 import { attrLabel, canAddMembers, canChangeBlinding, canTransferAdmin, membersOf, roleLabel, sortMembers } from '../../store/members';
 import { ROLES } from '../../store/people';
@@ -8,9 +8,9 @@ import { S } from '../../store/selectors';
 import { useDb } from '../../store/store';
 import { openModal } from '../../store/ui';
 import type { StudyMember } from '../../store/types';
-import { initials, PageToolbar, RowMenu } from './common';
+import { PageToolbar, RowMenu } from './common';
 
-const STATUS_OPTS = ['Active', 'Removed', 'All'] as const;
+const STATUS_OPTS = ['Active', 'Removed'] as const;
 type StatusFilter = (typeof STATUS_OPTS)[number];
 const PAGE_SIZES = [10, 20, 50];
 
@@ -30,7 +30,7 @@ export function MemberPage({ sid, initialUnspecified = false }: { sid: string; i
   const [unspecified, setUnspecified] = useState(initialUnspecified);
   const all = membersOf(sid);
   const needle = q.trim().toLowerCase();
-  const rows = sortMembers(all.filter((m) => (status === 'All' || (status === 'Active') === (m.status === 'ACTIVE'))
+  const rows = sortMembers(all.filter((m) => ((status === 'Active') === (m.status === 'ACTIVE'))
     && (!unspecified || m.attr === 'UNSET') && (!roles.length || roles.includes(m.role)) && (!needle || m.name.toLowerCase().includes(needle))));
 
   const tz = systemTimeZone().label;
@@ -38,14 +38,10 @@ export function MemberPage({ sid, initialUnspecified = false }: { sid: string; i
     const dim = (m: StudyMember, node: React.ReactNode) => (m.status === 'REMOVED' ? <span className="mem-dim">{node}</span> : node);
     const cols: TableColumn[] = [
       { key: 'name', header: 'Name', render: (_v, m: StudyMember) => {
-        const email = m.email?.trim();
         return (
-          <span className="mem-who">
-            <Avatar size={20} color="brand-blue" initials={initials(m.name)} />
-            <span className="mem-who__txt">
-              <span className="mem-who__name"><span className={m.status === 'REMOVED' ? 'app-ell mem-dim' : 'app-ell'}>{m.name}</span>{m.isAdmin && <Status variant="style1" tone="blue" textCase="normal">Admin</Status>}</span>
-              {email && <span className={m.status === 'REMOVED' ? 'mem-email mem-dim' : 'mem-email'}>{email}</span>}
-            </span>
+          <span className="mem-who__name">
+            <span className={m.status === 'REMOVED' ? 'app-ell mem-dim' : 'app-ell'}>{m.name}</span>
+            {m.isAdmin && <Status variant="style1" tone="blue" textCase="normal">Admin</Status>}
           </span>
         );
       } },
@@ -91,7 +87,7 @@ export function MemberPage({ sid, initialUnspecified = false }: { sid: string; i
             items={ROLES.map((r) => ({ label: r.label, value: r.value, selected: roles.includes(r.value) }))}
             onSelect={(v) => setRoles((p) => (p.includes(String(v)) ? p.filter((x) => x !== v) : [...p, String(v)]))} />
           <Dropdown size="medium" shadow="none" filterName="Status" label={status} width={160} items={STATUS_OPTS.map((t) => ({ label: t, value: t, selected: t === status }))} onSelect={(v) => setStatus(String(v) as StatusFilter)} />
-          <Dropdown size="medium" shadow="none" filterName="Blinding" label={unspecified ? 'Unspecified' : 'All'} items={[{ label: 'All', value: 'all', selected: !unspecified }, { label: 'Unspecified', value: 'unspecified', selected: unspecified }]} onSelect={(v) => setUnspecified(v === 'unspecified')} />
+          {unspecified && <Button variant="link" onClick={() => setUnspecified(false)}>Clear blinding filter</Button>}
         </>}
         search={<Search size="compact" width={220} placeholder="Search members" aria-label="Search members" value={q} onChange={(e) => setQ(e.target.value)} />}
         actions={addMembers} />}

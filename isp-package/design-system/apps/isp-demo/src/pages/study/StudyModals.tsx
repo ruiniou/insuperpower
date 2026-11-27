@@ -1,7 +1,7 @@
 import './code-package-upload.css';
 import { DeleteStudyModal } from './DeleteStudyModal';
 import { useRef, useState } from 'react';
-import { Avatar, Button, Checkbox, ConfirmDialog, Field, Input, Message, Modal, PickList, Select, Textarea, Upload } from '@wiz/react';
+import { Button, Checkbox, ConfirmDialog, Field, Input, Message, Modal, PickList, Select, Textarea, Upload } from '@wiz/react';
 import { go } from '../../router';
 import { AddMembersModal, ChangeBlindingModal, EditMemberModal, RemoveMemberModal, TransferAdminModal } from './MemberModals';
 import { ArchiveStudyModal, RestoreStudyModal } from './ArchiveModals';
@@ -52,7 +52,7 @@ function CreateEventModal({ sid }: { sid: string }) {
         <Textarea label="Analysis Objective" rows={2} maxLength={1000} placeholder="What this Event should answer" value={f.goal} onChange={(e) => setF({ ...f, goal: e.target.value })} />
         <div className="app-form__row2">
           <Select label="Analysis Scope" options={SCOPES.map(([value, label]) => ({ value, label }))} value={f.scope} onChange={(v) => setF({ ...f, scope: v })} />
-          <Field label="Event Owner"><span className="app-owner"><Avatar size={20} color="brand-blue" initials={db.me.ini} />{db.me.name}</span></Field>
+          <Field label="Event Owner"><span className="app-owner">{db.me.name}</span></Field>
         </div>
         <Field label={<>Reference Existing Assets{nSel > 0 && <span className="app-lcn">{nSel}</span>}</>}>
           {assets.length ? (

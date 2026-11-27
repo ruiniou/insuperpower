@@ -22,6 +22,8 @@ export interface ValidityPickerProps {
   defaultEnd?: boolean;
   /** 允许清空：有值时浮层底部出现 Clear，清空后 start 为空串、end 为 null（用作筛选条件时，空即不限） */
   clearable?: boolean;
+  /** Label for the sole date/time in a standalone field. */
+  singlePointLabel?: string;
   label?: ReactNode;
   required?: boolean;
   error?: ReactNode;
@@ -86,7 +88,7 @@ function TimeInput({ iso, label, onFocusRow, onIso }: { iso: string; label: stri
   );
 }
 
-export function ValidityPicker({ value, onChange, endable = false, defaultEnd = false, clearable = false, label, required, error, size = 'medium', disabled, placeholder = 'Select start time', className, ...rest }: ValidityPickerProps) {
+export function ValidityPicker({ value, onChange, endable = false, defaultEnd = false, clearable = false, singlePointLabel, label, required, error, size = 'medium', disabled, placeholder = 'Select start time', className, ...rest }: ValidityPickerProps) {
   const uid = 'wiz-isp-vp-' + useId().replace(/:/g, '');
   const tz = useMemo(systemTimeZone, []);
   const hasError = error != null && error !== false && error !== '';
@@ -191,7 +193,7 @@ export function ValidityPicker({ value, onChange, endable = false, defaultEnd = 
   };
 
   const fieldEl = (which: Row) => {
-    const d = which === 'start' ? txt.sd : txt.ed; const title = which === 'start' ? 'Start' : 'End';
+    const d = which === 'start' ? txt.sd : txt.ed; const title = which === 'start' ? (!endable && singlePointLabel || 'Start') : 'End';
     const bad = txtErr?.row === which;
     return (
       <div className={cx('wiz-isp-vp__field', active === which && 'is-active', bad && 'is-error')}>

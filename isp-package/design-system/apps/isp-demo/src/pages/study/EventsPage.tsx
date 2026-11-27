@@ -29,7 +29,7 @@ export function EventsPage({ sid }: { sid: string }) {
     { key: 'name', header: 'Event', render: (_v, e: EventRec) => <span className="app-nm"><i className={ICON.event} aria-hidden="true" /><span className="app-ell">{e.name}</span></span> },
     { key: 'status', header: 'Status', width: 120, render: (v) => <Status variant="style1" tone="grey" textCase="normal">{v}</Status> },
     { key: 'owner', header: 'Event Owner', width: 170, render: (_v, e: EventRec) => (writable && can('event.owner.transfer', { event: e })
-      ? <MemberSelect variant="inline" size="small" aria-label={`Event Owner of ${e.name}`} value={e.owner} options={peopleOf(sid).map((n) => ({ value: n, name: n, initials: initials(n) }))} onChange={(v) => transferEventOwner(e.id, v)} />
+      ? <MemberSelect showAvatar={false} variant="inline" size="small" aria-label={`Event Owner of ${e.name}`} value={e.owner} options={peopleOf(sid).map((n) => ({ value: n, name: n, initials: initials(n) }))} onChange={(v) => transferEventOwner(e.id, v)} />
       : <Owner name={e.owner} />) },
     { key: 'wfs', header: 'Workflows', width: 170, render: (_v, e: EventRec) => <span className="app-inline">{S.nWf(e)}{S.nStale(e) > 0 && <Status variant="style1" tone="yellow" textCase="normal">{S.nStale(e)} Outdated</Status>}</span> },
     { key: 'adopted', header: 'Adopted', width: 190, render: (v) => (v === '—' ? <span className="app-muted">—</span> : v) },

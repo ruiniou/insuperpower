@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { Button, Dropdown, EmptyState, Search, Table, type TableColumn } from '@wiz/react';
-import { Owner, PageToolbar } from './study/common';
+import { LifecycleTag, PageToolbar } from './study/common';
 import { go } from '../router';
 import { hrefStudy } from '../store/actions';
 import { can, session } from '../store/role';
-import { S } from '../store/selectors';
 import { useDb } from '../store/store';
 import { ICON } from '../icons';
-import type { Study } from '../store/types';
+import type { Lifecycle, Study } from '../store/types';
 import { openModal } from '../store/ui';
 
 const open = (id: string) => go(hrefStudy(id, 'events'));
@@ -15,8 +14,8 @@ const open = (id: string) => go(hrefStudy(id, 'events'));
 const STATUS_OPTIONS = [
   { value: 'ACTIVE', label: 'Active' },
   { value: 'ARCHIVED', label: 'Archived' },
+  { value: 'DELETED', label: 'Deleted' },
 ] as const;
-type StudyStatusFilter = typeof STATUS_OPTIONS[number]['value'];
 
 const updatedTime = (study: Study) => Date.parse(study.updated) || 0;
 
@@ -31,10 +30,10 @@ const toggleFilter = (sel: string[], v: string) => (sel.includes(v) ? sel.filter
 export function StudiesPage() {
   const db = useDb();
   const duty = session.duty;
-  const [status, setStatus] = useState<StudyStatusFilter>('ACTIVE');
+  const [status, setStatus] = useState<Lifecycle>('ACTIVE');
   const [ta, setTa] = useState<string[]>([]);
   const [q, setQ] = useState('');
-  const visibleStudies = db.studies.filter((s) => s.lifecycle !== 'DELETED');
+  const visibleStudies = db.studies;
   const tas: string[] = Array.from(new Set(visibleStudies.map((s) => s.ta).filter(Boolean)));
   const needle = q.trim().toLowerCase();
   const rows = visibleStudies
@@ -44,9 +43,7 @@ export function StudiesPage() {
   const columns: TableColumn[] = [
     { key: 'id', header: 'Study', render: (_v, s: Study) => (
       <span className="studies-study">
-        {s.lifecycle === 'ARCHIVED'
-          ? <i className="ri-archive-line" role="img" aria-label="Archived" />
-          : <i className={ICON.study} aria-hidden="true" />}
+        <i className={ICON.study} aria-hidden="true" />
         <span className="studies-study__txt">
           <span className="studies-id">{s.id}</span>
           <span className="studies-name">{s.name}</span>
@@ -54,8 +51,8 @@ export function StudiesPage() {
       </span>
     ) },
     { key: 'ta', header: 'Therapeutic Area', width: 160, render: (v) => v || '—' },
-    { key: 'admin', header: 'Study Admin', width: 170, render: (_v, s: Study) => <Owner name={s.admin} /> },
-    { key: 'events', header: 'Events', width: 80, render: (_v, s: Study) => S.eventsOf(s.id).length },
+    { key: 'admin', header: 'Study Admin', width: 170 },
+    { key: 'lifecycle', header: 'Status', width: 112, render: (_v, s: Study) => <LifecycleTag v={s.lifecycle} /> },
     { key: 'blinding', header: 'Blinding', width: 120, render: (_v, s: Study) => <span className="studies-blind">{s.blinding}</span> },
     { key: 'updated', header: 'Updated', width: 130 },
     { key: 'actions', header: '', width: 112, align: 'right', render: (_v, s: Study) => {
@@ -78,7 +75,8 @@ export function StudiesPage() {
             width={180}
             items={STATUS_OPTIONS.map((option) => ({ ...option, selected: option.value === status }))}
             onSelect={(value) => {
-              if (value === 'ACTIVE' || value === 'ARCHIVED') setStatus(value);
+              const option = STATUS_OPTIONS.find((item) => item.value === value);
+              if (option) setStatus(option.value);
             }} />
           <Dropdown multiple size="medium" shadow="none" filterName="Therapeutic area" label={tas.filter((area) => ta.includes(area)).join(', ')} width={220} items={filterItems(tas, ta)} onSelect={(v) => setTa((p) => toggleFilter(p, v))} />
         </>}
@@ -91,7 +89,7 @@ export function StudiesPage() {
         ) : rows.length === 0 ? (
           <div className="app-empty" role="status"><b>No studies match</b><span>Try another status or clear the search and therapeutic area filters.</span></div>
         ) : (
-          <Table key={status + '|' + ta + '|' + needle} className="studies-table" variant="plain" columnLayout="fixed" rowHeight={48} paginated={rows.length > STUDY_PAGE_SIZES[0]} jumpToPage pageSize={20} pageSizeOptions={STUDY_PAGE_SIZES} columns={columns} rows={rows} aria-label="Studies" onRowClick={(r: Study) => open(r.id)} />
+          <Table key={status + '|' + ta + '|' + needle} className="studies-table" variant="plain" columnLayout="fixed" rowHeight={48} paginated={rows.length > STUDY_PAGE_SIZES[0]} jumpToPage pageSize={20} pageSizeOptions={STUDY_PAGE_SIZES} columns={columns} rows={rows} aria-label="Studies" rowClickable={(r: Study) => r.lifecycle !== 'DELETED'} onRowClick={(r: Study) => open(r.id)} />
         )}
       </div>
     </div>
